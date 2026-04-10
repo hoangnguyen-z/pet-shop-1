@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang thông tin - Pet Marketplace</title>
+    <link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+    <main class="container" style="padding: 40px 0; max-width: 900px;">
+        <article id="pageContent">Đang tải...</article>
+    </main>
+    <script src="../../js/api/client.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const slug = new URLSearchParams(window.location.search).get('slug') || 'privacy-policy';
+            const container = document.getElementById('pageContent');
+            try {
+                const response = await api.getPublicPage(slug);
+                const page = response.data;
+                document.title = `${page.title} - Pet Marketplace`;
+                container.innerHTML = `<h1>${page.title}</h1><div>${page.content}</div>`;
+            } catch {
+                container.innerHTML = '<h1>Không tìm thấy trang</h1><p>Trang chính sách này chưa được xuất bản.</p>';
+            }
+        });
+    </script>
+</body>
+</html>

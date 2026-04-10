@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paws &amp; Palette - Quản lý đơn hàng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pages/seller/seller-portal.css">
+</head>
+<body class="seller-dashboard-body seller-orders-body">
+    <div class="seller-sidebar-backdrop" id="sellerSidebarBackdrop"></div>
+    <div class="seller-orders-drawer-backdrop" id="sellerOrdersDrawerBackdrop" hidden></div>
+
+    <div class="seller-dashboard-shell">
+        <aside class="seller-side-nav" id="sellerSidebar">
+            <div class="seller-side-brand">
+                <div class="seller-brand-mark">
+                    <span class="material-symbols-outlined">pets</span>
+                </div>
+                <div>
+                    <h1>Paws &amp; Palette</h1>
+                    <p>Trung tâm người bán</p>
+                </div>
+            </div>
+
+            <nav class="seller-side-links">
+                <a class="seller-nav-link" href="/pages/seller/dashboard.html">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Tổng quan</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/products.html">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span>Sản phẩm</span>
+                </a>
+                <a class="seller-nav-link active" href="/pages/seller/orders.html">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span>Đơn hàng</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/settings.html">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Cài đặt</span>
+                </a>
+            </nav>
+
+            <div class="seller-side-footer">
+                <a class="seller-primary-button seller-full-button" href="/pages/seller/create-product.html" id="ordersAddProductButton">
+                    <span class="material-symbols-outlined">add</span>
+                    <span>Thêm sản phẩm</span>
+                </a>
+            </div>
+        </aside>
+
+        <div class="seller-dashboard-main">
+            <header class="seller-dashboard-topbar">
+                <div class="seller-topbar-left">
+                    <button class="seller-mobile-toggle" id="sellerSidebarToggle" type="button" aria-label="Mở menu">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <label class="seller-topbar-search">
+                        <span class="material-symbols-outlined">search</span>
+                        <input id="ordersSearchInput" type="text" placeholder="Tìm kiếm đơn hàng, khách hàng...">
+                    </label>
+                </div>
+
+                <div class="seller-topbar-right">
+                    <button class="seller-icon-button" id="ordersNotificationButton" type="button">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="seller-icon-dot" id="ordersNotificationDot"></span>
+                    </button>
+                    <div class="seller-profile-chip">
+                        <div class="seller-profile-copy">
+                            <strong id="ordersSellerName">Người bán</strong>
+                            <span id="ordersSellerRole">Chủ cửa hàng</span>
+                        </div>
+                        <img id="ordersSellerAvatar" src="/assets/photos/cat.jpg" alt="Ảnh đại diện người bán">
+                    </div>
+                </div>
+            </header>
+
+            <main class="seller-orders-content">
+                <div class="seller-orders-heading">
+                    <div>
+                        <h2>Quản lý đơn hàng</h2>
+                        <p>Theo dõi và cập nhật trạng thái đơn hàng của bạn bằng dữ liệu thật từ hệ thống.</p>
+                    </div>
+
+                    <div class="seller-orders-heading-actions">
+                        <button class="seller-secondary-button" type="button" id="ordersFilterToggle">
+                            <span class="material-symbols-outlined">filter_list</span>
+                            <span>Lọc dữ liệu</span>
+                        </button>
+                        <button class="seller-secondary-button" type="button" id="ordersExportButton">
+                            <span class="material-symbols-outlined">download</span>
+                            <span>Xuất báo cáo</span>
+                        </button>
+                    </div>
+                </div>
+
+                <section class="seller-orders-filter-panel" id="ordersFilterPanel" hidden>
+                    <div class="seller-orders-filter-grid">
+                        <label class="seller-orders-filter-field">
+                            <span>Trạng thái</span>
+                            <select id="ordersStatusFilter">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="pending">Chờ xác nhận</option>
+                                <option value="confirmed">Đã xác nhận</option>
+                                <option value="preparing">Đang chuẩn bị</option>
+                                <option value="shipping">Đang giao</option>
+                                <option value="delivered">Đã giao</option>
+                                <option value="completed">Hoàn tất</option>
+                                <option value="cancelled">Đã hủy</option>
+                            </select>
+                        </label>
+                        <label class="seller-orders-filter-field">
+                            <span>Số dòng mỗi trang</span>
+                            <select id="ordersLimitFilter">
+                                <option value="5">5 đơn</option>
+                                <option value="10">10 đơn</option>
+                                <option value="20">20 đơn</option>
+                            </select>
+                        </label>
+                        <label class="seller-orders-filter-field">
+                            <span>Chỉ hiện đơn cần xử lý</span>
+                            <select id="ordersActionableFilter">
+                                <option value="all">Hiện tất cả</option>
+                                <option value="actionable">Chỉ đơn còn thao tác</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="seller-orders-filter-actions">
+                        <button class="seller-secondary-button" type="button" id="ordersResetFilters">Đặt lại</button>
+                        <button class="seller-primary-button" type="button" id="ordersApplyFilters">Áp dụng</button>
+                    </div>
+                </section>
+
+                <section class="seller-orders-stats-grid">
+                    <article class="seller-orders-stat-card">
+                        <div class="seller-orders-stat-top">
+                            <div class="seller-orders-stat-icon seller-orders-stat-icon-green">
+                                <span class="material-symbols-outlined">pending_actions</span>
+                            </div>
+                            <span class="seller-orders-stat-delta" id="statPendingDelta">0 đơn cần xử lý</span>
+                        </div>
+                        <p>Đang chờ xử lý</p>
+                        <h3 id="statPendingCount">0</h3>
+                    </article>
+
+                    <article class="seller-orders-stat-card">
+                        <div class="seller-orders-stat-top">
+                            <div class="seller-orders-stat-icon seller-orders-stat-icon-warm">
+                                <span class="material-symbols-outlined">local_shipping</span>
+                            </div>
+                            <span class="seller-orders-stat-delta" id="statShippingDelta">0 đơn đang giao</span>
+                        </div>
+                        <p>Đang giao hàng</p>
+                        <h3 id="statShippingCount">0</h3>
+                    </article>
+
+                    <article class="seller-orders-stat-card">
+                        <div class="seller-orders-stat-top">
+                            <div class="seller-orders-stat-icon seller-orders-stat-icon-primary">
+                                <span class="material-symbols-outlined">check_circle</span>
+                            </div>
+                            <span class="seller-orders-stat-delta" id="statCompletedDelta">Hôm nay</span>
+                        </div>
+                        <p>Hoàn tất hôm nay</p>
+                        <h3 id="statCompletedToday">0</h3>
+                    </article>
+
+                    <article class="seller-orders-stat-card seller-orders-stat-card-danger">
+                        <div class="seller-orders-stat-top">
+                            <div class="seller-orders-stat-icon seller-orders-stat-icon-danger">
+                                <span class="material-symbols-outlined">cancel</span>
+                            </div>
+                            <span class="seller-orders-stat-delta" id="statCancelledDelta">Cần theo dõi</span>
+                        </div>
+                        <p>Đã hủy</p>
+                        <h3 id="statCancelledCount">0</h3>
+                    </article>
+                </section>
+
+                <section class="seller-orders-table-shell">
+                    <div class="seller-orders-table-head">
+                        <div>
+                            <h3>Danh sách đơn hàng mới nhất</h3>
+                            <p id="ordersTableSubtitle">Đang tải dữ liệu đơn hàng...</p>
+                        </div>
+                        <div class="seller-orders-table-pager">
+                            <button class="seller-icon-button" id="ordersPrevTop" type="button" aria-label="Trang trước">
+                                <span class="material-symbols-outlined">chevron_left</span>
+                            </button>
+                            <button class="seller-icon-button" id="ordersNextTop" type="button" aria-label="Trang sau">
+                                <span class="material-symbols-outlined">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="seller-orders-table-scroll">
+                        <table class="seller-orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Mã đơn hàng</th>
+                                    <th>Khách hàng</th>
+                                    <th>Ngày đặt</th>
+                                    <th>Doanh thu shop</th>
+                                    <th>Trạng thái</th>
+                                    <th class="seller-orders-table-actions-head">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <tr>
+                                    <td colspan="6" class="seller-orders-loading-cell">Đang tải đơn hàng...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="seller-orders-pagination">
+                        <p id="ordersPaginationSummary">Hiển thị 0 đơn hàng</p>
+                        <div class="seller-orders-pagination-controls">
+                            <button type="button" id="ordersPrevBottom">Trước</button>
+                            <div class="seller-orders-page-list" id="ordersPageList"></div>
+                            <button type="button" id="ordersNextBottom">Sau</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="seller-orders-lower-grid">
+                    <div class="seller-orders-tip-card">
+                        <div class="seller-orders-tip-copy">
+                            <h4>Mẹo quản lý đơn hàng</h4>
+                            <p id="ordersTipText">Hệ thống đang tổng hợp gợi ý xử lý theo trạng thái đơn mới nhất.</p>
+                            <button class="seller-primary-button" type="button" id="ordersTipAction">Xem ngay</button>
+                        </div>
+                        <span class="material-symbols-outlined">rocket_launch</span>
+                    </div>
+
+                    <aside class="seller-orders-activity-card" id="ordersActivitySection">
+                        <h4>
+                            <span class="material-symbols-outlined">history</span>
+                            <span>Hoạt động gần đây</span>
+                        </h4>
+                        <ul id="ordersActivityList">
+                            <li class="seller-orders-empty-activity">Chưa có hoạt động nào để hiển thị.</li>
+                        </ul>
+                    </aside>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <aside class="seller-orders-drawer" id="ordersDetailDrawer" aria-hidden="true">
+        <div class="seller-orders-drawer-head">
+            <div>
+                <p class="seller-orders-drawer-eyebrow">Chi tiết đơn hàng</p>
+                <h3 id="ordersDrawerTitle">#ORDER</h3>
+            </div>
+            <button class="seller-icon-button" id="ordersCloseDrawer" type="button" aria-label="Đóng chi tiết">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="seller-orders-drawer-body" id="ordersDrawerBody">
+            <div class="seller-orders-drawer-loading">Chọn một đơn hàng để xem chi tiết.</div>
+        </div>
+    </aside>
+
+    <script src="/js/api/client.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/components/auth.js"></script>
+    <script src="/pages/seller/orders.js"></script>
+</body>
+</html>

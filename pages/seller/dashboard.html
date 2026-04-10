@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paws &amp; Palette - Trung tâm người bán</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pages/seller/seller-portal.css">
+</head>
+<body class="seller-dashboard-body">
+    <div class="seller-sidebar-backdrop" id="sellerSidebarBackdrop"></div>
+    <div class="seller-dashboard-shell">
+        <aside class="seller-side-nav" id="sellerSidebar">
+            <div class="seller-side-brand">
+                <div class="seller-brand-mark">
+                    <span class="material-symbols-outlined">pets</span>
+                </div>
+                <div>
+                    <h1>Paws &amp; Palette</h1>
+                    <p>Trung tâm người bán</p>
+                </div>
+            </div>
+
+            <nav class="seller-side-links">
+                <a class="seller-nav-link active" href="/pages/seller/dashboard.html">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Tổng quan</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/products.html">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span>Sản phẩm</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/orders.html">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span>Đơn hàng</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/settings.html">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Cài đặt</span>
+                </a>
+            </nav>
+
+            <div class="seller-side-footer">
+                <a class="seller-primary-button seller-full-button" href="/pages/seller/create-product.html" data-dashboard-add-product>
+                    <span class="material-symbols-outlined">add</span>
+                    <span>Thêm sản phẩm</span>
+                </a>
+            </div>
+        </aside>
+
+        <div class="seller-dashboard-main">
+            <header class="seller-dashboard-topbar">
+                <div class="seller-topbar-left">
+                    <button class="seller-mobile-toggle" id="sellerSidebarToggle" type="button" aria-label="Mở menu">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <label class="seller-topbar-search">
+                        <span class="material-symbols-outlined">search</span>
+                        <input id="dashboardSearch" type="text" placeholder="Tìm kiếm sản phẩm, đơn hàng...">
+                    </label>
+                </div>
+
+                <div class="seller-topbar-right">
+                    <button class="seller-icon-button" id="dashboardNotificationButton" type="button" aria-label="Thông báo">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="seller-icon-dot" id="dashboardNotificationDot"></span>
+                    </button>
+
+                    <div class="seller-profile-chip">
+                        <div class="seller-profile-copy">
+                            <strong id="dashboardSellerName">Người bán</strong>
+                            <span id="dashboardSellerRole">Nhà bán đã xác minh</span>
+                        </div>
+                        <img id="dashboardSellerAvatar" src="/assets/photos/cat.jpg" alt="Ảnh đại diện người bán">
+                    </div>
+                </div>
+            </header>
+
+            <main class="seller-dashboard-content">
+                <section class="seller-welcome-section">
+                    <div>
+                        <h2 id="dashboardGreeting">Chào buổi sáng!</h2>
+                        <p id="dashboardHeroDescription">Đây là những gì đang diễn ra với cửa hàng của bạn hôm nay.</p>
+                    </div>
+
+                    <div class="seller-welcome-actions">
+                        <div class="seller-date-chip" id="dashboardCurrentDate">
+                            <span class="material-symbols-outlined">calendar_today</span>
+                            <span>Đang tải ngày...</span>
+                        </div>
+                        <button class="seller-success-button" id="dashboardExportButton" type="button">
+                            <span class="material-symbols-outlined">download</span>
+                            <span>Xuất Báo Cáo</span>
+                        </button>
+                        <button class="seller-secondary-button" type="button" data-dashboard-view-orders>
+                            <span class="material-symbols-outlined">pending_actions</span>
+                            <span>Đơn chờ xử lý</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="seller-stat-grid">
+                    <article class="seller-stat-card">
+                        <div class="seller-stat-icon seller-stat-icon-primary">
+                            <span class="material-symbols-outlined">shopping_bag</span>
+                        </div>
+                        <p>Tổng Đơn Hàng</p>
+                        <h3 id="statTotalOrders">0</h3>
+                        <small id="statTotalOrdersDelta">Đang tính toán...</small>
+                    </article>
+
+                    <article class="seller-stat-card">
+                        <div class="seller-stat-icon seller-stat-icon-success">
+                            <span class="material-symbols-outlined">payments</span>
+                        </div>
+                        <p>Doanh Thu Nay</p>
+                        <h3 id="statTodayRevenue">$0.00</h3>
+                        <small id="statTodayRevenueDelta">Đồng bộ từ đơn hàng đã ghi nhận</small>
+                    </article>
+
+                    <article class="seller-stat-card seller-stat-card-highlight">
+                        <div class="seller-stat-icon seller-stat-icon-highlight">
+                            <span class="material-symbols-outlined">analytics</span>
+                        </div>
+                        <p>Doanh Thu Tháng</p>
+                        <h3 id="statMonthRevenue">$0.00</h3>
+                        <small id="statMonthRevenueDelta">Mục tiêu doanh thu đang cập nhật</small>
+                    </article>
+
+                    <article class="seller-stat-card">
+                        <div class="seller-stat-icon seller-stat-icon-tertiary">
+                            <span class="material-symbols-outlined">inventory_2</span>
+                        </div>
+                        <p>Sản Phẩm Đang Bán</p>
+                        <h3 id="statProductCount">0</h3>
+                        <small id="statVisibleProducts">0 sản phẩm đang hiển thị trên sàn</small>
+                    </article>
+
+                    <article class="seller-stat-card seller-stat-card-alert">
+                        <div class="seller-stat-icon seller-stat-icon-alert">
+                            <span class="material-symbols-outlined">pending_actions</span>
+                        </div>
+                        <p>Chờ Xử Lý</p>
+                        <h3 id="statPendingOrders">0</h3>
+                        <small id="statConfirmedOrders">Không có đơn cần xử lý ngay</small>
+                    </article>
+                </section>
+
+                <section class="seller-analytics-grid">
+                    <article class="seller-panel seller-panel-large" id="revenue-section">
+                        <div class="seller-panel-head">
+                            <div>
+                                <h3>Xu Hướng Doanh Thu</h3>
+                                <p>Thống kê doanh thu lấy trực tiếp từ các đơn hàng của shop</p>
+                            </div>
+                            <select id="dashboardTrendRange" class="seller-select">
+                                <option value="7">7 ngày gần nhất</option>
+                                <option value="30">30 ngày gần nhất</option>
+                            </select>
+                        </div>
+
+                        <div class="seller-chart-wrap">
+                            <svg id="revenueTrendChart" class="seller-chart" viewBox="0 0 760 240" preserveAspectRatio="none" aria-label="Biểu đồ doanh thu"></svg>
+                            <div class="seller-chart-labels" id="revenueTrendLabels"></div>
+                        </div>
+
+                        <div class="seller-metric-row">
+                            <div class="seller-metric-chip">
+                                <span>Hôm nay</span>
+                                <strong id="revenueToday">$0.00</strong>
+                            </div>
+                            <div class="seller-metric-chip">
+                                <span>Tháng này</span>
+                                <strong id="revenueMonth">$0.00</strong>
+                            </div>
+                            <div class="seller-metric-chip">
+                                <span>Năm nay</span>
+                                <strong id="revenueYear">$0.00</strong>
+                            </div>
+                            <div class="seller-metric-chip">
+                                <span>Tổng doanh thu</span>
+                                <strong id="revenueTotal">$0.00</strong>
+                            </div>
+                            <div class="seller-metric-chip">
+                                <span>Phí sàn</span>
+                                <strong id="revenuePlatformFee">$0.00</strong>
+                            </div>
+                            <div class="seller-metric-chip">
+                                <span>Thực nhận</span>
+                                <strong id="revenueNet">$0.00</strong>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="seller-panel">
+                        <div class="seller-panel-head">
+                            <div>
+                                <h3>Thống Kê Đơn Hàng</h3>
+                                <p>Phân loại theo trạng thái xử lý của seller</p>
+                            </div>
+                        </div>
+
+                        <div class="seller-progress-stack">
+                            <div class="seller-progress-item">
+                                <div class="seller-progress-copy">
+                                    <span>Thành Công</span>
+                                    <strong id="orderSuccessLabel">0%</strong>
+                                </div>
+                                <div class="seller-progress-bar">
+                                    <span id="orderSuccessBar"></span>
+                                </div>
+                            </div>
+
+                            <div class="seller-progress-item">
+                                <div class="seller-progress-copy">
+                                    <span>Đang Xử Lý / Đang Giao</span>
+                                    <strong id="orderShippingLabel">0%</strong>
+                                </div>
+                                <div class="seller-progress-bar">
+                                    <span id="orderShippingBar" class="seller-progress-bar-warm"></span>
+                                </div>
+                            </div>
+
+                            <div class="seller-progress-item">
+                                <div class="seller-progress-copy">
+                                    <span>Đã Hủy / Trả hàng</span>
+                                    <strong id="orderCancelledLabel">0%</strong>
+                                </div>
+                                <div class="seller-progress-bar">
+                                    <span id="orderCancelledBar" class="seller-progress-bar-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="seller-mini-summary">
+                            <div class="seller-mini-avatars">
+                                <div class="seller-mini-avatar" id="dashboardNewBuyerCount">0</div>
+                            </div>
+                            <p id="dashboardOrderSummaryText">Chưa có biến động đáng chú ý hôm nay.</p>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="seller-content-grid">
+                    <article class="seller-panel seller-panel-large" id="recent-orders-overview">
+                        <div class="seller-panel-head">
+                            <div>
+                                <h3>Đơn Hàng Gần Đây</h3>
+                                <p>Những đơn mới nhất thuộc shop của bạn</p>
+                            </div>
+                            <button class="seller-link-button" type="button" data-dashboard-view-orders>Xem trong đơn hàng</button>
+                        </div>
+                        <div class="seller-list-stack" id="dashboardRecentOrders"></div>
+                    </article>
+
+                    <article class="seller-panel" id="marketing-section">
+                        <div class="seller-panel-head">
+                            <div>
+                                <h3>Sản Phẩm Bán Chạy</h3>
+                                <p>Top sản phẩm dẫn doanh số của shop</p>
+                            </div>
+                        </div>
+                        <div class="seller-top-product-stack" id="dashboardBestSelling"></div>
+                        <div class="seller-insight-card">
+                            <div class="seller-insight-head">
+                                <span class="material-symbols-outlined">star</span>
+                                <strong>Lời khuyên Merchant</strong>
+                            </div>
+                            <p id="dashboardInsight">Đang phân tích tín hiệu vận hành của shop...</p>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="seller-lower-grid">
+                    <article class="seller-panel" id="inventory-section">
+                        <div class="seller-panel-head">
+                            <div>
+                                <h3>Cảnh Báo Tồn Kho</h3>
+                                <p>Những sản phẩm cần restock sớm</p>
+                            </div>
+                            <button class="seller-link-button" type="button" data-dashboard-add-product>Quản lý sản phẩm</button>
+                        </div>
+                        <div class="seller-list-stack" id="dashboardInventoryHighlights"></div>
+                    </article>
+
+                    <article class="seller-panel" id="reviews-section">
+                        <div class="seller-panel-head">
+                            <div>
+                                <h3>Đánh Giá Gần Đây</h3>
+                                <p>Phản hồi mới nhất từ khách hàng</p>
+                            </div>
+                        </div>
+                        <div class="seller-list-stack" id="dashboardRecentReviews"></div>
+                    </article>
+
+                    <article class="seller-panel" id="activity-section">
+                        <div class="seller-panel-head">
+                            <div>
+                                <h3>Đối Soát &amp; Thông Báo</h3>
+                                <p>Lịch sử thanh toán seller và trạng thái xử lý</p>
+                            </div>
+                        </div>
+                        <div class="seller-list-stack" id="dashboardSettlements"></div>
+                    </article>
+                </section>
+
+                <section class="seller-shop-grid">
+                    <article class="seller-panel seller-shop-panel" id="shop-section">
+                        <img class="seller-shop-banner" id="dashboardShopBanner" src="/assets/photos/dog.jpg" alt="Ảnh bìa shop">
+                        <div class="seller-shop-panel-body">
+                            <div class="seller-shop-head">
+                                <img class="seller-shop-logo" id="dashboardShopLogo" src="/assets/photos/cat.jpg" alt="Logo shop">
+                                <div>
+                                    <h3 id="dashboardShopName">Cửa hàng của bạn</h3>
+                                    <div class="seller-badge-row">
+                                        <span class="seller-status-pill" id="dashboardShopStatus">Chờ duyệt</span>
+                                        <span class="seller-muted-pill" id="dashboardShopRating">0.0 điểm</span>
+                                        <span class="seller-muted-pill"><span id="dashboardReviewCount">0</span> đánh giá</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="seller-shop-description" id="dashboardShopSummary">Cập nhật mô tả shop để khách hàng hiểu rõ hơn về thương hiệu của bạn.</p>
+
+                            <div class="seller-shop-meta">
+                                <div>
+                                    <span>Liên hệ</span>
+                                    <strong id="dashboardShopContact">Chưa cập nhật</strong>
+                                </div>
+                                <div>
+                                    <span>Địa chỉ</span>
+                                    <strong id="dashboardShopAddress">Chưa cập nhật</strong>
+                                </div>
+                                <div>
+                                    <span>Đang hiển thị</span>
+                                    <strong id="dashboardActiveProductCount">0</strong>
+                                </div>
+                                <div>
+                                    <span>Đang ẩn</span>
+                                    <strong id="dashboardHiddenProductCount">0</strong>
+                                </div>
+                            </div>
+
+                            <div class="seller-shop-actions">
+                                <button class="seller-secondary-button" id="dashboardOpenStoreButton" type="button">
+                                    <span class="material-symbols-outlined">open_in_new</span>
+                                    <span>Xem shop trên sàn</span>
+                                </button>
+                                <a class="seller-primary-button" href="/pages/seller/create-product.html" data-dashboard-add-product>
+                                    <span class="material-symbols-outlined">add</span>
+                                    <span>Đăng sản phẩm mới</span>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="seller-panel" id="settings-section">
+                        <div class="seller-panel-head">
+                            <div>
+                                <h3>Thao tác nhanh</h3>
+                                <p>Các thao tác nhanh để tiếp tục vận hành shop</p>
+                            </div>
+                        </div>
+
+                        <div class="seller-quick-action-list">
+                            <a class="seller-quick-action" href="/pages/seller/create-product.html" data-dashboard-add-product>
+                                <span class="material-symbols-outlined">add_circle</span>
+                                <div>
+                                    <strong>Thêm sản phẩm mới</strong>
+                                    <span>Đi tới màn hình đăng sản phẩm</span>
+                                </div>
+                            </a>
+
+                            <button class="seller-quick-action" type="button" data-dashboard-view-orders>
+                                <span class="material-symbols-outlined">receipt_long</span>
+                                <div>
+                                    <strong>Quản lý đơn hàng</strong>
+                                    <span>Xử lý các đơn đang chờ xác nhận hoặc giao hàng</span>
+                                </div>
+                            </button>
+
+                            <button class="seller-quick-action" type="button" id="dashboardManageProductsButton">
+                                <span class="material-symbols-outlined">edit_square</span>
+                                <div>
+                                    <strong>Cập nhật kho &amp; giá</strong>
+                                    <span>Đi tới danh sách sản phẩm để chỉnh sửa</span>
+                                </div>
+                            </button>
+
+                            <button class="seller-quick-action" type="button" id="dashboardGoStorefrontButton">
+                                <span class="material-symbols-outlined">storefront</span>
+                                <div>
+                                    <strong>Mở gian hàng</strong>
+                                    <span>Xem cách khách hàng nhìn thấy shop của bạn</span>
+                                </div>
+                            </button>
+
+                            <button class="seller-quick-action" type="button" data-dashboard-logout>
+                                <span class="material-symbols-outlined">logout</span>
+                                <div>
+                                    <strong>Đăng xuất seller</strong>
+                                    <span>Thoát khỏi trung tâm người bán an toàn</span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div class="seller-search-summary" id="dashboardSearchSummary">
+                            Chưa áp dụng bộ lọc tìm kiếm trên trang tổng quan.
+                        </div>
+                    </article>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="/js/api/client.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/components/auth.js"></script>
+    <script src="/pages/seller/dashboard.js"></script>
+</body>
+</html>

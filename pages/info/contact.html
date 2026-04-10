@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liên hệ - Pet Marketplace</title>
+    <link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+    <main class="container" style="padding: 40px 0; max-width: 900px;">
+        <h1>Liên hệ với chúng tôi</h1>
+        <section id="contactInfo" style="margin: 20px 0;">Đang tải thông tin liên hệ...</section>
+        <form id="contactForm" class="account-content" style="display: grid; gap: 14px;">
+            <input name="name" placeholder="Họ tên của bạn" required>
+            <input name="email" type="email" placeholder="Email" required>
+            <input name="phone" placeholder="Số điện thoại">
+            <input name="subject" placeholder="Chủ đề" required>
+            <select name="type">
+                <option value="general">Câu hỏi chung</option>
+                <option value="support">Hỗ trợ</option>
+                <option value="feedback">Góp ý</option>
+                <option value="business">Hợp tác</option>
+            </select>
+            <textarea name="message" rows="5" placeholder="Nội dung" required></textarea>
+            <button class="btn btn-primary" type="submit">Gửi</button>
+            <p id="formMessage"></p>
+        </form>
+    </main>
+    <script src="../../js/api/client.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const info = document.getElementById('contactInfo');
+            try {
+                const response = await api.getContactInfo();
+                const data = response.data || {};
+                info.innerHTML = `
+                    <p><strong>Điện thoại:</strong> ${data.phone || ''}</p>
+                    <p><strong>Email:</strong> ${data.email || ''}</p>
+                    <p><strong>Địa chỉ:</strong> ${data.address || ''}</p>
+                    <p><strong>Giờ làm việc:</strong> ${data.workingHours || ''}</p>
+                    <p><a href="${data.mapUrl || '#'}" target="_blank">Mở Google Maps</a></p>
+                `;
+            } catch {
+                info.innerHTML = '<p>Thông tin liên hệ hiện chưa khả dụng.</p>';
+            }
+        });
+
+        document.getElementById('contactForm').addEventListener('submit', async event => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const message = document.getElementById('formMessage');
+            const data = Object.fromEntries(new FormData(form).entries());
+            try {
+                await api.sendContact(data);
+                message.textContent = 'Tin nhắn của bạn đã được gửi.';
+                form.reset();
+            } catch (error) {
+                message.textContent = error.message || 'Không thể gửi tin nhắn.';
+            }
+        });
+    </script>
+</body>
+</html>

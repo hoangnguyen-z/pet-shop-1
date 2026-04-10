@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-label="Hamster pet product">
+  <rect width="700" height="700" rx="56" fill="#fff6e6"/>
+  <circle cx="350" cy="360" r="170" fill="#d79b56"/>
+  <circle cx="228" cy="255" r="58" fill="#b8783d"/>
+  <circle cx="472" cy="255" r="58" fill="#b8783d"/>
+  <circle cx="290" cy="350" r="17" fill="#231f20"/>
+  <circle cx="410" cy="350" r="17" fill="#231f20"/>
+  <ellipse cx="350" cy="425" rx="78" ry="54" fill="#ffe2c6"/>
+  <circle cx="350" cy="400" r="19" fill="#231f20"/>
+  <text x="350" y="595" text-anchor="middle" font-family="Arial, sans-serif" font-size="50" font-weight="700" fill="#8b5a2b">Hamster Shop</text>
+</svg>

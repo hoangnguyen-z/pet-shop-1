@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-label="Fish pet product">
+  <rect width="700" height="700" rx="56" fill="#e7f4ff"/>
+  <path d="M155 350c85-110 255-110 340 0-85 110-255 110-340 0z" fill="#009ddc"/>
+  <path d="M495 350 590 270v160z" fill="#004589"/>
+  <circle cx="270" cy="330" r="18" fill="#231f20"/>
+  <path d="M345 245c30 45 30 165 0 210" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="510" cy="170" r="22" fill="#ffffff" opacity=".9"/>
+  <circle cx="565" cy="115" r="14" fill="#ffffff" opacity=".8"/>
+  <text x="350" y="595" text-anchor="middle" font-family="Arial, sans-serif" font-size="56" font-weight="700" fill="#004589">Fish Shop</text>
+</svg>

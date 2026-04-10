@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-label="Bird pet product">
+  <rect width="700" height="700" rx="56" fill="#e9fbff"/>
+  <circle cx="350" cy="310" r="150" fill="#009ddc"/>
+  <circle cx="405" cy="255" r="74" fill="#ffffff"/>
+  <circle cx="430" cy="245" r="15" fill="#231f20"/>
+  <path d="M470 270 560 300l-90 30z" fill="#ffc107"/>
+  <path d="M305 350c-70 20-110 63-130 125 105-3 184-40 228-112z" fill="#004589"/>
+  <path d="M350 460v60M310 520h80" stroke="#8b5a2b" stroke-width="16" stroke-linecap="round"/>
+  <text x="350" y="595" text-anchor="middle" font-family="Arial, sans-serif" font-size="56" font-weight="700" fill="#004589">Bird Shop</text>
+</svg>

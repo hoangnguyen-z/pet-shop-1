@@ -1,0 +1,38 @@
+const express = require('express');
+const router = express.Router();
+
+const authRoutes = require('./auth');
+const productRoutes = require('./products');
+const shopRoutes = require('./shops');
+const sellerProductRoutes = require('./seller-products');
+const buyerOrderRoutes = require('./buyer-orders');
+const sellerOrderRoutes = require('./seller-orders');
+const sellerRoutes = require('./seller');
+const userRoutes = require('./user');
+const adminRoutes = require('./admin');
+const publicRoutes = require('./public');
+const uploadRoutes = require('./uploads');
+
+router.use('/auth', authRoutes);
+router.use('/products', productRoutes);
+router.use('/shops', shopRoutes);
+router.use('/seller/products', sellerProductRoutes);
+router.use('/buyer/orders', buyerOrderRoutes);
+router.use('/orders', buyerOrderRoutes);
+router.use('/seller/orders', sellerOrderRoutes);
+router.use('/seller', sellerRoutes);
+router.use('/user', userRoutes);
+router.use('/admin', adminRoutes);
+router.use('/public', publicRoutes);
+router.use('/uploads', uploadRoutes);
+
+router.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Pet Marketplace API is running',
+        version: '1.0.0',
+        timestamp: new Date()
+    });
+});
+
+module.exports = router;

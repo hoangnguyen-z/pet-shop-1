@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Đăng nhập | Paws & Palette</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#964300",
+                        "primary-dim": "#843a00",
+                        "primary-container": "#f9873e",
+                        "secondary": "#006b1b",
+                        "secondary-container": "#91f78e",
+                        "on-primary": "#fff0e9",
+                        "on-surface": "#2d2f2c",
+                        "on-surface-variant": "#5a5c58",
+                        "surface": "#f7f7f2",
+                        "surface-container-low": "#f1f1ec",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e2e3dd",
+                        "outline": "#767773",
+                        "outline-variant": "#adada9",
+                        "error": "#b02500",
+                        "error-container": "#f95630",
+                        "on-background": "#2d2f2c"
+                    },
+                    "borderRadius": { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+                    "fontFamily": { "headline": ["Plus Jakarta Sans"], "body": ["Be Vietnam Pro"], "label": ["Be Vietnam Pro"] }
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; }
+        h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-container/30">
+    <main class="min-h-screen flex flex-col md:flex-row overflow-hidden">
+        <!-- Left Side -->
+        <section class="hidden md:flex md:w-1/2 lg:w-7/12 relative bg-surface-container-low p-12 flex-col justify-between overflow-hidden">
+            <div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-container/20 rounded-full blur-3xl"></div>
+            <div class="absolute top-1/2 -right-24 w-80 h-80 bg-secondary-container/30 rounded-full blur-3xl"></div>
+            <div class="relative z-10">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">pets</span>
+                    <span class="text-xl font-bold tracking-tight text-primary">Paws & Palette</span>
+                </div>
+            </div>
+            <div class="relative z-10 mt-auto">
+                <h1 class="text-display-lg font-bold text-on-background leading-tight mb-6 max-w-xl">
+                    Chào mừng trở lại với <span class="text-primary">ngôi nhà</span> của thú cưng.
+                </h1>
+                <p class="text-on-surface-variant text-lg max-w-md leading-relaxed mb-12">
+                    Nơi phong cách sống của bạn và niềm vui của thú cưng hòa làm một.
+                </p>
+                <div class="relative w-full h-[400px] flex items-end">
+                    <div class="absolute left-0 bottom-0 w-4/5 h-[350px] rounded-xl overflow-hidden shadow-2xl rotate-[-2deg] transition-transform hover:rotate-0 duration-500">
+                        <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=350&fit=crop" alt="Dog"/>
+                    </div>
+                    <div class="absolute right-0 bottom-12 w-2/3 h-[280px] rounded-xl overflow-hidden shadow-2xl rotate-[3deg] z-20 border-8 border-surface-container-low transition-transform hover:rotate-0 duration-500">
+                        <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=280&h=280&fit=crop" alt="Cat"/>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Right Side -->
+        <section class="w-full md:w-1/2 lg:w-5/12 flex items-center justify-center p-6 md:p-12 lg:p-24 bg-surface">
+            <div class="w-full max-w-md">
+                <div class="flex md:hidden items-center gap-2 mb-12 justify-center">
+                    <span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">pets</span>
+                    <span class="text-lg font-bold tracking-tight text-primary">Paws & Palette</span>
+                </div>
+                <div class="mb-10 text-center md:text-left">
+                    <h2 class="text-headline-md font-bold mb-2">Đăng nhập</h2>
+                    <p class="text-on-surface-variant">Chào mừng bạn quay lại không gian yêu thương.</p>
+                </div>
+                <!-- Role Tabs -->
+                <div class="flex p-1.5 bg-surface-container-low rounded-full mb-10" id="roleTabs">
+                    <button class="role-tab flex-1 py-3 px-4 rounded-full text-sm font-semibold transition-all duration-300 bg-surface-container-lowest text-primary shadow-sm" data-role="buyer">Người mua</button>
+                    <button class="role-tab flex-1 py-3 px-4 rounded-full text-sm font-semibold transition-all duration-300 text-on-surface-variant hover:text-on-surface" data-role="seller">Người bán</button>
+                    <button class="role-tab flex-1 py-3 px-4 rounded-full text-sm font-semibold transition-all duration-300 text-on-surface-variant hover:text-on-surface" data-role="admin">Admin</button>
+                </div>
+                <form id="loginForm" class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-label-md font-bold text-on-surface ml-1">Email hoặc Số điện thoại</label>
+                        <div class="relative">
+                            <input id="email" name="email" class="w-full px-6 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary-container transition-all outline-none placeholder:text-outline-variant" placeholder="name@example.com" type="text"/>
+                            <span class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-on-surface-variant">alternate_email</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-label-md font-bold text-on-surface ml-1">Mật khẩu</label>
+                        <div class="relative">
+                            <input id="password" name="password" class="w-full px-6 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary-container transition-all outline-none placeholder:text-outline-variant" placeholder="••••••••" type="password"/>
+                            <button type="button" id="togglePassword" class="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors">visibility</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between px-1">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <div class="relative flex items-center justify-center">
+                                <input id="rememberMe" class="peer appearance-none w-5 h-5 rounded border-2 border-outline-variant checked:bg-primary checked:border-primary transition-all cursor-pointer" type="checkbox"/>
+                                <span class="material-symbols-outlined absolute text-[14px] text-on-primary opacity-0 peer-checked:opacity-100">check</span>
+                            </div>
+                            <span class="text-sm text-on-surface-variant group-hover:text-on-surface transition-colors">Ghi nhớ đăng nhập</span>
+                        </label>
+                        <a class="text-sm font-semibold text-primary hover:text-primary-dim transition-colors" href="forgot-password.html">Quên mật khẩu?</a>
+                    </div>
+                    <div id="errorMessage" class="hidden p-4 bg-error-container/20 border border-error-container/30 rounded-xl">
+                        <p class="text-sm text-error" id="errorText"></p>
+                    </div>
+                    <button type="submit" class="w-full py-4 bg-primary text-on-primary font-bold rounded-full text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 mt-4" id="submitBtn">Đăng nhập</button>
+                </form>
+                <div class="relative my-10">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-surface-container-high"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-4 bg-surface text-on-surface-variant italic">hoặc</span>
+                    </div>
+                </div>
+                <div class="space-y-4 text-center">
+                    <div class="p-4 bg-secondary-container/10 rounded-xl border border-secondary-container/20">
+                        <p class="text-sm text-on-surface-variant">Chưa có tài khoản?<a class="font-bold text-secondary ml-1 hover:underline underline-offset-4" href="register.html">Đăng ký ngay</a></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="../../js/api/client.js"></script>
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let currentRole = 'buyer';
+        
+        const roleTabs = document.querySelectorAll('.role-tab');
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const togglePassword = document.getElementById('togglePassword');
+
+        roleTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                roleTabs.forEach(t => {
+                    t.classList.remove('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
+                    t.classList.add('text-on-surface-variant');
+                });
+                tab.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
+                tab.classList.remove('text-on-surface-variant');
+                currentRole = tab.dataset.role;
+            });
+        });
+
+        togglePassword.addEventListener('click', () => {
+            const passwordInput = document.getElementById('password');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                togglePassword.textContent = 'visibility_off';
+            } else {
+                passwordInput.type = 'password';
+                togglePassword.textContent = 'visibility';
+            }
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMessage.classList.add('hidden');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submitBtn');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Đang đăng nhập...';
+
+            try {
+                const data = await api.login(email, password, currentRole);
+                const payload = data.data || {};
+                const user = payload.user || payload.admin;
+                const token = payload.accessToken || payload.token;
+
+                localStorage.setItem('accessToken', token);
+                if (payload.refreshToken) {
+                    localStorage.setItem('refreshToken', payload.refreshToken);
+                }
+                localStorage.setItem('user', JSON.stringify({ ...user, role: currentRole }));
+                localStorage.setItem('role', currentRole);
+
+                if (currentRole === 'seller' && payload.shop) {
+                    localStorage.setItem('shop', JSON.stringify(payload.shop));
+                }
+
+                window.location.href = currentRole === 'seller'
+                    ? '../seller/dashboard.html'
+                    : currentRole === 'admin'
+                        ? '../admin/dashboard.html'
+                        : '../../index.html';
+            } catch (error) {
+                errorMessage.classList.remove('hidden');
+                errorText.textContent = error.message;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Đăng nhập';
+            }
+        });
+    </script>
+</body>
+</html>

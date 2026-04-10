@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ hàng - Pet Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../styles.css">
+    <style>
+        .cart-page { padding: 40px 0; }
+        .cart-page h1 { margin-bottom: 30px; }
+        .cart-page-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; }
+        .cart-items-list { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .cart-item-list { list-style: none; padding: 0; margin: 0; }
+        .cart-item-list .cart-item { display: flex; gap: 20px; padding: 20px 0; border-bottom: 1px solid #eee; }
+        .cart-item-list .cart-item:last-child { border-bottom: none; }
+        .cart-item-image { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; background: #f5f5f5; }
+        .cart-item-info { flex: 1; }
+        .cart-item-info h3 { font-size: 18px; margin-bottom: 5px; }
+        .cart-item-info p { color: #666; margin-bottom: 10px; }
+        .cart-item-price { font-size: 20px; font-weight: 700; color: #ea2229; }
+        .cart-item-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .cart-item-remove { color: #999; cursor: pointer; padding: 5px; }
+        .cart-item-remove:hover { color: #dc3545; }
+        .cart-summary { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); height: fit-content; position: sticky; top: 100px; }
+        .cart-summary h3 { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .cart-summary-row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .cart-summary-total { font-size: 24px; font-weight: 700; color: #333; margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee; }
+        .cart-summary .btn { margin-top: 20px; width: 100%; padding: 15px; }
+        .coupon-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        .coupon-input { display: flex; gap: 10px; }
+        .coupon-input input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        .cart-empty-page { text-align: center; padding: 100px 20px; }
+        .cart-empty-page i { font-size: 80px; color: #ddd; margin-bottom: 20px; }
+        .cart-empty-page h2 { margin-bottom: 10px; }
+        .cart-empty-page p { color: #666; margin-bottom: 30px; }
+        .continue-shopping { margin-top: 20px; }
+        @media (max-width: 768px) {
+            .cart-page-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="container">
+            <div class="top-bar-content">
+                <span><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn từ $35</span>
+            </div>
+        </div>
+    </div>
+
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=50&h=50&fit=crop" alt="Petco Logo" class="logo-img">
+                    <span class="logo-text">Petco</span>
+                </a>
+
+                <div class="header-actions">
+                    <a href="/pages/account/profile.html" class="header-action">
+                        <i class="far fa-user"></i>
+                        <span>Tài khoản</span>
+                    </a>
+                    <a href="#" class="header-action cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                        <span>Giỏ hàng</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="cart-page">
+        <div class="container">
+            <div id="cartContent"></div>
+        </div>
+    </div>
+
+    <script src="../../js/api/client.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/components/auth.js"></script>
+    <script src="../../js/components/cart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            await cartManager.loadCart();
+            renderCart();
+        });
+
+        function renderCart() {
+            const container = document.getElementById('cartContent');
+            const items = cartManager.getItems();
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="cart-empty-page">
+                        <i class="fas fa-shopping-cart"></i>
+                        <h2>Giỏ hàng của bạn đang trống</h2>
+                        <p>Có vẻ bạn chưa thêm sản phẩm nào vào giỏ hàng.</p>
+                        <a href="/pages/shop/shop.html" class="btn btn-primary">Mua sắm ngay</a>
+                        <div class="continue-shopping">
+                            <a href="/">Quay về trang chủ</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const subtotal = cartManager.getSubtotal();
+            const shipping = subtotal >= 35 ? 0 : 5.99;
+            const total = subtotal + shipping;
+
+            container.innerHTML = `
+                <h1>Giỏ hàng (${items.length} sản phẩm)</h1>
+                <div class="cart-page-grid">
+                    <div class="cart-items-list">
+                        <ul class="cart-item-list">
+                            ${items.map((item, index) => {
+                                const product = cartManager.getItemProduct(item);
+                                const price = item.price || product?.price || 0;
+                                const quantity = item.quantity || 1;
+                                const name = item.name || product?.name || 'Sản phẩm';
+                                const image = item.image || product?.images?.[0] || '';
+                                const itemId = cartManager.getItemProductId(item) || item._id || item.id || index;
+
+                                return `
+                                    <li class="cart-item">
+                                        <img src="${image}" alt="${name}" class="cart-item-image">
+                                        <div class="cart-item-info">
+                                            <h3>${name}</h3>
+                                            <p>Đơn giá: $${price.toFixed(2)}</p>
+                                            <div class="quantity-selector-inline">
+                                                <button onclick="updateQuantity('${itemId}', ${quantity - 1})">-</button>
+                                                <span>${quantity}</span>
+                                                <button onclick="updateQuantity('${itemId}', ${quantity + 1})">+</button>
+                                            </div>
+                                        </div>
+                                        <div class="cart-item-actions">
+                                            <div class="cart-item-price">$${(price * quantity).toFixed(2)}</div>
+                                            <button class="cart-item-remove" onclick="removeItem('${itemId}')">
+                                                <i class="fas fa-trash"></i> Xóa
+                                            </button>
+                                        </div>
+                                    </li>
+                                `;
+                            }).join('')}
+                        </ul>
+                        <button class="btn btn-secondary" onclick="clearCart()" style="margin-top: 20px;">
+                            <i class="fas fa-trash"></i> Xóa toàn bộ giỏ hàng
+                        </button>
+                    </div>
+                    <div class="cart-summary">
+                        <h3>Tóm tắt đơn hàng</h3>
+                        <div class="cart-summary-row">
+                            <span>Tạm tính</span>
+                            <span>$${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="cart-summary-row">
+                            <span>Phí vận chuyển</span>
+                            <span>${shipping === 0 ? 'FREE' : '$' + shipping.toFixed(2)}</span>
+                        </div>
+                        ${subtotal < 35 ? `
+                            <p style="color: #28a745; font-size: 14px; margin-top: 10px;">
+                                <i class="fas fa-truck"></i> Mua thêm $${(35 - subtotal).toFixed(2)} để được miễn phí vận chuyển!
+                            </p>
+                        ` : ''}
+                        <div class="cart-summary-row cart-summary-total">
+                            <span>Tổng cộng</span>
+                            <span>$${total.toFixed(2)}</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="checkout()">
+                            Tiến hành thanh toán
+                        </button>
+                        <div class="coupon-section">
+                            <p style="margin-bottom: 10px; color: #666;">Bạn có mã giảm giá?</p>
+                            <div class="coupon-input">
+                                <input type="text" placeholder="Nhập mã giảm giá" id="couponCode">
+                                <button class="btn btn-secondary" onclick="applyCoupon()">Áp dụng</button>
+                            </div>
+                        </div>
+                        <div class="continue-shopping">
+                            <a href="/pages/shop/shop.html"><i class="fas fa-arrow-left"></i> Tiếp tục mua sắm</a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateQuantity(itemId, quantity) {
+            if (quantity <= 0) {
+                removeItem(itemId);
+                return;
+            }
+            cartManager.updateQuantity(itemId, quantity);
+            renderCart();
+        }
+
+        function removeItem(itemId) {
+            cartManager.removeItem(itemId);
+            renderCart();
+        }
+
+        function clearCart() {
+            if (confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng không?')) {
+                cartManager.clearCart();
+                renderCart();
+            }
+        }
+
+        function checkout() {
+            if (!authManager.isLoggedIn()) {
+                authManager.showLoginModal();
+                return;
+            }
+            window.location.href = '/pages/shop/checkout.html';
+        }
+
+        function applyCoupon() {
+            const code = document.getElementById('couponCode').value.trim();
+            if (code) {
+                authManager.showNotification('Tính năng mã giảm giá sẽ sớm được cập nhật!', 'info');
+            }
+        }
+    </script>
+</body>
+</html>

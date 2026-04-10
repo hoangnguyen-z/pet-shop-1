@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Petco logo">
+  <rect width="240" height="240" rx="120" fill="#e7f4ff"/>
+  <circle cx="120" cy="116" r="54" fill="#004589"/>
+  <circle cx="80" cy="72" r="22" fill="#009ddc"/>
+  <circle cx="120" cy="58" r="22" fill="#009ddc"/>
+  <circle cx="160" cy="72" r="22" fill="#009ddc"/>
+  <circle cx="67" cy="118" r="20" fill="#009ddc"/>
+  <circle cx="173" cy="118" r="20" fill="#009ddc"/>
+  <text x="120" y="184" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#004589">Petco</text>
+</svg>

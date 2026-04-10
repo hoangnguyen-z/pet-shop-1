@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài viết - Pet Marketplace</title>
+    <link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+    <main class="container" style="padding: 40px 0; max-width: 900px;">
+        <a href="/pages/info/articles.html">Quay lại danh sách bài viết</a>
+        <article id="articleContent" style="margin-top: 24px;">Đang tải bài viết...</article>
+        <section style="margin-top: 40px;">
+            <h2>Bài viết liên quan</h2>
+            <div id="relatedArticles"></div>
+        </section>
+    </main>
+    <script src="../../js/api/client.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadArticle);
+
+        async function loadArticle() {
+            const slug = new URLSearchParams(window.location.search).get('slug');
+            const container = document.getElementById('articleContent');
+            if (!slug) {
+                window.location.href = '/pages/info/articles.html';
+                return;
+            }
+
+            try {
+                const response = await api.getArticle(slug);
+                const article = response.data;
+                document.title = `${article.title} - Pet Marketplace`;
+                container.innerHTML = `
+                    <h1>${article.title}</h1>
+                    ${article.image ? `<img src="${article.image}" alt="${article.title}" style="width: 100%; border-radius: 8px; margin: 20px 0;">` : ''}
+                    <p><strong>${article.category || 'tin tức'}</strong></p>
+                    <div>${article.content}</div>
+                `;
+                document.getElementById('relatedArticles').innerHTML = (article.relatedArticles || []).map(item => `
+                    <p><a href="/pages/info/article.html?slug=${item.slug}">${item.title}</a></p>
+                `).join('') || '<p>Chưa có bài viết liên quan.</p>';
+            } catch (error) {
+                container.innerHTML = '<p>Không tìm thấy bài viết.</p>';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-label="Cat pet product">
+  <rect width="700" height="700" rx="56" fill="#fff1f3"/>
+  <path d="M205 245 250 130l80 92 80-92 45 115c58 38 95 104 95 178 0 118-89 190-200 190s-200-72-200-190c0-74 37-140 95-178z" fill="#ffffff"/>
+  <circle cx="292" cy="344" r="17" fill="#231f20"/>
+  <circle cx="408" cy="344" r="17" fill="#231f20"/>
+  <path d="M330 402c15 14 25 18 40 0" fill="none" stroke="#231f20" stroke-width="14" stroke-linecap="round"/>
+  <path d="M270 395h-80M270 425h-88M430 395h80M430 425h88" stroke="#8a8a8a" stroke-width="9" stroke-linecap="round"/>
+  <text x="350" y="595" text-anchor="middle" font-family="Arial, sans-serif" font-size="56" font-weight="700" fill="#ea2229">Cat Shop</text>
+</svg>

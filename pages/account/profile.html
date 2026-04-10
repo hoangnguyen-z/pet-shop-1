@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài khoản của tôi - Pet Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../styles.css">
+    <style>
+        .account-page { padding: 40px 0; }
+        .account-grid { display: grid; grid-template-columns: 250px 1fr; gap: 40px; }
+        .account-sidebar { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); height: fit-content; }
+        .account-nav { list-style: none; padding: 0; margin: 0; }
+        .account-nav li { margin-bottom: 5px; }
+        .account-nav a { display: flex; align-items: center; gap: 10px; padding: 12px 15px; border-radius: 8px; color: #333; transition: all 0.3s; }
+        .account-nav a:hover, .account-nav a.active { background: #f0f7ff; color: #004589; }
+        .account-content { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .account-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .profile-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .profile-item { display: flex; flex-direction: column; gap: 5px; }
+        .profile-item label { font-size: 13px; color: #666; }
+        .profile-item span { font-size: 15px; color: #333; }
+        @media (max-width: 768px) {
+            .account-grid { grid-template-columns: 1fr; }
+            .profile-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="container">
+            <div class="top-bar-content">
+                <span><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn từ $35</span>
+            </div>
+        </div>
+    </div>
+
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=50&h=50&fit=crop" alt="Logo" class="logo-img">
+                    <span class="logo-text">Pet Marketplace</span>
+                </a>
+                <div class="header-actions">
+                    <a href="/pages/shop/cart.html" class="header-action cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                        <span>Giỏ hàng</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="account-page">
+        <div class="container">
+            <div class="account-grid">
+                <aside class="account-sidebar">
+                    <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+                        <div style="width: 80px; height: 80px; border-radius: 50%; background: #004589; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 30px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h4 id="userName">Khách</h4>
+                        <p id="userEmail" style="color: #666; font-size: 14px;"></p>
+                    </div>
+                    <ul class="account-nav">
+                        <li><a href="/pages/account/profile.html" class="active"><i class="fas fa-user"></i> Hồ sơ của tôi</a></li>
+                        <li><a href="/pages/account/orders.html"><i class="fas fa-box"></i> Đơn hàng của tôi</a></li>
+                        <li><a href="/pages/account/wishlist.html"><i class="fas fa-heart"></i> Yêu thích</a></li>
+                        <li><a href="/pages/account/addresses.html"><i class="fas fa-map-marker-alt"></i> Địa chỉ</a></li>
+                        <div class="dropdown-divider"></div>
+                        <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+                    </ul>
+                </aside>
+
+                <main class="account-content">
+                    <div class="account-header">
+                        <h2>Hồ sơ của tôi</h2>
+                        <button class="btn btn-secondary" id="editBtn" onclick="toggleEdit()">
+                            <i class="fas fa-edit"></i> Chỉnh sửa
+                        </button>
+                    </div>
+
+                    <form id="profileForm" class="profile-form" style="display: none;">
+                        <div class="profile-grid">
+                            <div class="form-group">
+                                <label>Họ và tên</label>
+                                <input type="text" name="name" id="inputName">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" name="email" id="inputEmail">
+                            </div>
+                            <div class="form-group">
+                                <label>Số điện thoại</label>
+                                <input type="tel" name="phone" id="inputPhone">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Lưu thay đổi</button>
+                        <button type="button" class="btn btn-secondary" style="margin-top: 20px; margin-left: 10px;" onclick="toggleEdit()">Hủy</button>
+                    </form>
+
+                    <div id="profileView">
+                        <div class="profile-grid">
+                            <div class="profile-item">
+                                <label>Họ và tên</label>
+                                <span id="viewName">-</span>
+                            </div>
+                            <div class="profile-item">
+                                <label>Email</label>
+                                <span id="viewEmail">-</span>
+                            </div>
+                            <div class="profile-item">
+                                <label>Số điện thoại</label>
+                                <span id="viewPhone">-</span>
+                            </div>
+                            <div class="profile-item">
+                                <label>Loại tài khoản</label>
+                                <span id="viewRole">-</span>
+                            </div>
+                            <div class="profile-item">
+                                <label>Tham gia từ</label>
+                                <span id="viewCreated">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/api/client.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/components/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!authManager.isAuthenticated) {
+                authManager.showLoginModal();
+            }
+            await loadProfile();
+        });
+
+        async function loadProfile() {
+            try {
+                const response = await api.getProfile();
+                const user = response.data.user;
+
+                document.getElementById('userName').textContent = user.name || 'Người dùng';
+                document.getElementById('userEmail').textContent = user.email || '';
+
+                document.getElementById('viewName').textContent = user.name || '-';
+                document.getElementById('viewEmail').textContent = user.email || '-';
+                document.getElementById('viewPhone').textContent = user.phone || '-';
+                document.getElementById('viewRole').textContent = user.role?.charAt(0).toUpperCase() + user.role?.slice(1) || '-';
+                document.getElementById('viewCreated').textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-';
+
+                document.getElementById('inputName').value = user.name || '';
+                document.getElementById('inputEmail').value = user.email || '';
+                document.getElementById('inputPhone').value = user.phone || '';
+            } catch (error) {
+                console.error('Failed to load profile:', error);
+            }
+        }
+
+        function toggleEdit() {
+            const view = document.getElementById('profileView');
+            const form = document.getElementById('profileForm');
+            view.style.display = view.style.display === 'none' ? 'block' : 'none';
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            try {
+                await api.updateProfile({
+                    name: formData.get('name'),
+                    phone: formData.get('phone')
+                });
+                authManager.showNotification('Đã cập nhật hồ sơ!', 'success');
+                toggleEdit();
+                loadProfile();
+            } catch (error) {
+                authManager.showNotification(error.message, 'error');
+            }
+        });
+
+        function logout() {
+            authManager.logout();
+        }
+    </script>
+</body>
+</html>

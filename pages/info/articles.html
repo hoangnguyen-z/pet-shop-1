@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài viết chăm sóc thú cưng - Pet Marketplace</title>
+    <link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+    <main class="container" style="padding: 40px 0;">
+        <h1>Bài viết chăm sóc thú cưng</h1>
+        <p>Tin tức, hướng dẫn chăm sóc và những cập nhật hữu ích dành cho người nuôi thú cưng.</p>
+        <div class="products-grid" id="articlesGrid" style="margin-top: 24px;"></div>
+    </main>
+    <script src="../../js/api/client.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadArticles);
+
+        async function loadArticles() {
+            const container = document.getElementById('articlesGrid');
+            container.innerHTML = '<p>Đang tải bài viết...</p>';
+            try {
+                const response = await api.getArticles({ limit: 24 });
+                const articles = response.data || [];
+                if (!articles.length) {
+                    container.innerHTML = '<p>Chưa có bài viết nào được xuất bản.</p>';
+                    return;
+                }
+
+                container.innerHTML = articles.map(article => `
+                    <article class="product-card">
+                        <a href="/pages/info/article.html?slug=${article.slug}">
+                            <img class="product-img" src="${article.image || 'https://via.placeholder.com/400x240?text=Pet+Article'}" alt="${article.title}">
+                        </a>
+                        <div class="product-info">
+                            <span class="product-brand">${article.category || 'tin tức'}</span>
+                            <h3 class="product-name"><a href="/pages/info/article.html?slug=${article.slug}">${article.title}</a></h3>
+                            <p>${article.excerpt || ''}</p>
+                        </div>
+                    </article>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = '<p>Không thể tải danh sách bài viết.</p>';
+            }
+        }
+    </script>
+</body>
+</html>

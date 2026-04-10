@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paws &amp; Palette - Cài đặt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pages/seller/seller-portal.css">
+</head>
+<body class="seller-dashboard-body seller-settings-body">
+    <div class="seller-sidebar-backdrop" id="sellerSidebarBackdrop"></div>
+
+    <div class="seller-dashboard-shell">
+        <aside class="seller-side-nav seller-settings-side-nav" id="sellerSidebar">
+            <div class="seller-side-brand seller-settings-brand">
+                <div>
+                    <h1>Paws &amp; Palette</h1>
+                    <p>Trung tâm người bán</p>
+                </div>
+            </div>
+
+            <nav class="seller-side-links seller-settings-nav">
+                <a class="seller-nav-link" href="/pages/seller/dashboard.html">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Tổng quan</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/products.html">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span>Sản phẩm</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/orders.html">
+                    <span class="material-symbols-outlined">shopping_bag</span>
+                    <span>Đơn hàng</span>
+                </a>
+                <a class="seller-nav-link active" href="/pages/seller/settings.html">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Cài đặt</span>
+                </a>
+            </nav>
+
+            <div class="seller-side-footer">
+                <a class="seller-primary-button seller-full-button" href="/pages/seller/create-product.html" id="settingsAddProductButton">
+                    <span class="material-symbols-outlined">add</span>
+                    <span>Thêm sản phẩm mới</span>
+                </a>
+            </div>
+        </aside>
+
+        <div class="seller-dashboard-main">
+            <header class="seller-dashboard-topbar seller-settings-topbar">
+                <div class="seller-topbar-left">
+                    <button class="seller-mobile-toggle" id="sellerSidebarToggle" type="button" aria-label="Mở menu">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="seller-settings-logo">Paws &amp; Palette</div>
+                </div>
+
+                <div class="seller-topbar-right">
+                    <label class="seller-topbar-search seller-settings-search">
+                        <span class="material-symbols-outlined">search</span>
+                        <input id="settingsSearchInput" type="text" placeholder="Tìm kiếm giao dịch...">
+                    </label>
+
+                    <div class="seller-settings-header-icons">
+                        <button class="seller-icon-button" id="settingsNotificationButton" type="button" aria-label="Thông báo">
+                            <span class="material-symbols-outlined">notifications</span>
+                        </button>
+                        <button class="seller-icon-button" id="settingsSelfButton" type="button" aria-label="Cài đặt">
+                            <span class="material-symbols-outlined">settings</span>
+                        </button>
+                    </div>
+
+                    <div class="seller-profile-chip seller-settings-profile-chip">
+                        <div class="seller-profile-copy">
+                            <strong id="settingsTopbarName">Người bán</strong>
+                            <span id="settingsTopbarBadge">Nhà bán kim cương</span>
+                        </div>
+                        <img id="settingsTopbarAvatar" src="/assets/photos/cat.jpg" alt="Ảnh đại diện người bán">
+                    </div>
+                </div>
+            </header>
+
+            <main class="seller-settings-content">
+                <div class="seller-settings-heading">
+                    <h2>Cài đặt tài khoản</h2>
+                    <p>Quản lý thông tin cá nhân và cấu hình cửa hàng của bạn tại đây.</p>
+                </div>
+
+                <section class="seller-settings-shell-card">
+                    <div class="seller-settings-tabs">
+                        <button class="seller-settings-tab active" type="button" data-settings-tab="profile">
+                            <span class="material-symbols-outlined">person</span>
+                            <span>Thông tin cá nhân</span>
+                        </button>
+                        <button class="seller-settings-tab" type="button" data-settings-tab="shop">
+                            <span class="material-symbols-outlined">store</span>
+                            <span>Thông tin shop</span>
+                        </button>
+                        <button class="seller-settings-tab" type="button" data-settings-tab="password">
+                            <span class="material-symbols-outlined">lock</span>
+                            <span>Đổi mật khẩu</span>
+                        </button>
+                    </div>
+
+                    <div class="seller-settings-panel-wrap">
+                        <section class="seller-settings-panel active" data-settings-panel="profile">
+                            <div class="seller-settings-decor seller-settings-decor-top"></div>
+                            <div class="seller-settings-decor seller-settings-decor-bottom"></div>
+
+                            <div class="seller-settings-inner">
+                                <div class="seller-avatar-section">
+                                    <div class="seller-avatar-shell">
+                                        <img id="settingsAvatarPreview" src="/assets/photos/cat.jpg" alt="Ảnh đại diện">
+                                        <button class="seller-avatar-fab" id="settingsAvatarPromptButton" type="button">
+                                            <span class="material-symbols-outlined">photo_camera</span>
+                                        </button>
+                                        <input id="settingsAvatarFileInput" type="file" accept="image/*" hidden>
+                                    </div>
+                                    <div>
+                                        <h3>Ảnh đại diện</h3>
+                                        <p>Chọn ảnh trực tiếp từ máy để cập nhật avatar. Hệ thống sẽ tự tải ảnh lên và lưu lại cho tài khoản của bạn.</p>
+                                        <div class="seller-avatar-actions">
+                                            <button class="seller-secondary-button" type="button" id="settingsAvatarUploadButton">Tải lên mới</button>
+                                            <button class="seller-text-danger-button" type="button" id="settingsAvatarRemoveButton">Gỡ bỏ</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <form id="settingsProfileForm" class="seller-settings-form">
+                                    <div class="seller-settings-form-grid">
+                                        <label class="seller-settings-field">
+                                            <span>Họ và Tên</span>
+                                            <div class="seller-settings-input-shell">
+                                                <span class="material-symbols-outlined">badge</span>
+                                                <input id="settingsProfileName" type="text" placeholder="Họ và tên">
+                                            </div>
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Số điện thoại</span>
+                                            <div class="seller-settings-input-shell">
+                                                <span class="material-symbols-outlined">phone</span>
+                                                <input id="settingsProfilePhone" type="tel" placeholder="Số điện thoại">
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <label class="seller-settings-field">
+                                        <span>Email (Không thể thay đổi)</span>
+                                        <div class="seller-settings-input-shell seller-settings-input-shell-disabled">
+                                            <span class="material-symbols-outlined">mail</span>
+                                            <input id="settingsProfileEmail" type="email" disabled>
+                                        </div>
+                                        <small>Vui lòng liên hệ hỗ trợ nếu bạn muốn thay đổi email đăng nhập.</small>
+                                    </label>
+
+                                    <div class="seller-settings-submit-row">
+                                        <button class="seller-primary-button" type="submit" id="settingsProfileSaveButton">Cập nhật thông tin</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </section>
+
+                        <section class="seller-settings-panel" data-settings-panel="shop">
+                            <div class="seller-settings-inner">
+                                <form id="settingsShopForm" class="seller-settings-form">
+                                    <div class="seller-settings-form-grid">
+                                        <label class="seller-settings-field">
+                                            <span>Tên shop</span>
+                                            <input id="settingsShopName" type="text" placeholder="Tên cửa hàng">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Điện thoại shop</span>
+                                            <input id="settingsShopPhone" type="tel" placeholder="Điện thoại shop">
+                                        </label>
+                                    </div>
+
+                                    <div class="seller-settings-form-grid">
+                                        <label class="seller-settings-field">
+                                            <span>Email shop</span>
+                                            <input id="settingsShopEmail" type="email" placeholder="Email shop">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Trạng thái shop</span>
+                                            <input id="settingsShopStatus" type="text" disabled>
+                                        </label>
+                                    </div>
+
+                                    <label class="seller-settings-field">
+                                        <span>Mô tả shop</span>
+                                        <textarea id="settingsShopDescription" rows="4" placeholder="Mô tả ngắn về shop của bạn"></textarea>
+                                    </label>
+
+                                    <div class="seller-settings-form-grid">
+                                        <label class="seller-settings-field">
+                                            <span>Logo shop</span>
+                                            <input id="settingsShopLogo" type="url" placeholder="https://...">
+                                            <small>Bạn có thể chọn ảnh từ máy hoặc dán URL nếu cần.</small>
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Banner shop</span>
+                                            <input id="settingsShopBanner" type="url" placeholder="https://...">
+                                            <small>Ảnh banner rộng sẽ hiển thị đẹp hơn ở trang shop.</small>
+                                        </label>
+                                    </div>
+
+                                    <input id="settingsShopLogoFileInput" type="file" accept="image/*" hidden>
+                                    <input id="settingsShopBannerFileInput" type="file" accept="image/*" hidden>
+
+                                    <div class="seller-settings-preview-grid">
+                                        <div class="seller-settings-preview-card">
+                                            <strong>Xem trước logo</strong>
+                                            <img id="settingsShopLogoPreview" src="/assets/photos/cat.jpg" alt="Ảnh xem trước logo">
+                                            <div class="seller-settings-preview-actions">
+                                                <button class="seller-secondary-button seller-inline-button" id="settingsShopLogoUploadButton" type="button">
+                                                    <span class="material-symbols-outlined">upload</span>
+                                                    <span>Chọn logo từ máy</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="seller-settings-preview-card seller-settings-preview-banner">
+                                            <strong>Xem trước banner</strong>
+                                            <img id="settingsShopBannerPreview" src="/assets/photos/dog.jpg" alt="Ảnh xem trước banner">
+                                            <div class="seller-settings-preview-actions">
+                                                <button class="seller-secondary-button seller-inline-button" id="settingsShopBannerUploadButton" type="button">
+                                                    <span class="material-symbols-outlined">upload</span>
+                                                    <span>Chọn banner từ máy</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="seller-settings-form-grid seller-settings-form-grid-address">
+                                        <label class="seller-settings-field">
+                                            <span>Địa chỉ chi tiết</span>
+                                            <input id="settingsShopStreet" type="text" placeholder="Số nhà, đường">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Phường/Xã</span>
+                                            <input id="settingsShopWard" type="text" placeholder="Phường / Xã">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Quận/Huyện</span>
+                                            <input id="settingsShopDistrict" type="text" placeholder="Quận / Huyện">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Tỉnh/Thành phố</span>
+                                            <input id="settingsShopCity" type="text" placeholder="Tỉnh / Thành phố">
+                                        </label>
+                                    </div>
+
+                                    <div class="seller-settings-map-card">
+                                        <div class="seller-settings-map-heading">
+                                            <div>
+                                                <strong>Vị trí cửa hàng trên Google Maps</strong>
+                                                <p>Người mua và khách sẽ thấy vị trí này khi mở trang shop của bạn.</p>
+                                            </div>
+                                            <a id="settingsShopMapLink" href="#" target="_blank" rel="noreferrer" class="seller-secondary-button seller-inline-link" hidden>Mở Google Maps</a>
+                                        </div>
+
+                                        <div class="seller-settings-form-grid">
+                                            <label class="seller-settings-field">
+                                                <span>Latitude</span>
+                                                <input id="settingsShopLatitude" type="number" step="any" placeholder="10.7769">
+                                            </label>
+                                            <label class="seller-settings-field">
+                                                <span>Longitude</span>
+                                                <input id="settingsShopLongitude" type="number" step="any" placeholder="106.7009">
+                                            </label>
+                                        </div>
+
+                                        <div class="seller-settings-form-grid">
+                                            <label class="seller-settings-field">
+                                                <span>Link Google Maps</span>
+                                                <input id="settingsShopGoogleMapsUrl" type="url" placeholder="https://maps.google.com/...">
+                                            </label>
+                                            <label class="seller-settings-field">
+                                                <span>Link Embed Maps</span>
+                                                <input id="settingsShopEmbedUrl" type="url" placeholder="https://maps.google.com/maps?...&output=embed">
+                                            </label>
+                                        </div>
+
+                                        <div class="seller-settings-map-preview">
+                                            <iframe id="settingsShopMapPreview" title="Xem trước bản đồ cửa hàng" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                            <p id="settingsShopMapEmpty">Điền tọa độ hoặc link Google Maps để xem preview.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="seller-settings-form-grid">
+                                        <label class="seller-settings-field">
+                                            <span>Chính sách giao hàng</span>
+                                            <textarea id="settingsPolicyShipping" rows="3" placeholder="Chính sách giao hàng riêng của shop"></textarea>
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Chính sách đổi trả</span>
+                                            <textarea id="settingsPolicyReturn" rows="3" placeholder="Quy định đổi trả và hoàn tiền"></textarea>
+                                        </label>
+                                    </div>
+
+                                    <label class="seller-settings-field">
+                                        <span>Thông tin bảo hành</span>
+                                        <textarea id="settingsPolicyWarranty" rows="3" placeholder="Mô tả chính sách bảo hành của shop"></textarea>
+                                    </label>
+
+                                    <div class="seller-settings-submit-row">
+                                        <button class="seller-primary-button" type="submit" id="settingsShopSaveButton">Lưu thông tin shop</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </section>
+
+                        <section class="seller-settings-panel" data-settings-panel="password">
+                            <div class="seller-settings-inner seller-settings-password-wrap">
+                                <form id="settingsPasswordForm" class="seller-settings-form">
+                                    <label class="seller-settings-field">
+                                        <span>Mật khẩu hiện tại</span>
+                                        <div class="seller-settings-input-shell">
+                                            <span class="material-symbols-outlined">lock</span>
+                                            <input id="settingsCurrentPassword" type="password" placeholder="Nhập mật khẩu hiện tại">
+                                        </div>
+                                    </label>
+
+                                    <label class="seller-settings-field">
+                                        <span>Mật khẩu mới</span>
+                                        <div class="seller-settings-input-shell">
+                                            <span class="material-symbols-outlined">lock_reset</span>
+                                            <input id="settingsNewPassword" type="password" placeholder="Ít nhất 6 ký tự, gồm chữ hoa, chữ thường và số">
+                                        </div>
+                                    </label>
+
+                                    <label class="seller-settings-field">
+                                        <span>Nhập lại mật khẩu mới</span>
+                                        <div class="seller-settings-input-shell">
+                                            <span class="material-symbols-outlined">verified_user</span>
+                                            <input id="settingsConfirmPassword" type="password" placeholder="Nhập lại mật khẩu mới">
+                                        </div>
+                                    </label>
+
+                                    <div class="seller-password-note">
+                                        Mật khẩu mới phải có ít nhất 6 ký tự, bao gồm 1 chữ hoa, 1 chữ thường và 1 số.
+                                    </div>
+
+                                    <div class="seller-settings-submit-row">
+                                        <button class="seller-primary-button" type="submit" id="settingsPasswordSaveButton">Đổi mật khẩu</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+
+                <footer class="seller-settings-footer">
+                    <p>© 2024 The Editorial Merchant. Bản quyền thuộc về Azure Paws.</p>
+                    <div>
+                        <a href="/">Chính sách bảo mật</a>
+                        <a href="/">Điều khoản dịch vụ</a>
+                        <a href="/">Trung tâm hỗ trợ</a>
+                    </div>
+                </footer>
+            </main>
+        </div>
+    </div>
+
+    <div class="seller-settings-toast" id="settingsToast" hidden>
+        <div class="seller-settings-toast-inner">
+            <div class="seller-settings-toast-icon">
+                <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">check_circle</span>
+            </div>
+            <div>
+                <strong id="settingsToastTitle">Cập nhật thành công!</strong>
+                <p id="settingsToastMessage">Thông tin đã được lưu trữ.</p>
+            </div>
+            <button class="seller-settings-toast-close" id="settingsToastClose" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="/js/api/client.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/components/auth.js"></script>
+    <script src="/pages/seller/settings.js"></script>
+</body>
+</html>

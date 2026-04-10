@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-label="Rabbit pet product">
+  <rect width="700" height="700" rx="56" fill="#f4fff0"/>
+  <path d="M280 250c-60-145-10-205 35-50 20 70 22 120 15 145zM420 250c60-145 10-205-35-50-20 70-22 120-15 145z" fill="#ffffff"/>
+  <circle cx="350" cy="375" r="155" fill="#ffffff"/>
+  <circle cx="296" cy="360" r="16" fill="#231f20"/>
+  <circle cx="404" cy="360" r="16" fill="#231f20"/>
+  <circle cx="350" cy="402" r="19" fill="#ea8891"/>
+  <path d="M305 432h90M350 421v55" stroke="#8a8a8a" stroke-width="10" stroke-linecap="round"/>
+  <text x="350" y="595" text-anchor="middle" font-family="Arial, sans-serif" font-size="54" font-weight="700" fill="#2f7d32">Rabbit Shop</text>
+</svg>

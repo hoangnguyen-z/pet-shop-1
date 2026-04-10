@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Marketplace - Thức ăn, phụ kiện và dịch vụ thú cưng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="/assets/images/pet-logo.svg">
+</head>
+<body>
+    <div class="top-bar">
+        <div class="container">
+            <div class="top-bar-content">
+                <span><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn từ $35</span>
+                <span><i class="fas fa-map-marker-alt"></i> Tìm cửa hàng</span>
+                <span><i class="fas fa-paw"></i> Tư vấn trực tuyến cùng chuyên gia thú cưng</span>
+            </div>
+            <div class="top-bar-right">
+                <a href="#orders">Theo dõi đơn</a>
+                <a href="#contact">Hỗ trợ</a>
+            </div>
+        </div>
+    </div>
+
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div class="logo">
+                    <img src="/assets/images/pet-logo.svg" alt="Petco Logo" class="logo-img">
+                    <span class="logo-text">Petco</span>
+                </div>
+
+                <div class="search-bar">
+                    <div class="search-dropdown">
+                        <select id="searchCategory">
+                            <option value="all">Tất cả</option>
+                            <option value="dogs">Chó</option>
+                            <option value="cats">Mèo</option>
+                            <option value="birds">Chim</option>
+                            <option value="fish">Cá</option>
+                            <option value="small-pets">Thú nhỏ</option>
+                            <option value="reptiles">Bò sát</option>
+                        </select>
+                    </div>
+                    <input type="text" placeholder="Tìm thức ăn, bánh thưởng, đồ chơi và nhiều hơn...">
+                    <button class="search-btn"><i class="fas fa-search"></i></button>
+                </div>
+
+                <div class="header-actions">
+                    <a href="#shop" class="header-action">
+                        <i class="fas fa-store"></i>
+                        <span>Cửa hàng</span>
+                    </a>
+                    <a href="#page?slug=vet-services" class="header-action">
+                        <i class="fas fa-stethoscope"></i>
+                        <span>Dịch vụ thú y</span>
+                    </a>
+                    <a href="#login" class="header-action account-action">
+                        <i class="far fa-user"></i>
+                        <span>Đăng nhập</span>
+                    </a>
+                    <a href="#cart" class="header-action cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                        <span>Giỏ hàng</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="main-nav">
+        <div class="container">
+            <ul class="nav-list" id="mainNav">
+                <li class="nav-item nav-item-has-submenu">
+                    <a href="#shop">Mua theo danh mục <i class="fas fa-chevron-down"></i></a>
+                    <div class="mega-menu">
+                        <div class="mega-menu-inner">
+                            <div class="mega-menu-column">
+                                <div class="mega-menu-icon" style="background-image: url('/assets/photos/dog.jpg')"></div>
+                                <h3>Dogs</h3>
+                                <ul>
+                                    <li><a href="#shop?petType=dog&search=food">Food</a></li>
+                                    <li><a href="#shop?petType=dog&search=treat">Treats & Chews</a></li>
+                                    <li><a href="#shop?petType=dog&search=toy">Toys</a></li>
+                                    <li><a href="#shop?petType=dog&search=bed">Beds & Blankets</a></li>
+                                    <li><a href="#shop?petType=dog&search=crate">Crates & Gates</a></li>
+                                    <li><a href="#contact">Grooming</a></li>
+                                    <li><a href="#shop?petType=dog&search=health">Health Care</a></li>
+                                </ul>
+                            </div>
+                            <div class="mega-menu-column">
+                                <div class="mega-menu-icon" style="background-image: url('/assets/photos/cat.jpg')"></div>
+                                <h3>Cats</h3>
+                                <ul>
+                                    <li><a href="#shop?petType=cat&search=food">Food</a></li>
+                                    <li><a href="#shop?petType=cat&search=treat">Treats</a></li>
+                                    <li><a href="#shop?petType=cat&search=toy">Toys</a></li>
+                                    <li><a href="#shop?petType=cat&search=scratcher">Scratchers</a></li>
+                                    <li><a href="#shop?petType=cat&search=cat%20tree">Furniture</a></li>
+                                    <li><a href="#shop?petType=cat&search=litter">Litter & Accessories</a></li>
+                                    <li><a href="#shop?petType=cat&search=health">Health Care</a></li>
+                                </ul>
+                            </div>
+                            <div class="mega-menu-column">
+                                <div class="mega-menu-icon" style="background-image: url('/assets/photos/bird.jpg')"></div>
+                                <h3>Birds</h3>
+                                <ul>
+                                    <li><a href="#shop?petType=bird&search=food">Food & Treats</a></li>
+                                    <li><a href="#shop?petType=bird&search=cage">Cages</a></li>
+                                    <li><a href="#shop?petType=bird&search=toy">Toys</a></li>
+                                    <li><a href="#shop?petType=bird">Accessories</a></li>
+                                </ul>
+                            </div>
+                            <div class="mega-menu-column">
+                                <div class="mega-menu-icon" style="background-image: url('/assets/photos/fish.jpg')"></div>
+                                <h3>Fish</h3>
+                                <ul>
+                                    <li><a href="#shop?petType=fish&search=food">Fish Food</a></li>
+                                    <li><a href="#shop?petType=fish&search=aquarium">Aquariums</a></li>
+                                    <li><a href="#shop?petType=fish&search=decor">Decor</a></li>
+                                    <li><a href="#shop?petType=fish&search=equipment">Equipment</a></li>
+                                </ul>
+                            </div>
+                            <div class="mega-menu-column">
+                                <div class="mega-menu-icon" style="background-image: url('/assets/photos/rabbit.jpg')"></div>
+                                <h3>Small Pets</h3>
+                                <ul>
+                                    <li><a href="#shop?petType=small-pet&search=hay">Food & Hay</a></li>
+                                    <li><a href="#shop?petType=small-pet&search=habitat">Cages & Habitats</a></li>
+                                    <li><a href="#shop?petType=small-pet&search=bedding">Bedding</a></li>
+                                    <li><a href="#shop?petType=small-pet&search=toy">Toys</a></li>
+                                </ul>
+                            </div>
+                            <div class="mega-menu-column">
+                                <div class="mega-menu-icon" style="background-image: url('/assets/photos/reptile.jpg')"></div>
+                                <h3>Reptiles</h3>
+                                <ul>
+                                    <li><a href="#shop?petType=reptile&search=food">Food</a></li>
+                                    <li><a href="#shop?petType=reptile&search=terrarium">Terrariums</a></li>
+                                    <li><a href="#shop?petType=reptile&search=heat">Heating & Lighting</a></li>
+                                    <li><a href="#shop?petType=reptile&search=decor">Decor</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                <li class="nav-item"><a href="#shop?search=food">Thức ăn</a></li>
+                <li class="nav-item"><a href="#shop?search=treat">Bánh thưởng</a></li>
+                <li class="nav-item"><a href="#shop?search=toy">Đồ chơi</a></li>
+                <li class="nav-item"><a href="#shop">Phụ kiện</a></li>
+                <li class="nav-item"><a href="#contact">Spa & chăm sóc</a></li>
+                <li class="nav-item"><a href="#page?slug=vet-services">Thú y</a></li>
+                <li class="nav-item"><a href="#shop?onSale=true">Ưu đãi</a></li>
+                <li class="nav-item highlight"><a href="#shop?onSale=true">Đăng ký & tiết kiệm</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <div class="logo">
+                <img src="/assets/images/pet-logo.svg" alt="Petco Logo" class="logo-img">
+                <span class="logo-text">Petco</span>
+            </div>
+            <button class="mobile-nav-close" id="mobileNavClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="mobile-nav-list">
+            <li><a href="#shop">Mua theo danh mục</a></li>
+            <li><a href="#shop?search=food">Thức ăn</a></li>
+            <li><a href="#shop?search=treat">Bánh thưởng</a></li>
+            <li><a href="#shop?search=toy">Đồ chơi</a></li>
+            <li><a href="#shop">Phụ kiện</a></li>
+            <li><a href="#contact">Spa & chăm sóc</a></li>
+            <li><a href="#page?slug=vet-services">Thú y</a></li>
+            <li><a href="#shop?onSale=true">Ưu đãi</a></li>
+            <li><a href="#shop?onSale=true">Đăng ký & tiết kiệm</a></li>
+            <li class="mobile-divider"></li>
+            <li><a href="#login">Đăng nhập</a></li>
+            <li><a href="#shop">Cửa hàng</a></li>
+            <li><a href="#orders">Theo dõi đơn</a></li>
+        </ul>
+    </div>
+
+    <section class="hero-section">
+        <div class="hero-slider" id="heroSlider">
+            <div class="hero-slide active" style="background: linear-gradient(135deg, #004589 0%, #0066b2 50%, #009ddc 100%);">
+                <div class="container">
+                    <div class="hero-content">
+                        <span class="hero-badge">Ưu đãi có hạn</span>
+                        <h1>Mùa mua sắm tiết kiệm</h1>
+                        <p>Giảm đến 50% cho nhiều sản phẩm nổi bật. Chăm thú cưng tốt hơn với mức giá dễ chịu hơn.</p>
+                        <a href="#shop" class="btn btn-primary">Mua ngay</a>
+                    </div>
+                    <div class="hero-image">
+                        <img src="/assets/photos/dog.jpg" alt="Happy Dog" class="hero-pet-img">
+                    </div>
+                </div>
+            </div>
+            <div class="hero-slide" style="background: linear-gradient(135deg, #231f20 0%, #3a3a3a 50%, #5a5a5a 100%);">
+                <div class="container">
+                    <div class="hero-content">
+                        <span class="hero-badge">Chất lượng cao cấp</span>
+                        <h1>Thức ăn thú cưng cao cấp</h1>
+                        <p>Dinh dưỡng phù hợp cho từng bé cưng, nguyên liệu chọn lọc và hiệu quả rõ ràng.</p>
+                        <a href="#shop?search=food" class="btn btn-primary">Khám phá ngay</a>
+                    </div>
+                    <div class="hero-image">
+                        <img src="/assets/photos/cat.jpg" alt="Cute Cat" class="hero-pet-img">
+                    </div>
+                </div>
+            </div>
+            <div class="hero-slide" style="background: linear-gradient(135deg, #ea2229 0%, #ee2a24 50%, #f54545 100%);">
+                <div class="container">
+                    <div class="hero-content">
+                        <span class="hero-badge">Tư vấn miễn phí</span>
+                        <h1>Tư vấn thú y miễn phí</h1>
+                        <p>Nhận tư vấn từ chuyên gia để chăm sóc sức khỏe cho thú cưng tốt hơn ngay hôm nay.</p>
+                        <a href="#page?slug=vet-services" class="btn btn-white">Đặt lịch</a>
+                    </div>
+                    <div class="hero-image">
+                        <img src="/assets/photos/dog.jpg" alt="Vet with Pet" class="hero-pet-img">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-nav">
+            <button class="hero-nav-btn prev" id="heroPrev"><i class="fas fa-chevron-left"></i></button>
+            <div class="hero-dots" id="heroDots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+            <button class="hero-nav-btn next" id="heroNext"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </section>
+
+    <section class="shop-by-pet">
+        <div class="container">
+            <div class="section-header">
+                <h2>Mua theo thú cưng</h2>
+                <a href="#shop" class="view-all">Xem tất cả <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="pet-grid">
+                <a href="#shop?petType=dog" class="pet-card">
+                    <div class="pet-icon" style="background-image: url('/assets/photos/dog.jpg')"></div>
+                    <h3>Chó</h3>
+                </a>
+                <a href="#shop?petType=cat" class="pet-card">
+                    <div class="pet-icon" style="background-image: url('/assets/photos/cat.jpg')"></div>
+                    <h3>Mèo</h3>
+                </a>
+                <a href="#shop?petType=bird" class="pet-card">
+                    <div class="pet-icon" style="background-image: url('/assets/photos/bird.jpg')"></div>
+                    <h3>Chim</h3>
+                </a>
+                <a href="#shop?petType=fish" class="pet-card">
+                    <div class="pet-icon" style="background-image: url('/assets/photos/fish.jpg')"></div>
+                    <h3>Cá</h3>
+                </a>
+                <a href="#shop?petType=small-pet" class="pet-card">
+                    <div class="pet-icon" style="background-image: url('/assets/photos/rabbit.jpg')"></div>
+                    <h3>Thú nhỏ</h3>
+                </a>
+                <a href="#shop?petType=reptile" class="pet-card">
+                    <div class="pet-icon" style="background-image: url('/assets/photos/reptile.jpg')"></div>
+                    <h3>Bò sát</h3>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="promo-banners">
+        <div class="container">
+            <div class="promo-grid">
+                <a href="#shop?search=treat&onSale=true" class="promo-card promo-card-large" style="background: linear-gradient(135deg, #ea2229 0%, #ee2a24 100%);">
+                    <div class="promo-content">
+                        <span class="promo-tag">Có hạn</span>
+                        <h3>Mua 1 tặng 1 giảm 50%</h3>
+                        <p>Áp dụng cho một số bánh thưởng cho chó</p>
+                        <span class="promo-link">Mua ngay <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                    <div class="promo-image">
+                        <img src="/assets/photos/food.jpg" alt="Dog Treats">
+                    </div>
+                </a>
+                <a href="#shop?petType=cat&search=food" class="promo-card" style="background: linear-gradient(135deg, #009ddc 0%, #27adea 100%);">
+                    <div class="promo-content">
+                        <h3>Khuyến mãi thức ăn cho mèo</h3>
+                        <p>Giảm đến 40%</p>
+                        <span class="promo-link">Mua ngay <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                    <div class="promo-image">
+                        <img src="/assets/photos/cat.jpg" alt="Cat Food">
+                    </div>
+                </a>
+                <a href="#shop?search=toy" class="promo-card" style="background: linear-gradient(135deg, #004589 0%, #0066b2 100%);">
+                    <div class="promo-content">
+                        <h3>Hàng mới về</h3>
+                        <p>Đồ chơi và phụ kiện</p>
+                        <span class="promo-link">Mua ngay <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                    <div class="promo-image">
+                        <img src="/assets/photos/dog.jpg" alt="Pet Toys">
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="featured-products">
+        <div class="container">
+            <div class="section-header">
+                <h2>Sản phẩm nổi bật</h2>
+                <div class="product-tabs">
+                    <button class="product-tab active" data-tab="bestsellers">Bán chạy</button>
+                    <button class="product-tab" data-tab="new">Hàng mới</button>
+                    <button class="product-tab" data-tab="deals">Ưu đãi tốt</button>
+                </div>
+            </div>
+            <div class="products-grid" id="productsGrid">
+                <div class="account-content" style="grid-column: 1 / -1; text-align:center;">
+                    Đang tải sản phẩm thật từ hệ thống...
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="services-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Dịch vụ cho thú cưng</h2>
+                <a href="#contact" class="view-all">Xem tất cả dịch vụ <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="services-grid">
+                <a href="#page?slug=vet-services" class="service-card">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #004589, #0066b2);">
+                        <img src="/assets/photos/dog.jpg" alt="Vet">
+                    </div>
+                    <h3>Dịch vụ thú y</h3>
+                    <p>Tư vấn và chăm sóc thú y chuyên nghiệp cho thú cưng của bạn</p>
+                    <span class="service-link">Đặt lịch <i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="#contact" class="service-card">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #ea2229, #ee2a24);">
+                        <img src="/assets/photos/grooming.jpg" alt="Grooming">
+                    </div>
+                    <h3>Spa & chăm sóc</h3>
+                    <p>Dịch vụ chăm sóc chuyên nghiệp để bé cưng luôn sạch đẹp</p>
+                    <span class="service-link">Đặt lịch <i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="#contact" class="service-card">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #009ddc, #27adea);">
+                        <img src="/assets/photos/rabbit.jpg" alt="Boarding">
+                    </div>
+                    <h3>Lưu trú</h3>
+                    <p>Không gian an toàn và thoải mái cho thú cưng lưu trú</p>
+                    <span class="service-link">Đặt lịch <i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="#contact" class="service-card">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #231f20, #3a3a3a);">
+                        <img src="/assets/photos/dog.jpg" alt="Training">
+                    </div>
+                    <h3>Huấn luyện</h3>
+                    <p>Huấn luyện hành vi và vâng lời cho thú cưng</p>
+                    <span class="service-link">Đặt lịch <i class="fas fa-arrow-right"></i></span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="brands-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Thương hiệu nổi bật</h2>
+            </div>
+            <div class="brands-slider">
+                <div class="brand-item">
+                    <img src="/assets/photos/food.jpg" alt="Blue Buffalo">
+                    Blue Buffalo
+                </div>
+                <div class="brand-item">
+                    <img src="/assets/photos/cat.jpg" alt="Purina">
+                    Purina
+                </div>
+                <div class="brand-item">
+                    <img src="/assets/photos/bird.jpg" alt="Hill's">
+                    Hill's
+                </div>
+                <div class="brand-item">
+                    <img src="/assets/photos/fish.jpg" alt="Royal Canin">
+                    Royal Canin
+                </div>
+                <div class="brand-item">
+                    <img src="/assets/photos/dog.jpg" alt="Kong">
+                    Kong
+                </div>
+                <div class="brand-item">
+                    <img src="/assets/photos/rabbit.jpg" alt="Petmate">
+                    Petmate
+                </div>
+                <div class="brand-item">
+                    <img src="/assets/photos/reptile.jpg" alt="Nylabone">
+                    Nylabone
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="subscribe-section">
+        <div class="container">
+            <div class="subscribe-content">
+                <div class="subscribe-image">
+                    <img src="/assets/images/pet-dog.svg" alt="Happy Pets">
+                </div>
+                <div class="subscribe-text">
+                    <h2><i class="fas fa-paw"></i> Đăng ký & tiết kiệm</h2>
+                    <p>Nhận ưu đãi 5% cho đơn đầu tiên và giao định kỳ những sản phẩm thú cưng yêu thích của bạn.</p>
+                    <form class="subscribe-form">
+                        <input type="email" placeholder="Nhập địa chỉ email của bạn">
+                        <button type="submit" class="btn btn-white">Đăng ký</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features-section">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-truck"></i></div>
+                    <div>
+                        <h4>Giao nhanh trong ngày</h4>
+                        <p>Áp dụng cho đơn từ $35</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-undo"></i></div>
+                    <div>
+                        <h4>Đổi trả dễ dàng</h4>
+                        <p>Hỗ trợ nhanh và minh bạch</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-headset"></i></div>
+                    <div>
+                        <h4>Hỗ trợ 24/7</h4>
+                        <p>Sẵn sàng hỗ trợ bất kỳ lúc nào</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-certificate"></i></div>
+                    <div>
+                        <h4>Cam kết giá tốt</h4>
+                        <p>Mang lại mức giá cạnh tranh cho bạn</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-column footer-about">
+                    <div class="footer-logo">
+                        <img src="/assets/images/pet-logo.svg" alt="Petco Logo" class="footer-logo-img">
+                        <span>Petco</span>
+                    </div>
+                    <p>Điểm đến tin cậy cho thức ăn, phụ kiện và dịch vụ thú cưng. Đồng hành cùng niềm vui và sức khỏe của các bé cưng mỗi ngày.</p>
+                    <div class="footer-social">
+                        <a href="https://www.facebook.com/" target="_blank" rel="noreferrer"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://x.com/" target="_blank" rel="noreferrer"><i class="fab fa-twitter"></i></a>
+                        <a href="https://www.instagram.com/" target="_blank" rel="noreferrer"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.youtube.com/" target="_blank" rel="noreferrer"><i class="fab fa-youtube"></i></a>
+                    </div>
+                    <div class="footer-app-links">
+                        <a href="https://www.apple.com/app-store/" target="_blank" rel="noreferrer" class="app-link"><i class="fab fa-apple"></i> Tải trên App Store</a>
+                        <a href="https://play.google.com/store" target="_blank" rel="noreferrer" class="app-link"><i class="fab fa-google-play"></i> Tải trên Google Play</a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h4>Mua sắm</h4>
+                    <ul>
+                        <li><a href="#shop?petType=dog">Đồ dùng cho chó</a></li>
+                        <li><a href="#shop?petType=cat">Đồ dùng cho mèo</a></li>
+                        <li><a href="#shop?petType=bird">Đồ dùng cho chim</a></li>
+                        <li><a href="#shop?petType=fish">Đồ dùng cho cá</a></li>
+                        <li><a href="#shop?petType=small-pet">Đồ dùng cho thú nhỏ</a></li>
+                        <li><a href="#shop?petType=reptile">Đồ dùng cho bò sát</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Dịch vụ</h4>
+                    <ul>
+                        <li><a href="#page?slug=vet-services">Dịch vụ thú y</a></li>
+                        <li><a href="#contact">Spa & chăm sóc</a></li>
+                        <li><a href="#contact">Lưu trú</a></li>
+                        <li><a href="#contact">Huấn luyện</a></li>
+                        <li><a href="#contact">Vui chơi trong ngày</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Hỗ trợ</h4>
+                    <ul>
+                        <li><a href="#contact">Trung tâm hỗ trợ</a></li>
+                        <li><a href="#orders">Theo dõi đơn</a></li>
+                        <li><a href="#page?slug=return-policy">Đổi trả & hoàn hàng</a></li>
+                        <li><a href="#page?slug=shipping-policy">Thông tin vận chuyển</a></li>
+                        <li><a href="#contact">Liên hệ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Liên kết nhanh</h4>
+                    <ul>
+                        <li><a href="#shop">Tìm cửa hàng</a></li>
+                        <li><a href="#shop?onSale=true">Thẻ quà tặng</a></li>
+                        <li><a href="#articles">Tuyển dụng</a></li>
+                        <li><a href="#articles">Bài viết chăm sóc thú cưng</a></li>
+                        <li><a href="#page?slug=about-us">Về chúng tôi</a></li>
+                        <li><a href="#page?slug=terms-of-use">Điều khoản sử dụng</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-bottom-left">
+                    <p>&copy; 2026 Pet Marketplace. Bảo lưu mọi quyền.</p>
+                    <div class="footer-links">
+                        <a href="#page?slug=privacy-policy">Chính sách bảo mật</a>
+                        <a href="#page?slug=terms-of-use">Điều khoản sử dụng</a>
+                        <a href="#contact">Hỗ trợ truy cập</a>
+                    </div>
+                </div>
+                <div class="footer-payments">
+                    <i class="fab fa-cc-visa"></i>
+                    <i class="fab fa-cc-mastercard"></i>
+                    <i class="fab fa-cc-amex"></i>
+                    <i class="fab fa-cc-paypal"></i>
+                    <i class="fab fa-cc-apple-pay"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Giỏ hàng</h3>
+            <button class="cart-close" id="cartClose"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cart-content">
+            <div class="cart-empty" id="cartEmpty">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Giỏ hàng của bạn đang trống</p>
+                <a href="#shop" class="btn btn-secondary">Tiếp tục mua sắm</a>
+            </div>
+            <div class="cart-items" id="cartItems"></div>
+        </div>
+        <div class="cart-footer" id="cartFooter" style="display: none;">
+            <div class="cart-subtotal">
+                <span>Tạm tính</span>
+                <span id="cartSubtotal">$0.00</span>
+            </div>
+            <p class="cart-shipping">Phí vận chuyển sẽ được tính ở bước thanh toán</p>
+            <button class="btn btn-primary btn-block" id="cartSidebarCheckout">Thanh toán</button>
+            <a href="#shop" class="cart-continue">Tiếp tục mua sắm</a>
+        </div>
+    </div>
+    <div class="cart-overlay" id="cartOverlay"></div>
+
+    <script src="js/api/client.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/components/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

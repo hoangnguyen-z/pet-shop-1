@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý sản phẩm - Paws &amp; Palette</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pages/seller/seller-portal.css">
+</head>
+<body class="seller-dashboard-body seller-products-body">
+    <div class="seller-sidebar-backdrop" id="sellerSidebarBackdrop"></div>
+    <div class="seller-products-modal-backdrop" id="productEditorBackdrop" hidden></div>
+
+    <div class="seller-dashboard-shell">
+        <aside class="seller-side-nav" id="sellerSidebar">
+            <div class="seller-side-brand">
+                <div class="seller-brand-mark">
+                    <span class="material-symbols-outlined">pets</span>
+                </div>
+                <div>
+                    <h1>Paws &amp; Palette</h1>
+                    <p>Trung tâm người bán</p>
+                </div>
+            </div>
+
+            <nav class="seller-side-links">
+                <a class="seller-nav-link" href="/pages/seller/dashboard.html">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Tổng quan</span>
+                </a>
+                <a class="seller-nav-link active" href="/pages/seller/products.html">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span>Sản phẩm</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/orders.html">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span>Đơn hàng</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/settings.html">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Cài đặt</span>
+                </a>
+            </nav>
+
+            <div class="seller-side-footer">
+                <a class="seller-primary-button seller-full-button" href="/pages/seller/create-product.html">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    <span>Thêm sản phẩm mới</span>
+                </a>
+            </div>
+        </aside>
+
+        <div class="seller-dashboard-main">
+            <header class="seller-dashboard-topbar">
+                <div class="seller-topbar-left">
+                    <button class="seller-mobile-toggle" id="sellerSidebarToggle" type="button" aria-label="Mở menu">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <label class="seller-topbar-search">
+                        <span class="material-symbols-outlined">search</span>
+                        <input id="productsSearchInput" type="text" placeholder="Tìm kiếm sản phẩm...">
+                    </label>
+                </div>
+
+                <div class="seller-topbar-right">
+                    <button class="seller-icon-button" id="productsNotificationButton" type="button" aria-label="Thông báo">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="seller-icon-dot" id="productsNotificationDot"></span>
+                    </button>
+
+                    <div class="seller-profile-chip">
+                        <div class="seller-profile-copy">
+                            <strong id="productsSellerName">Người bán</strong>
+                            <span id="productsSellerRole">Mã người bán</span>
+                        </div>
+                        <img id="productsSellerAvatar" src="/assets/photos/cat.jpg" alt="Ảnh đại diện người bán">
+                    </div>
+                </div>
+            </header>
+
+            <main class="seller-products-content">
+                <section class="seller-products-heading">
+                    <div>
+                        <h2>Sản phẩm</h2>
+                        <p>Quản lý danh mục hàng hóa, trạng thái hiển thị và số lượng tồn kho của bạn.</p>
+                    </div>
+                    <a class="seller-primary-button" href="/pages/seller/create-product.html">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        <span>Thêm sản phẩm mới</span>
+                    </a>
+                </section>
+
+                <section class="seller-products-top-grid">
+                    <article class="seller-products-filter-card">
+                        <div class="seller-products-filter-field">
+                            <label for="productsCategoryFilter">Danh mục</label>
+                            <select id="productsCategoryFilter">
+                                <option value="">Tất cả danh mục</option>
+                            </select>
+                        </div>
+
+                        <div class="seller-products-status-group">
+                            <button class="seller-products-status-chip active" type="button" data-product-status="active">Đang bán</button>
+                            <button class="seller-products-status-chip" type="button" data-product-status="hidden">Tạm ẩn</button>
+                            <button class="seller-products-status-chip" type="button" data-product-status="out_of_stock">Hết hàng</button>
+                        </div>
+                    </article>
+
+                    <article class="seller-products-value-card">
+                        <div>
+                            <p>Tổng giá trị kho</p>
+                            <h3 id="productsInventoryValue">0 ₫</h3>
+                        </div>
+                        <div class="seller-products-value-icon">
+                            <span class="material-symbols-outlined">account_balance_wallet</span>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="seller-products-stats-grid">
+                    <article class="seller-products-stat-card">
+                        <p>Tổng sản phẩm</p>
+                        <h3 id="productsTotalCount">0</h3>
+                        <small id="productsTotalHint">Đang đồng bộ dữ liệu...</small>
+                    </article>
+
+                    <article class="seller-products-stat-card">
+                        <p>Đang hiển thị</p>
+                        <h3 id="productsActiveCount">0</h3>
+                        <small id="productsActiveHint">Trên toàn hệ thống</small>
+                    </article>
+
+                    <article class="seller-products-stat-card seller-products-stat-alert">
+                        <p>Sắp hết hàng</p>
+                        <h3 id="productsLowStockCount">0</h3>
+                        <small id="productsLowStockHint">Cần nhập thêm hàng</small>
+                    </article>
+
+                    <article class="seller-products-stat-card">
+                        <p>Đang ẩn / hết hàng</p>
+                        <h3 id="productsHiddenCount">0</h3>
+                        <small id="productsHiddenHint">Đang tạm dừng bán</small>
+                    </article>
+                </section>
+
+                <section class="seller-products-table-shell">
+                    <div class="seller-products-table-wrap">
+                        <table class="seller-products-table">
+                            <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th>Danh mục</th>
+                                    <th>Giá bán</th>
+                                    <th>Kho</th>
+                                    <th>Trạng thái</th>
+                                    <th class="seller-products-actions-head">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <tr>
+                                    <td colspan="6" class="seller-products-loading-cell">Đang tải sản phẩm...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="seller-products-pagination">
+                        <p id="productsPaginationSummary">Hiển thị 0 sản phẩm</p>
+                        <div class="seller-products-pagination-controls">
+                            <button type="button" id="productsPrevPage">Trước</button>
+                            <div class="seller-products-page-list" id="productsPageList"></div>
+                            <button type="button" id="productsNextPage">Sau</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="seller-products-bottom-grid">
+                    <article class="seller-products-cta-card">
+                        <div class="seller-products-cta-copy">
+                            <h4>Bạn cần hỗ trợ quảng bá?</h4>
+                            <p id="productsCtaText">Các sản phẩm bán chậm có thể được đẩy lại bằng combo giảm giá hoặc bộ sưu tập nổi bật trên gian hàng.</p>
+                            <button class="seller-primary-button" type="button" id="productsGoDashboardButton">Đi tới tổng quan</button>
+                        </div>
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                    </article>
+
+                    <article class="seller-products-summary-card">
+                        <div class="seller-products-summary-copy">
+                            <div class="seller-products-summary-kicker">
+                                <span class="seller-products-summary-dot"></span>
+                                <span>Tỷ lệ hiển thị</span>
+                            </div>
+                            <h3 id="productsVisibilityRate">0%</h3>
+                            <p id="productsVisibilityHint">Đang tính toán theo sản phẩm hiện có</p>
+                        </div>
+                        <div class="seller-products-mini-chart" id="productsMiniChart">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </article>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <aside class="seller-product-editor" id="productEditor" aria-hidden="true">
+        <div class="seller-product-editor-head">
+            <div>
+                <p class="seller-product-editor-eyebrow">Chỉnh sửa nhanh</p>
+                <h3 id="productEditorTitle">Sản phẩm</h3>
+            </div>
+            <button class="seller-icon-button" id="productEditorClose" type="button" aria-label="Đóng">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form class="seller-product-editor-body" id="productEditorForm">
+            <div class="seller-product-editor-preview">
+                <img id="productEditorImage" src="/assets/photos/dog.jpg" alt="Ảnh xem trước sản phẩm">
+                <div>
+                    <strong id="productEditorSku">SKU</strong>
+                    <span id="productEditorCategoryText">Danh mục</span>
+                </div>
+            </div>
+
+            <div class="seller-product-editor-grid">
+                <label>
+                    <span>Tên sản phẩm</span>
+                    <input id="productEditorName" type="text" required>
+                </label>
+                <label>
+                    <span>Danh mục</span>
+                    <select id="productEditorCategory"></select>
+                </label>
+                <label>
+                    <span>Giá bán</span>
+                    <input id="productEditorPrice" type="number" min="0" step="0.01" required>
+                </label>
+                <label>
+                    <span>Giá cũ</span>
+                    <input id="productEditorOriginalPrice" type="number" min="0" step="0.01">
+                </label>
+                <label>
+                    <span>Tồn kho</span>
+                    <input id="productEditorStock" type="number" min="0" step="1" required>
+                </label>
+                <label>
+                    <span>Thương hiệu</span>
+                    <input id="productEditorBrand" type="text">
+                </label>
+                <label>
+                    <span>SKU</span>
+                    <input id="productEditorSkuInput" type="text">
+                </label>
+                <label class="seller-product-editor-toggle">
+                    <span>Hiển thị trên sàn</span>
+                    <input id="productEditorActive" type="checkbox">
+                </label>
+            </div>
+
+            <label class="seller-product-editor-grid-full">
+                <span>Mô tả ngắn</span>
+                <textarea id="productEditorShortDescription" rows="3"></textarea>
+            </label>
+
+            <div class="seller-product-editor-actions">
+                <button class="seller-secondary-button" id="productEditorDelete" type="button">Xóa sản phẩm</button>
+                <button class="seller-primary-button" id="productEditorSave" type="submit">Lưu thay đổi</button>
+            </div>
+        </form>
+    </aside>
+
+    <script src="/js/api/client.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/components/auth.js"></script>
+    <script src="/pages/seller/products.js"></script>
+</body>
+</html>

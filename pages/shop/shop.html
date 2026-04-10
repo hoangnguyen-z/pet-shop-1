@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cửa hàng - Pet Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../styles.css">
+    <style>
+        .shop-container { padding: 40px 0; }
+        .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .shop-controls { display: flex; gap: 15px; }
+        .shop-content { display: grid; grid-template-columns: 250px 1fr; gap: 30px; }
+        .shop-sidebar { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); height: fit-content; }
+        .filter-section { margin-bottom: 25px; }
+        .filter-section h3 { margin-bottom: 15px; font-size: 16px; }
+        .filter-section label { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
+        .price-range { display: flex; gap: 10px; align-items: center; }
+        .price-range input { width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; }
+        @media (max-width: 768px) {
+            .shop-content { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="container">
+            <div class="top-bar-content">
+                <span><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn từ $35</span>
+            </div>
+        </div>
+    </div>
+
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=50&h=50&fit=crop" alt="Logo" class="logo-img">
+                    <span class="logo-text">Pet Marketplace</span>
+                </a>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Tìm thức ăn, bánh thưởng, đồ chơi và nhiều hơn...">
+                    <button class="search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
+                </div>
+                <div class="header-actions">
+                    <a href="/pages/shop/cart.html" class="header-action cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                        <span>Giỏ hàng</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="shop-container">
+        <div class="container">
+            <div class="shop-header">
+                <h1>Cửa hàng</h1>
+                <div class="shop-controls">
+                    <select id="sortSelect" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px;">
+                        <option value="createdAt-desc">Mới nhất</option>
+                        <option value="price-asc">Giá: thấp đến cao</option>
+                        <option value="price-desc">Giá: cao đến thấp</option>
+                        <option value="soldCount-desc">Bán chạy</option>
+                        <option value="rating-desc">Đánh giá cao</option>
+                        <option value="originalPrice-desc">Giảm nhiều nhất</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="shop-content">
+                <aside class="shop-sidebar">
+                    <div class="filter-section">
+                        <h3>Danh mục</h3>
+                        <div id="categoryFilters">
+                            <label><input type="radio" name="category" value="" checked> Tất cả danh mục</label>
+                        </div>
+                    </div>
+
+                    <div class="filter-section">
+                        <h3>Khoảng giá</h3>
+                        <div class="price-range">
+                            <input type="number" id="minPrice" placeholder="Từ">
+                            <span>-</span>
+                            <input type="number" id="maxPrice" placeholder="Đến">
+                            <button class="btn btn-secondary btn-small" onclick="applyFilters()">Lọc</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-section">
+                        <h3>Loại thú cưng</h3>
+                        <div id="petTypeFilters">
+                            <label><input type="radio" name="petType" value="" checked> Tất cả thú cưng</label>
+                            <label><input type="radio" name="petType" value="dog"> Chó</label>
+                            <label><input type="radio" name="petType" value="cat"> Mèo</label>
+                            <label><input type="radio" name="petType" value="bird"> Chim</label>
+                            <label><input type="radio" name="petType" value="fish"> Cá</label>
+                            <label><input type="radio" name="petType" value="small-pet"> Thú nhỏ</label>
+                        </div>
+                    </div>
+
+                    <div class="filter-section">
+                        <h3>Thương hiệu</h3>
+                        <select id="brandFilter" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                            <option value="">Tất cả thương hiệu</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-section">
+                        <h3>Tình trạng</h3>
+                        <label><input type="checkbox" id="inStockFilter"> Chỉ hiển thị còn hàng</label>
+                        <label><input type="checkbox" id="onSaleFilter"> Đang giảm giá</label>
+                    </div>
+
+                    <div class="filter-section">
+                        <h3>Đánh giá</h3>
+                        <select id="ratingFilter" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                            <option value="">Tất cả mức đánh giá</option>
+                            <option value="5">5 sao</option>
+                            <option value="4">Từ 4 sao trở lên</option>
+                            <option value="3">Từ 3 sao trở lên</option>
+                            <option value="2">Từ 2 sao trở lên</option>
+                        </select>
+                    </div>
+                </aside>
+
+                <main>
+                    <div class="products-grid" id="productsGrid">
+                        <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/api/client.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/components/auth.js"></script>
+    <script>
+        let currentParams = {};
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentParams.search = urlParams.get('search') || '';
+            currentParams.category = urlParams.get('category') || '';
+            currentParams.petType = urlParams.get('petType') || '';
+            currentParams.onSale = urlParams.get('onSale') || '';
+            currentParams.shop = urlParams.get('shop') || '';
+
+            if (currentParams.search) {
+                document.getElementById('searchInput').value = currentParams.search;
+            }
+            if (currentParams.onSale === 'true') {
+                document.getElementById('onSaleFilter').checked = true;
+            }
+
+            await loadCategories();
+            await loadFilters();
+            if (currentParams.petType) {
+                const petInput = document.querySelector(`input[name="petType"][value="${currentParams.petType}"]`);
+                if (petInput) petInput.checked = true;
+            }
+            await loadProducts();
+            setupEventListeners();
+        });
+
+        async function loadCategories() {
+            try {
+                const response = await api.getCategories();
+                const categories = response.data || [];
+                const container = document.getElementById('categoryFilters');
+
+                container.innerHTML = `<label><input type="radio" name="category" value="" checked> Tất cả danh mục</label>` +
+                    categories.map(cat => `<label><input type="radio" name="category" value="${cat._id}"> ${cat.name} (${cat.productCount || 0})</label>`).join('');
+
+                container.querySelectorAll('input[name="category"]').forEach(input => {
+                    input.addEventListener('change', () => {
+                        currentParams.category = input.value;
+                        loadProducts();
+                    });
+                });
+            } catch (error) {
+                console.error('Không thể tải danh mục:', error);
+            }
+        }
+
+        async function loadFilters() {
+            try {
+                const response = await api.getProductFilters();
+                const filters = response.data || {};
+                const brandFilter = document.getElementById('brandFilter');
+                brandFilter.innerHTML = '<option value="">Tất cả thương hiệu</option>' +
+                    (filters.brands || []).map(brand => `<option value="${brand}">${brand}</option>`).join('');
+            } catch (error) {
+                console.error('Failed to load filters:', error);
+            }
+        }
+
+        async function loadProducts() {
+            const container = document.getElementById('productsGrid');
+            container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+
+            try {
+                const sortValue = document.getElementById('sortSelect')?.value || 'createdAt-desc';
+                const [sortBy, sortOrder] = sortValue.split('-');
+
+                const params = {
+                    ...currentParams,
+                    sortBy,
+                    sortOrder,
+                    limit: 20
+                };
+
+                params.brand = document.getElementById('brandFilter')?.value || '';
+                params.petType = document.querySelector('input[name="petType"]:checked')?.value || '';
+                params.inStock = document.getElementById('inStockFilter')?.checked ? 'true' : '';
+                params.onSale = document.getElementById('onSaleFilter')?.checked ? 'true' : '';
+                params.minRating = document.getElementById('ratingFilter')?.value || '';
+
+                const response = await api.getProducts(params);
+                const products = response.data || [];
+
+                if (products.length === 0) {
+                    container.innerHTML = '<p class="text-center">Không tìm thấy sản phẩm nào</p>';
+                    return;
+                }
+
+                container.innerHTML = products.map(product => createProductCard(product)).join('');
+
+                container.querySelectorAll('.quick-add').forEach(btn => {
+                    btn.addEventListener('click', () => addToCart(btn.dataset.productId));
+                });
+            } catch (error) {
+                container.innerHTML = '<p class="text-center">Không thể tải danh sách sản phẩm</p>';
+            }
+        }
+
+        function createProductCard(product) {
+            const price = product.price || 0;
+            const originalPrice = product.originalPrice || 0;
+            const discount = originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
+            const image = product.images?.[0] || 'https://via.placeholder.com/300x300?text=Product';
+            return `
+                <div class="product-card">
+                    <div class="product-image">
+                        ${discount ? `<span class="product-badge badge-sale">-${discount}%</span>` : ''}
+                        ${product.stock <= 0 ? `<span class="product-badge">Hết hàng</span>` : ''}
+                        <a href="/pages/shop/product.html?id=${product._id}">
+                            <img src="${image}" alt="${product.name}" class="product-img">
+                        </a>
+                        <div class="product-actions">
+                            <button class="quick-add" data-product-id="${product._id}"><i class="fas fa-plus"></i> Thêm nhanh</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-brand">${product.brand || product.shop?.name || 'Cửa hàng thú cưng'}</span>
+                        <h4 class="product-name"><a href="/pages/shop/product.html?id=${product._id}">${product.name}</a></h4>
+                        <div class="product-rating">
+                            <div class="stars">${generateStars(product.rating || 0)}</div>
+                            <span>(${product.reviewCount || 0})</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current">$${price.toFixed(2)}</span>
+                            ${originalPrice > price ? `<span class="price-old">$${originalPrice.toFixed(2)}</span>` : ''}
+                        </div>
+                        <div class="product-delivery">${product.stock > 0 ? 'Còn hàng' : 'Hết hàng'}</div>
+                        <div class="product-delivery"><i class="fas fa-truck"></i> Free delivery</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += i <= Math.round(rating) ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
+            }
+            return stars;
+        }
+
+        async function addToCart(productId) {
+            if (!authManager.isAuthenticated) {
+                authManager.showLoginModal();
+                return;
+            }
+            try {
+                await api.addToCart(productId, 1);
+                authManager.showNotification('Added to cart!', 'success');
+            } catch (error) {
+                authManager.showNotification(error.message, 'error');
+            }
+        }
+
+        function applyFilters() {
+            currentParams.minPrice = document.getElementById('minPrice').value;
+            currentParams.maxPrice = document.getElementById('maxPrice').value;
+            loadProducts();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('searchBtn').addEventListener('click', () => {
+                currentParams.search = document.getElementById('searchInput').value;
+                loadProducts();
+            });
+
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    currentParams.search = e.target.value;
+                    loadProducts();
+                }
+            });
+
+            document.getElementById('sortSelect').addEventListener('change', loadProducts);
+            document.getElementById('brandFilter').addEventListener('change', loadProducts);
+            document.getElementById('ratingFilter').addEventListener('change', loadProducts);
+            document.getElementById('inStockFilter').addEventListener('change', loadProducts);
+            document.getElementById('onSaleFilter').addEventListener('change', loadProducts);
+            document.querySelectorAll('input[name="petType"]').forEach(input => {
+                input.addEventListener('change', () => {
+                    currentParams.petType = input.value;
+                    loadProducts();
+                });
+            });
+        }
+    </script>
+</body>
+</html>

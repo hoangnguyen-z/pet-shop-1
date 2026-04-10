@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-label="Pet product">
+  <rect width="700" height="700" rx="56" fill="#f4f7fb"/>
+  <rect x="180" y="220" width="340" height="280" rx="48" fill="#ffffff" stroke="#004589" stroke-width="24"/>
+  <circle cx="285" cy="330" r="42" fill="#009ddc"/>
+  <circle cx="350" cy="300" r="42" fill="#009ddc"/>
+  <circle cx="415" cy="330" r="42" fill="#009ddc"/>
+  <path d="M275 420c40-70 110-70 150 0 18 32-4 60-40 50-22-6-48-6-70 0-36 10-58-18-40-50z" fill="#004589"/>
+  <text x="350" y="595" text-anchor="middle" font-family="Arial, sans-serif" font-size="52" font-weight="700" fill="#004589">Pet Product</text>
+</svg>

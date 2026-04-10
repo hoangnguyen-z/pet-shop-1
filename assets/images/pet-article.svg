@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 430" role="img" aria-label="Pet care article">
+  <rect width="700" height="430" rx="42" fill="#e7f4ff"/>
+  <rect x="88" y="78" width="524" height="274" rx="32" fill="#ffffff"/>
+  <circle cx="195" cy="188" r="54" fill="#009ddc"/>
+  <path d="M300 150h220M300 210h170M165 285h370" stroke="#004589" stroke-width="22" stroke-linecap="round"/>
+  <text x="350" y="390" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#004589">Pet Care Guide</text>
+</svg>

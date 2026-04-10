@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-label="Reptile pet product">
+  <rect width="700" height="700" rx="56" fill="#efffea"/>
+  <path d="M150 385c80-120 260-150 410-70 35 19 27 70-13 78-124 24-235 55-385 50-45-1-40-31-12-58z" fill="#3fa45b"/>
+  <circle cx="510" cy="300" r="18" fill="#231f20"/>
+  <path d="M540 328c32 4 55 15 75 33" stroke="#3fa45b" stroke-width="24" stroke-linecap="round"/>
+  <path d="M250 435l-65 70M390 425l-55 80" stroke="#2f7d32" stroke-width="18" stroke-linecap="round"/>
+  <text x="350" y="595" text-anchor="middle" font-family="Arial, sans-serif" font-size="50" font-weight="700" fill="#2f7d32">Reptile Shop</text>
+</svg>

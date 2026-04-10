@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết sản phẩm - Pet Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../styles.css">
+    <style>
+        .product-detail { padding: 40px 0; }
+        .product-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin-bottom: 60px; }
+        .product-gallery img { width: 100%; border-radius: 12px; }
+        .product-thumbnails { display: flex; gap: 10px; margin-top: 15px; }
+        .product-thumbnails img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
+        .product-thumbnails img.active { border-color: #004589; }
+        .product-info h1 { font-size: 28px; margin-bottom: 10px; }
+        .product-price-detail { font-size: 32px; font-weight: 700; color: #ea2229; margin-bottom: 20px; }
+        .product-price-old { font-size: 18px; color: #999; text-decoration: line-through; margin-left: 10px; }
+        .quantity-selector { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .quantity-input { display: flex; border: 1px solid #ddd; border-radius: 8px; }
+        .quantity-input button { width: 40px; height: 40px; border: none; background: #f5f5f5; cursor: pointer; }
+        .quantity-input input { width: 60px; height: 40px; border: none; text-align: center; }
+        .product-meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 20px 0; }
+        .product-meta div, .shop-summary, .reviews-section, .related-section { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 14px; }
+        .reviews-section, .related-section { margin-top: 30px; }
+        .related-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 15px; }
+        .related-card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+        .review-item { padding: 12px 0; border-bottom: 1px solid #eee; }
+        @media (max-width: 768px) {
+            .product-detail-grid { grid-template-columns: 1fr; }
+            .related-grid { grid-template-columns: repeat(2, 1fr); }
+            .product-meta { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="container">
+            <div class="top-bar-content">
+                <span><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn từ $35</span>
+            </div>
+        </div>
+    </div>
+
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=50&h=50&fit=crop" alt="Logo" class="logo-img">
+                    <span class="logo-text">Pet Marketplace</span>
+                </a>
+                <div class="header-actions">
+                    <a href="/pages/shop/cart.html" class="header-action cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                        <span>Giỏ hàng</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="product-detail">
+        <div class="container">
+            <div class="product-detail-grid" id="productDetail">
+                <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/api/client.js"></script>
+    <script src="../../js/utils.js"></script>
+    <script src="../../js/components/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const productId = new URLSearchParams(window.location.search).get('id');
+            if (!productId) {
+                window.location.href = '/pages/shop/shop.html';
+                return;
+            }
+            await loadProduct(productId);
+            await loadReviews(productId);
+        });
+
+        async function loadProduct(id) {
+            const container = document.getElementById('productDetail');
+            try {
+                const response = await api.getProduct(id);
+                const product = response.data;
+                document.title = `${product.name} - Pet Marketplace`;
+
+                const price = product.price || 0;
+                const originalPrice = product.originalPrice;
+                const images = product.images?.length ? product.images : ['https://via.placeholder.com/500x500'];
+                const rating = product.rating || 4.5;
+                const reviews = product.reviewCount || 0;
+                const discount = originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
+                const petTypes = (product.tags || []).join(', ') || product.attributes?.find(attr => /pet/i.test(attr.name))?.value || 'All pets';
+
+                container.innerHTML = `
+                    <div class="product-gallery">
+                        <img src="${images[0]}" alt="${product.name}" id="mainImage">
+                        ${images.length > 1 ? `
+                            <div class="product-thumbnails">
+                                ${images.map((img, i) => `<img src="${img}" class="${i === 0 ? 'active' : ''}" onclick="changeImage('${img}', this)">`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="product-info">
+                        <h1>${product.name}</h1>
+                        <div style="color: #666; margin-bottom: 10px;">
+                            ${generateStars(rating)} <span>(${reviews} đánh giá)</span>
+                        </div>
+                        <div class="product-price-detail">
+                            $${price.toFixed(2)}
+                            ${originalPrice ? `<span class="product-price-old">$${originalPrice.toFixed(2)}</span>` : ''}
+                            ${discount ? `<span class="product-badge badge-sale">-${discount}%</span>` : ''}
+                        </div>
+                        <p style="margin-bottom: 10px; color: #555;">${product.shortDescription || ''}</p>
+                        <p style="margin-bottom: 20px; color: #555;">${product.description || 'Chưa có mô tả chi tiết.'}</p>
+                        <div class="product-meta">
+                            <div><strong>Tồn kho:</strong> ${product.stock > 0 ? `${product.stock} sản phẩm` : 'Hết hàng'}</div>
+                            <div><strong>Thương hiệu:</strong> ${product.brand || 'Chưa có'}</div>
+                            <div><strong>Danh mục:</strong> ${product.category?.name || 'Chưa có'}</div>
+                            <div><strong>Loại thú cưng:</strong> ${petTypes}</div>
+                        </div>
+                        ${product.shop ? `
+                            <div class="shop-summary">
+                                <strong>Người bán:</strong>
+                                <a href="/pages/shop/shop.html?shop=${product.shop._id}">${product.shop.name}</a>
+                                <p>${product.shop.description || ''}</p>
+                                <p>${generateStars(product.shop.rating || 0)} (${product.shop.reviewCount || 0})</p>
+                            </div>
+                        ` : ''}
+                        <div class="quantity-selector">
+                            <label>Số lượng:</label>
+                            <div class="quantity-input">
+                                <button onclick="updateQty(-1)">-</button>
+                                <input type="number" id="qtyInput" value="1" min="1" max="${product.stock || 1}">
+                                <button onclick="updateQty(1)">+</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="addToCart('${product._id}')" style="padding: 15px 40px; font-size: 16px;">
+                            <i class="fas fa-shopping-cart"></i> Thêm vào giỏ
+                        </button>
+                    </div>
+                    <div class="reviews-section" style="grid-column: 1 / -1;">
+                        <h2>Đánh giá</h2>
+                        <div id="reviewsList">Đang tải đánh giá...</div>
+                    </div>
+                    <div class="related-section" style="grid-column: 1 / -1;">
+                        <h2>Sản phẩm liên quan</h2>
+                        <div class="related-grid">
+                            ${(product.relatedProducts || []).map(item => `
+                                <a class="related-card" href="/pages/shop/product.html?id=${item._id}">
+                                    <img src="${item.images?.[0] || item.thumbnail || 'https://via.placeholder.com/200'}" alt="${item.name}">
+                                    <h4>${item.name}</h4>
+                                    <p>$${(item.price || 0).toFixed(2)}</p>
+                                </a>
+                            `).join('') || '<p>Chưa có sản phẩm liên quan.</p>'}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = '<p>Không thể tải sản phẩm</p>';
+            }
+        }
+
+        async function loadReviews(productId) {
+            const container = document.getElementById('reviewsList');
+            if (!container) return;
+
+            try {
+                const response = await api.getProductReviews(productId, { limit: 10 });
+                const data = response.data || {};
+                const reviews = data.reviews || [];
+                const stats = data.stats || {};
+
+                if (reviews.length === 0) {
+                    container.innerHTML = '<p>Chưa có đánh giá đã duyệt.</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <p>${generateStars(stats.average || 0)} ${Number(stats.average || 0).toFixed(1)} / 5 từ ${stats.total || reviews.length} đánh giá</p>
+                    ${reviews.map(review => `
+                        <div class="review-item">
+                            <strong>${review.user?.name || 'Người mua'}</strong>
+                            <span>${generateStars(review.rating || 0)}</span>
+                            <p>${review.comment || review.content || ''}</p>
+                        </div>
+                    `).join('')}
+                `;
+            } catch (error) {
+                container.innerHTML = '<p>Hiện chưa tải được đánh giá.</p>';
+            }
+        }
+
+        function changeImage(src, el) {
+            document.getElementById('mainImage').src = src;
+            document.querySelectorAll('.product-thumbnails img').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function updateQty(delta) {
+            const input = document.getElementById('qtyInput');
+            input.value = Math.max(1, parseInt(input.value) + delta);
+        }
+
+        async function addToCart(productId) {
+            if (!authManager.isAuthenticated) {
+                authManager.showLoginModal();
+                return;
+            }
+            const qty = parseInt(document.getElementById('qtyInput').value) || 1;
+            try {
+                await api.addToCart(productId, qty);
+                authManager.showNotification('Đã thêm vào giỏ hàng!', 'success');
+            } catch (error) {
+                authManager.showNotification(error.message, 'error');
+            }
+        }
+
+        function generateStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= Math.floor(rating)) stars += '<i class="fas fa-star" style="color:#ffc107"></i>';
+                else if (i - rating < 1) stars += '<i class="fas fa-star-half-alt" style="color:#ffc107"></i>';
+                else stars += '<i class="far fa-star" style="color:#ffc107"></i>';
+            }
+            return stars;
+        }
+    </script>
+</body>
+</html>

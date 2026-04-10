@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paws &amp; Palette - Thêm Sản Phẩm Mới</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pages/seller/seller-portal.css">
+</head>
+<body class="seller-dashboard-body">
+    <div class="seller-sidebar-backdrop" id="sellerSidebarBackdrop"></div>
+    <div class="seller-dashboard-shell">
+        <aside class="seller-side-nav" id="sellerSidebar">
+            <div class="seller-side-brand">
+                <div class="seller-brand-mark">
+                    <span class="material-symbols-outlined">pets</span>
+                </div>
+                <div>
+                    <h1>Paws &amp; Palette</h1>
+                    <p>Trung tâm người bán</p>
+                </div>
+            </div>
+
+            <nav class="seller-side-links">
+                <a class="seller-nav-link" href="/pages/seller/dashboard.html">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Tổng quan</span>
+                </a>
+                <a class="seller-nav-link active" href="/pages/seller/products.html">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span>Sản phẩm</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/orders.html">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span>Đơn hàng</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/settings.html">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Cài đặt</span>
+                </a>
+            </nav>
+
+            <div class="seller-side-footer">
+                <button class="seller-primary-button seller-full-button" type="button" id="sidebarPublishButton">
+                    <span class="material-symbols-outlined">publish</span>
+                    <span>Đăng sản phẩm</span>
+                </button>
+            </div>
+        </aside>
+
+        <div class="seller-dashboard-main">
+            <header class="seller-dashboard-topbar">
+                <div class="seller-topbar-left">
+                    <button class="seller-mobile-toggle" id="sellerSidebarToggle" type="button" aria-label="Mở menu">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <label class="seller-topbar-search">
+                        <span class="material-symbols-outlined">search</span>
+                        <input id="createProductSearch" type="text" placeholder="Tìm kiếm sản phẩm hiện có...">
+                    </label>
+                </div>
+
+                <div class="seller-topbar-right">
+                    <button class="seller-icon-button" id="createProductNotificationButton" type="button">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="seller-icon-dot"></span>
+                    </button>
+                    <div class="seller-profile-chip">
+                        <div class="seller-profile-copy">
+                            <strong id="createProductSellerName">Người bán</strong>
+                            <span id="createProductSellerRole">Nhà bán đã xác minh</span>
+                        </div>
+                        <img id="createProductSellerAvatar" src="/assets/photos/cat.jpg" alt="Ảnh đại diện người bán">
+                    </div>
+                </div>
+            </header>
+
+            <main class="seller-create-content">
+                <div class="seller-create-header">
+                    <div>
+                        <nav class="seller-breadcrumb">
+                            <span>Sản phẩm</span>
+                            <span class="material-symbols-outlined">chevron_right</span>
+                            <span style="color: var(--seller-primary);">Thêm sản phẩm mới</span>
+                        </nav>
+                        <h2>Tạo Sản Phẩm Mới</h2>
+                        <p>Điền thông tin chi tiết để đưa sản phẩm của bạn lên kệ hàng Paws &amp; Palette. Form này đã nối trực tiếp vào seller API.</p>
+                    </div>
+                    <div class="seller-create-actions">
+                        <button class="seller-secondary-button" type="button" id="saveDraftButton">Lưu Bản Nháp</button>
+                        <button class="seller-primary-button" type="button" id="publishProductButton">Đăng Sản Phẩm</button>
+                    </div>
+                </div>
+
+                <form id="createProductForm" class="seller-create-grid">
+                    <div class="seller-create-main">
+                        <section class="seller-form-section">
+                            <div class="seller-section-heading">
+                                <span class="seller-step-badge">1</span>
+                                <h3>Thông Tin Cơ Bản</h3>
+                            </div>
+                            <div class="seller-form-stack">
+                                <div class="seller-field">
+                                    <label for="productName">Tên Sản Phẩm *</label>
+                                    <input id="productName" name="name" type="text" placeholder="Ví dụ: Đệm Ngủ Cao Cấp Cho Mèo">
+                                    <p class="seller-field-help">Gợi ý: Bao gồm cả thương hiệu, chất liệu và kích thước để khách hàng dễ tìm kiếm.</p>
+                                </div>
+
+                                <div class="seller-field-grid">
+                                    <div class="seller-field">
+                                        <label for="productCategory">Danh Mục *</label>
+                                        <select id="productCategory" name="category">
+                                            <option value="">Đang tải danh mục...</option>
+                                        </select>
+                                    </div>
+                                    <div class="seller-field">
+                                        <label for="productBrand">Thương Hiệu</label>
+                                        <input id="productBrand" name="brand" type="text" placeholder="Tên hãng sản xuất">
+                                    </div>
+                                </div>
+
+                                <div class="seller-field-grid">
+                                    <div class="seller-field">
+                                        <label for="productSku">SKU / Mã Sản Phẩm *</label>
+                                        <input id="productSku" name="sku" type="text" placeholder="VD: DOG-BED-001">
+                                    </div>
+                                    <div class="seller-field">
+                                        <label for="productUnit">Đơn Vị</label>
+                                        <input id="productUnit" name="unit" type="text" value="cái" placeholder="Ví dụ: cái, gói, hộp">
+                                    </div>
+                                </div>
+
+                                <div class="seller-field">
+                                    <label for="productShortDescription">Mô Tả Ngắn</label>
+                                    <textarea id="productShortDescription" name="shortDescription" rows="3" placeholder="Tóm tắt những đặc điểm nổi bật nhất của sản phẩm..."></textarea>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="seller-form-section">
+                            <div class="seller-section-heading">
+                                <span class="seller-step-badge">2</span>
+                                <h3>Giá &amp; Kho Hàng</h3>
+                            </div>
+                            <div class="seller-field-grid seller-field-grid-three">
+                                <div class="seller-field">
+                                    <label for="productPrice">Giá Bán *</label>
+                                    <div class="seller-money-input">
+                                        <input id="productPrice" name="price" type="number" min="0" step="0.01" placeholder="0">
+                                        <span>₫</span>
+                                    </div>
+                                </div>
+                                <div class="seller-field">
+                                    <label for="productOriginalPrice">Giá Cũ</label>
+                                    <div class="seller-money-input">
+                                        <input id="productOriginalPrice" name="originalPrice" type="number" min="0" step="0.01" placeholder="0">
+                                        <span>₫</span>
+                                    </div>
+                                </div>
+                                <div class="seller-field">
+                                    <label for="productStock">Số Lượng Kho *</label>
+                                    <input id="productStock" name="stock" type="number" min="0" step="1" placeholder="100">
+                                </div>
+                            </div>
+
+                            <div class="seller-field-grid">
+                                <div class="seller-field">
+                                    <label for="productWeight">Khối Lượng (gram)</label>
+                                    <input id="productWeight" name="weight" type="number" min="0" step="0.1" placeholder="250">
+                                </div>
+                                <div class="seller-field">
+                                    <label for="productTags">Tags Bổ Sung</label>
+                                    <input id="productTags" name="tags" type="text" placeholder="organic, indoor, premium">
+                                    <p class="seller-field-help">Phân tách bằng dấu phẩy để hỗ trợ tìm kiếm tốt hơn.</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="seller-form-section">
+                            <div class="seller-section-heading">
+                                <span class="seller-step-badge">3</span>
+                                <h3>Chi Tiết Sản Phẩm</h3>
+                            </div>
+                            <div class="seller-field">
+                                <label for="productDescription">Mô Tả Chi Tiết *</label>
+                                <div class="seller-editor-shell">
+                                    <div class="seller-editor-toolbar">
+                                        <button type="button" data-editor-wrap="**"><span class="material-symbols-outlined">format_bold</span></button>
+                                        <button type="button" data-editor-wrap="_"><span class="material-symbols-outlined">format_italic</span></button>
+                                        <button type="button" data-editor-prefix="- "><span class="material-symbols-outlined">format_list_bulleted</span></button>
+                                        <button type="button" data-editor-prefix="https://"><span class="material-symbols-outlined">link</span></button>
+                                    </div>
+                                    <textarea id="productDescription" name="description" rows="8" placeholder="Viết chi tiết về công dụng, hướng dẫn sử dụng và thành phần sản phẩm..."></textarea>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="seller-create-side">
+                        <section class="seller-form-section">
+                            <h3 style="margin: 0 0 8px;">Hình Ảnh Sản Phẩm</h3>
+                            <p class="seller-field-help" style="margin-top: 0;">Chọn ảnh trực tiếp từ máy để tải lên. Nếu cần, bạn vẫn có thể dán URL ảnh vào các ô bên dưới.</p>
+                            <input id="productImageFileInput" type="file" accept="image/*" multiple hidden>
+
+                            <div class="seller-media-grid">
+                                <div class="seller-media-preview seller-media-preview-large">
+                                    <img id="productMainPreview" src="/assets/photos/dog.jpg" alt="Ảnh xem trước sản phẩm chính">
+                                    <div class="seller-media-empty" id="productMainEmpty">
+                                        <span class="material-symbols-outlined">imagesmode</span>
+                                        <span>Ảnh chính sẽ hiện ở đây</span>
+                                    </div>
+                                    <div class="seller-media-badge">Ảnh Chính</div>
+                                </div>
+                                <div class="seller-media-preview">
+                                    <img id="productSecondaryPreview" src="/assets/photos/cat.jpg" alt="Ảnh xem trước sản phẩm phụ">
+                                    <div class="seller-media-empty" id="productSecondaryEmpty">
+                                        <span class="material-symbols-outlined">photo_camera</span>
+                                        <span>Ảnh phụ</span>
+                                    </div>
+                                </div>
+                                <button class="seller-media-preview" id="addImageFieldButton" type="button">
+                                    <div class="seller-media-empty">
+                                        <span class="material-symbols-outlined" style="font-size: 32px; color: var(--seller-primary);">add_a_photo</span>
+                                        <strong style="font-size: 12px;">Chọn từ máy</strong>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <div class="seller-inline-action-row">
+                                <button class="seller-secondary-button seller-inline-button" id="addImageUrlFieldButton" type="button">
+                                    <span class="material-symbols-outlined">link</span>
+                                    <span>Thêm ô URL</span>
+                                </button>
+                            </div>
+
+                            <div class="seller-image-field-list" id="productImageFieldList"></div>
+                            <p class="seller-inline-note">
+                                <span class="material-symbols-outlined">info</span>
+                                <span>Tối đa 5 ảnh. Ảnh đầu tiên sẽ được dùng làm thumbnail của sản phẩm.</span>
+                            </p>
+                        </section>
+
+                        <section class="seller-form-section">
+                            <h3 style="margin: 0 0 16px;">Phân Loại Thú Cưng</h3>
+                            <div class="seller-pet-grid" id="petTypeList">
+                                <label class="seller-pet-option">
+                                    <input type="checkbox" value="dog" checked>
+                                    <div class="seller-pet-copy">
+                                        <strong>Chó</strong>
+                                        <span>Thức ăn, đệm, đồ chơi cho chó</span>
+                                    </div>
+                                    <span class="material-symbols-outlined" style="color: var(--seller-secondary);">pets</span>
+                                </label>
+                                <label class="seller-pet-option">
+                                    <input type="checkbox" value="cat" checked>
+                                    <div class="seller-pet-copy">
+                                        <strong>Mèo</strong>
+                                        <span>Sản phẩm chuyên biệt cho mèo</span>
+                                    </div>
+                                    <span class="material-symbols-outlined" style="color: var(--seller-secondary);">pets</span>
+                                </label>
+                                <label class="seller-pet-option">
+                                    <input type="checkbox" value="bird">
+                                    <div class="seller-pet-copy">
+                                        <strong>Chim</strong>
+                                        <span>Lồng, thức ăn, phụ kiện cho chim</span>
+                                    </div>
+                                    <span class="material-symbols-outlined" style="color: var(--seller-text-muted);">raven</span>
+                                </label>
+                                <label class="seller-pet-option">
+                                    <input type="checkbox" value="fish">
+                                    <div class="seller-pet-copy">
+                                        <strong>Cá</strong>
+                                        <span>Hồ cá, thức ăn, thiết bị thủy sinh</span>
+                                    </div>
+                                    <span class="material-symbols-outlined" style="color: var(--seller-text-muted);">water</span>
+                                </label>
+                                <label class="seller-pet-option">
+                                    <input type="checkbox" value="small-pet">
+                                    <div class="seller-pet-copy">
+                                        <strong>Thú nhỏ khác</strong>
+                                        <span>Hamster, thỏ, guinea pig...</span>
+                                    </div>
+                                    <span class="material-symbols-outlined" style="color: var(--seller-text-muted);">cruelty_free</span>
+                                </label>
+                                <label class="seller-pet-option">
+                                    <input type="checkbox" value="reptile">
+                                    <div class="seller-pet-copy">
+                                        <strong>Bò sát</strong>
+                                        <span>Chuồng, đèn, phụ kiện cho reptile</span>
+                                    </div>
+                                    <span class="material-symbols-outlined" style="color: var(--seller-text-muted);">forest</span>
+                                </label>
+                            </div>
+                        </section>
+
+                        <div class="seller-validation-box" id="createProductValidationBox">
+                            <span class="material-symbols-outlined">info</span>
+                            <div>
+                                <strong>Thông tin còn thiếu</strong>
+                                <ul id="createProductValidationList">
+                                    <li>Đang kiểm tra dữ liệu nhập...</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </main>
+
+            <div class="seller-mobile-create-footer">
+                <button class="seller-secondary-button" type="button" id="mobileSaveDraftButton">Lưu nháp</button>
+                <button class="seller-primary-button" type="button" id="mobilePublishProductButton">Đăng ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api/client.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/components/auth.js"></script>
+    <script src="/pages/seller/create-product.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-label="Dog pet product">
+  <rect width="700" height="700" rx="56" fill="#e7f4ff"/>
+  <circle cx="350" cy="320" r="170" fill="#ffffff"/>
+  <path d="M230 260c-55-70-105-42-78 45 23 72 61 100 99 72zM470 260c55-70 105-42 78 45-23 72-61 100-99 72z" fill="#8b5a2b"/>
+  <circle cx="295" cy="305" r="18" fill="#231f20"/>
+  <circle cx="405" cy="305" r="18" fill="#231f20"/>
+  <path d="M330 365c18 16 40 16 58 0" fill="none" stroke="#231f20" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="350" cy="340" r="23" fill="#231f20"/>
+  <text x="350" y="595" text-anchor="middle" font-family="Arial, sans-serif" font-size="56" font-weight="700" fill="#004589">Dog Shop</text>
+</svg>
