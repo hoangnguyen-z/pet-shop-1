@@ -15,14 +15,24 @@ const connectDB = require('./config/database');
 
 const app = express();
 const uploadRoot = path.join(__dirname, '..', 'uploads');
+const rawCorsOrigins = String(process.env.CORS_ORIGIN || '*')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+const allowAllOrigins = rawCorsOrigins.includes('*') || rawCorsOrigins.length === 0;
 
 connectDB();
 fs.mkdirSync(uploadRoot, { recursive: true });
 
 app.use(helmet());
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: true
+    origin(origin, callback) {
+        if (allowAllOrigins || !origin || rawCorsOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Origin không được phép truy cập API'));
+    },
+    credentials: false
 }));
 
 app.use(express.json({ limit: '10mb' }));

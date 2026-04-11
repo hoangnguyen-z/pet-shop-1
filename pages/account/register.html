@@ -149,9 +149,9 @@
             </div>
         </section>
     </main>
+    <script src="../../js/config.js"></script>
     <script src="../../js/api/client.js"></script>
     <script>
-        const API_URL = 'http://localhost:3000/api';
         let currentRole = 'buyer';
         
         const roleTabs = document.querySelectorAll('.role-tab');
@@ -205,18 +205,7 @@
             submitBtn.textContent = 'Đang đăng ký...';
 
             try {
-                const endpoint = currentRole === 'seller' ? '/auth/register/seller' : '/auth/register/buyer';
-                const response = await fetch(`${API_URL}${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.message || 'Đăng ký thất bại');
-                }
+                const data = await api.register(formData, currentRole);
 
                 messageBox.className = 'p-4 rounded-xl bg-secondary-container/20 border border-secondary-container/30';
                 messageBox.innerHTML = `<p class="text-sm text-secondary font-semibold">${data.message}</p>`;

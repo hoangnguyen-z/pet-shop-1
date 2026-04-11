@@ -1,4 +1,6 @@
-const API_BASE_URL = `${window.location.origin}/api`;
+const API_BASE_URL = typeof window.getPetShopApiBaseUrl === 'function'
+    ? window.getPetShopApiBaseUrl()
+    : `${window.location.origin}/api`;
 
 class ApiClient {
     constructor() {

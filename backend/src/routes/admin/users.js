@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const User = require('../../models/User');
 const Shop = require('../../models/Shop');
+const Product = require('../../models/Product');
+const Review = require('../../models/Review');
+const InventoryLog = require('../../models/InventoryLog');
+const Coupon = require('../../models/Coupon');
+const Promotion = require('../../models/Promotion');
+const Settlement = require('../../models/Settlement');
 const AuditLog = require('../../models/admin/AuditLog');
 const { authenticateAdmin } = require('../../middleware/adminAuth');
 const { checkPermission } = require('../../middleware/permissionGuard');
@@ -86,11 +92,54 @@ const deleteUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-        throw ApiError.notFound('Không tìm thấy người dùng');
+        throw ApiError.notFound('Kh\u00f4ng t\u00ecm th\u1ea5y ng\u01b0\u1eddi d\u00f9ng');
     }
 
+    const shopIds = user.role === 'seller'
+        ? await Shop.find({ owner: user._id }).distinct('_id')
+        : [];
+
+    const productIds = user.role === 'seller'
+        ? await Product.find({ $or: [{ seller: user._id }, { shop: { $in: shopIds } }] }).distinct('_id')
+        : [];
+
     if (user.role === 'seller') {
+        await Review.deleteMany({ $or: [{ product: { $in: productIds } }, { shop: { $in: shopIds } }] });
+        await InventoryLog.deleteMany({
+            $or: [
+                { createdBy: user._id },
+                { product: { $in: productIds } },
+                { shop: { $in: shopIds } }
+            ]
+        });
+        await Settlement.deleteMany({ $or: [{ seller: user._id }, { shop: { $in: shopIds } }] });
+        await Coupon.deleteMany({ $or: [{ seller: user._id }, { shop: { $in: shopIds } }] });
+        await Promotion.deleteMany({ $or: [{ seller: user._id }, { shop: { $in: shopIds } }] });
+
+        if (productIds.length) {
+            await Coupon.updateMany(
+                { applicableProducts: { $in: productIds } },
+                { $pull: { applicableProducts: { $in: productIds } } }
+            );
+            await Promotion.updateMany(
+                { products: { $in: productIds } },
+                { $pull: { products: { $in: productIds } } }
+            );
+            await User.updateMany(
+                {},
+                {
+                    $pull: {
+                        'cart.items': { product: { $in: productIds } },
+                        wishlist: { product: { $in: productIds } }
+                    }
+                }
+            );
+        }
+
+        await Product.deleteMany({ $or: [{ seller: user._id }, { shop: { $in: shopIds } }] });
         await Shop.deleteMany({ owner: user._id });
+    } else {
+        await Review.deleteMany({ user: user._id });
     }
 
     await User.findByIdAndDelete(req.params.id);
@@ -106,7 +155,7 @@ const deleteUser = asyncHandler(async (req, res) => {
         status: 'success'
     });
 
-    sendSuccess(res, null, 'Xóa người dùng thành công');
+    sendSuccess(res, null, 'X\u00f3a ng\u01b0\u1eddi d\u00f9ng th\u00e0nh c\u00f4ng');
 });
 
 const getUserStats = asyncHandler(async (req, res) => {

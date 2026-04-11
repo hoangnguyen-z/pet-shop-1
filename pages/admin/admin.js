@@ -1,5 +1,7 @@
 (function() {
-    const API_BASE = 'http://localhost:3000/api';
+    const API_BASE = typeof window.getPetShopApiBaseUrl === 'function'
+        ? window.getPetShopApiBaseUrl()
+        : `${window.location.origin}/api`;
     const root = document.getElementById('adminRoot');
     const state = {
         token: localStorage.getItem('adminToken') || '',
@@ -25,7 +27,22 @@
             cols('name:Tên', 'code:Mã', 'group:Nhóm', 'isActive:Hoạt động:bool'), { readOnly: true }),
         section('users', 'Người dùng', 'Người mua và người bán', '/admin/users', 'users',
             cols('name:Họ tên', 'email:Email', 'phone:Số điện thoại', 'role:Vai trò:badge', 'status:Trạng thái:badge', 'lastLoginAt:Đăng nhập cuối:date'),
-            { statuses: ['active', 'banned', 'inactive'], actions: userActions }),
+            {
+                statuses: ['active', 'banned', 'inactive'],
+                filters: [
+                    {
+                        id: 'roleInput',
+                        query: 'role',
+                        options: [
+                            { value: '', label: 'T\u1ea5t c\u1ea3 vai tr\u00f2' },
+                            { value: 'buyer', label: 'Ng\u01b0\u1eddi mua' },
+                            { value: 'seller', label: 'Ng\u01b0\u1eddi b\u00e1n' }
+                        ]
+                    }
+                ],
+                allowCreate: false,
+                actions: userActions
+            }),
         section('shops', 'Người dùng', 'Cửa hàng', '/admin/shops', 'shops',
             cols('name:Cửa hàng', 'owner.email:Chủ shop', 'status:Trạng thái:badge', 'isVerified:Xác minh:bool', 'rating:Điểm đánh giá', 'productCount:Sản phẩm'),
             { statuses: ['pending', 'approved', 'rejected', 'inactive'], actions: shopActions }),
@@ -169,6 +186,8 @@
             debug: 'Gỡ lỗi'
         };
         const normalized = String(value ?? '').toLowerCase();
+        if (normalized === 'buyer') return 'Người mua';
+        if (normalized === 'seller') return 'Người bán';
         return map[normalized] || String(value ?? '');
     }
 
@@ -377,9 +396,13 @@
         const container = document.getElementById('adminContent');
         const existingSearch = document.getElementById('searchInput')?.value || '';
         const existingStatus = document.getElementById('statusInput')?.value || '';
+        const existingFilters = Object.fromEntries((section.filters || []).map(filter => [filter.query, document.getElementById(filter.id)?.value || '']));
         const params = new URLSearchParams({ limit: '50' });
         if (existingSearch) params.set('search', existingSearch);
         if (existingStatus) params.set(section.statusQuery || 'status', existingStatus);
+        (section.filters || []).forEach(filter => {
+            if (existingFilters[filter.query]) params.set(filter.query, existingFilters[filter.query]);
+        });
 
         container.innerHTML = '<div class="panel"><div class="empty">Đang tải dữ liệu...</div></div>';
         try {
@@ -393,8 +416,9 @@
                         <div class="toolbar">
                             <input id="searchInput" placeholder="Tìm kiếm..." value="${escapeHtml(existingSearch)}">
                             ${statusFilter(section, existingStatus)}
+                            ${extraFilters(section, existingFilters)}
                             <button class="secondary-btn" id="refreshBtn">Làm mới</button>
-                            ${section.readOnly ? '' : '<button class="primary-btn" id="createBtn">Tạo mới</button>'}
+                            ${canCreateSection(section) ? '<button class="primary-btn" id="createBtn">T\u1ea1o m\u1edbi</button>' : ''}
                         </div>
                     </div>
                     ${table(section, state.rows)}
@@ -412,6 +436,19 @@
         return `<select id="statusInput"><option value="">Tất cả</option>${section.statuses.map(status => `<option value="${escapeHtml(status)}" ${status === value ? 'selected' : ''}>${escapeHtml(translateAdminLabel(status))}</option>`).join('')}</select>`;
     }
 
+    function extraFilters(section, values = {}) {
+        if (!section.filters?.length) return '';
+        return section.filters.map(filter => `
+            <select id="${escapeHtml(filter.id)}">
+                ${(filter.options || []).map(option => `<option value="${escapeHtml(option.value)}" ${String(values[filter.query] || '') === String(option.value) ? 'selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
+            </select>
+        `).join('');
+    }
+
+    function canCreateSection(section) {
+        return !section.readOnly && section.allowCreate !== false && section.create !== undefined;
+    }
+
     function unwrapRows(data, key) {
         if (Array.isArray(data)) return data;
         if (!data || typeof data !== 'object') return [];
@@ -425,10 +462,16 @@
     function wireToolbar(section) {
         document.getElementById('refreshBtn')?.addEventListener('click', () => loadSection(section.id));
         document.getElementById('statusInput')?.addEventListener('change', () => loadSection(section.id));
+        (section.filters || []).forEach(filter => {
+            document.getElementById(filter.id)?.addEventListener('change', () => loadSection(section.id));
+        });
         document.getElementById('searchInput')?.addEventListener('input', () => {
             window.clearTimeout(state.searchTimer);
             state.searchTimer = window.setTimeout(() => loadSection(section.id), 350);
         });
+        if (!canCreateSection(section)) {
+            document.getElementById('createBtn')?.remove();
+        }
         document.getElementById('createBtn')?.addEventListener('click', () => createRecord(section));
     }
 
@@ -483,6 +526,7 @@
     }
 
     function createRecord(section) {
+        if (!canCreateSection(section)) return;
         openJson(`Tạo mới ${section.title}`, section.create || {}, async payload => {
             await api(section.endpoint, { method: 'POST', body: payload });
             notify('Đã tạo mới');
@@ -570,24 +614,24 @@
     function adminActions(section, row) {
         return [
             details(row),
-            { label: 'Chỉnh sửa', run: () => editRecord(section, row) },
+            { label: 'Ch\u1ec9nh s\u1eeda', run: () => editRecord(section, row) },
             {
-                label: row.status === 'active' ? 'Khóa' : 'Mở khóa',
+                label: row.status === 'active' ? 'Kh\u00f3a' : 'M\u1edf kh\u00f3a',
                 kind: row.status === 'active' ? 'warn' : 'success',
                 run: async () => {
                     await api(`${section.endpoint}/${row._id}`, { method: 'PUT', body: { status: row.status === 'active' ? 'locked' : 'active' } });
-                    notify('Đã cập nhật trạng thái admin');
+                    notify('\u0110\u00e3 c\u1eadp nh\u1eadt tr\u1ea1ng th\u00e1i admin');
                     await loadSection(section.id);
                 }
             },
             {
-                label: 'Đặt lại mật khẩu',
+                label: '\u0110\u1eb7t l\u1ea1i m\u1eadt kh\u1ea9u',
                 kind: 'warn',
                 run: async () => {
-                    const newPassword = prompt('Mật khẩu admin mới', 'Admin1234');
+                    const newPassword = prompt('M\u1eadt kh\u1ea9u admin m\u1edbi', 'Admin1234');
                     if (!newPassword) return;
                     await api(`${section.endpoint}/${row._id}/reset-password`, { method: 'POST', body: { newPassword } });
-                    notify('Đã đặt lại mật khẩu');
+                    notify('\u0110\u00e3 \u0111\u1eb7t l\u1ea1i m\u1eadt kh\u1ea9u');
                 }
             }
         ];
@@ -606,19 +650,32 @@
         return [
             details(row),
             {
-                label: row.status === 'active' ? 'Khóa tài khoản' : 'Kích hoạt',
+                label: row.status === 'active' ? 'Kh\u00f3a t\u00e0i kho\u1ea3n' : 'K\u00edch ho\u1ea1t',
                 kind: row.status === 'active' ? 'warn' : 'success',
                 run: async () => {
                     await api(`${section.endpoint}/${row._id}/status`, { method: 'PUT', body: { status: row.status === 'active' ? 'banned' : 'active' } });
-                    notify('Đã cập nhật trạng thái người dùng');
+                    notify('\u0110\u00e3 c\u1eadp nh\u1eadt tr\u1ea1ng th\u00e1i ng\u01b0\u1eddi d\u00f9ng');
                     await loadSection(section.id);
                 }
             },
             {
-                label: row.role === 'seller' ? 'Chuyển thành người mua' : 'Chuyển thành người bán',
+                label: row.role === 'seller' ? 'Chuy\u1ec3n th\u00e0nh ng\u01b0\u1eddi mua' : 'Chuy\u1ec3n th\u00e0nh ng\u01b0\u1eddi b\u00e1n',
                 run: async () => {
                     await api(`${section.endpoint}/${row._id}/role`, { method: 'PUT', body: { role: row.role === 'seller' ? 'buyer' : 'seller' } });
-                    notify('Đã cập nhật vai trò người dùng');
+                    notify('\u0110\u00e3 c\u1eadp nh\u1eadt vai tr\u00f2 ng\u01b0\u1eddi d\u00f9ng');
+                    await loadSection(section.id);
+                }
+            },
+            {
+                label: 'X\u00f3a t\u00e0i kho\u1ea3n',
+                kind: 'danger',
+                run: async () => {
+                    const warning = row.role === 'seller'
+                        ? 'X\u00f3a t\u00e0i kho\u1ea3n ng\u01b0\u1eddi b\u00e1n n\u00e0y? H\u1ec7 th\u1ed1ng s\u1ebd x\u00f3a shop, s\u1ea3n ph\u1ea9m v\u00e0 d\u1eef li\u1ec7u v\u1eadn h\u00e0nh li\u00ean quan.'
+                        : 'X\u00f3a t\u00e0i kho\u1ea3n ng\u01b0\u1eddi mua n\u00e0y?';
+                    if (!confirm(warning)) return;
+                    await api(`${section.endpoint}/${row._id}`, { method: 'DELETE' });
+                    notify('\u0110\u00e3 x\u00f3a t\u00e0i kho\u1ea3n ng\u01b0\u1eddi d\u00f9ng');
                     await loadSection(section.id);
                 }
             }
