@@ -1,4 +1,4 @@
-const LOCAL_IMAGE_BY_KEY = {
+﻿const LOCAL_IMAGE_BY_KEY = {
     dog: '/assets/images/pet-dog.svg',
     cat: '/assets/images/pet-cat.svg',
     bird: '/assets/images/pet-bird.svg',
@@ -16,22 +16,31 @@ const LOCAL_IMAGE_BY_KEY = {
     generic: '/assets/images/pet-generic.svg'
 };
 
+function remotePhoto(photoId, width = 1200, height = 900) {
+    return `https://images.unsplash.com/${photoId}?auto=format&fit=crop&w=${width}&h=${height}&q=80`;
+}
+
 const PHOTO_IMAGE_BY_KEY = {
-    dog: '/assets/photos/dog.jpg',
-    cat: '/assets/photos/cat.jpg',
-    bird: '/assets/photos/bird.jpg',
-    fish: '/assets/photos/fish.jpg',
-    rabbit: '/assets/photos/rabbit.jpg',
-    hamster: '/assets/photos/hamster.jpg',
-    reptile: '/assets/photos/reptile.jpg',
-    'small-pet': '/assets/photos/hamster.jpg',
-    grooming: '/assets/photos/grooming.jpg',
-    habitat: '/assets/photos/rabbit.jpg',
-    food: '/assets/photos/food.jpg',
-    toy: '/assets/photos/dog.jpg',
-    vet: '/assets/photos/dog.jpg',
-    article: '/assets/photos/cat.jpg',
-    generic: '/assets/photos/dog.jpg'
+    dog: remotePhoto('photo-1587300003388-59208cc962cb'),
+    cat: remotePhoto('photo-1574158622682-e40e69881006'),
+    bird: remotePhoto('photo-1444464666168-49d633b86797'),
+    fish: remotePhoto('photo-1522069169874-c58ec4b76be5'),
+    rabbit: remotePhoto('photo-1585110396000-c9ffd4e4b308'),
+    hamster: remotePhoto('photo-1425082661705-1834bfd09dca'),
+    reptile: remotePhoto('photo-1533371356817-02152aef1506'),
+    'small-pet': remotePhoto('photo-1548767797-d8c844163c4c'),
+    grooming: remotePhoto('photo-1516734212186-a967f81ad0d7'),
+    habitat: remotePhoto('photo-1601758125946-6ec2ef64daf8'),
+    food: remotePhoto('photo-1601758124510-52d02ddb7cbd'),
+    toy: remotePhoto('photo-1535294435445-d7249524ef2e'),
+    litter: remotePhoto('photo-1514888286974-6c03e2ca1dba'),
+    aquarium: remotePhoto('photo-1522069169874-c58ec4b76be5'),
+    bed: remotePhoto('photo-1601758125946-6ec2ef64daf8'),
+    fashion: remotePhoto('photo-1507146426996-ef05306b995a'),
+    health: remotePhoto('photo-1628009368231-7bb7cfcb0def'),
+    vet: remotePhoto('photo-1558788353-f76d92427f16'),
+    article: remotePhoto('photo-1450778869180-41d0601e046e'),
+    generic: remotePhoto('photo-1548199973-03cce0bbc87b')
 };
 
 function localImage(key = 'generic') {
@@ -40,6 +49,40 @@ function localImage(key = 'generic') {
 
 function displayImage(key = 'generic') {
     return PHOTO_IMAGE_BY_KEY[key] || PHOTO_IMAGE_BY_KEY.generic;
+}
+
+function normalizeShopLabels(shop = {}) {
+    const labels = Array.isArray(shop.labels) ? shop.labels.filter(Boolean) : [];
+    if (labels.length) return labels;
+    return shop.verificationLevel ? [shop.verificationLevel] : [];
+}
+
+function shopLabelText(label = '') {
+    const normalized = String(label || '').toLowerCase();
+    if (normalized === 'petmall') return 'PetMall';
+    if (normalized === 'official_brand') return 'Official Brand';
+    if (normalized === 'verified_seller') return 'Verified Seller';
+    return normalized ? normalized.replace(/_/g, ' ') : '';
+}
+
+function renderShopLabelBadges(shop = {}) {
+    const labels = normalizeShopLabels(shop);
+    if (!labels.length) return '';
+
+    return `
+        <div class="shop-label-row">
+            ${labels.map((label) => `<span class="status-badge status-badge-success">${shopLabelText(label)}</span>`).join('')}
+        </div>
+    `;
+}
+
+function escapeHtml(value = '') {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function inferProductImageKey(product = {}) {
@@ -52,8 +95,13 @@ function inferProductImageKey(product = {}) {
     ].filter(Boolean).join(' ').toLowerCase();
 
     if (haystack.includes('groom')) return 'grooming';
-    if (haystack.includes('house') || haystack.includes('habitat') || haystack.includes('cage') || haystack.includes('crate') || haystack.includes('bed')) return 'habitat';
+    if (haystack.includes('litter')) return 'litter';
+    if (haystack.includes('aquarium') || haystack.includes('tank')) return 'aquarium';
+    if (haystack.includes('house') || haystack.includes('habitat') || haystack.includes('cage') || haystack.includes('crate')) return 'habitat';
+    if (haystack.includes('bed') || haystack.includes('blanket') || haystack.includes('mat')) return 'bed';
     if (haystack.includes('toy') || haystack.includes('chew') || haystack.includes('kong')) return 'toy';
+    if (haystack.includes('jacket') || haystack.includes('harness') || haystack.includes('collar') || haystack.includes('leash')) return 'fashion';
+    if (haystack.includes('health') || haystack.includes('supplement') || haystack.includes('flea') || haystack.includes('vitamin')) return 'health';
     if (haystack.includes('food') || haystack.includes('treat') || haystack.includes('pellet') || haystack.includes('flake') || haystack.includes('hay')) return 'food';
     if (haystack.includes('cat')) return 'cat';
     if (haystack.includes('bird')) return 'bird';
@@ -66,7 +114,7 @@ function inferProductImageKey(product = {}) {
 }
 
 function isUnstableRemoteImage(url = '') {
-    return /images\.unsplash\.com|petco\.com|scene7|via\.placeholder\.com|placeholder\.com|lh3\.googleusercontent\.com\/aida-public/i.test(String(url));
+    return /petco\.com|scene7|via\.placeholder\.com|placeholder\.com|lh3\.googleusercontent\.com\/aida-public/i.test(String(url));
 }
 
 function resolveImage(url, fallbackKey = 'generic') {
@@ -199,7 +247,8 @@ async function loadHomeData() {
         await Promise.all([
             loadBanners(),
             loadPromotions(),
-            loadFeaturedProducts()
+            loadFeaturedProducts(),
+            loadPetMallShops()
         ]);
     } catch (error) {
         console.error('Failed to load home data:', error);
@@ -344,6 +393,82 @@ function renderProducts(products) {
     bindProductCards(container);
 }
 
+function createShopSpotlightCard(shop = {}) {
+    const shopId = shop._id || '';
+    const shopName = shop.name || 'Cửa hàng PetMall';
+    const logo = resolveImage(shop.logo || shop.banner, 'generic');
+    const productCount = Number(shop.productCount || 0);
+    const addressText = formatShopMapAddress(shop.address || {});
+
+    return `
+        <article class="shop-spotlight-card">
+            <a class="shop-spotlight-media" href="#shop-detail?id=${shopId}">
+                <img src="${logo}" alt="${shopName}" loading="lazy">
+            </a>
+            <div class="shop-spotlight-content">
+                <div class="shop-spotlight-head">
+                    <div>
+                        <h3><a href="#shop-detail?id=${shopId}">${shopName}</a></h3>
+                        ${renderShopLabelBadges(shop)}
+                    </div>
+                    <span class="shop-spotlight-score">${Number(shop.rating || 0).toFixed(1)}</span>
+                </div>
+                <p class="shop-spotlight-desc">${shop.description || 'Cửa hàng uy tín đã được sàn kiểm duyệt và gắn nhãn PetMall.'}</p>
+                <div class="shop-spotlight-meta">
+                    <span>${productCount} sản phẩm</span>
+                    <span>${shop.reviewCount || 0} đánh giá</span>
+                    ${addressText ? `<span>${addressText}</span>` : ''}
+                </div>
+                <div class="shop-spotlight-actions">
+                    <a class="btn btn-secondary btn-small" href="#shop?shop=${shopId}&mallOnly=true">Xem sản phẩm</a>
+                    <a class="btn btn-primary btn-small" href="#shop-detail?id=${shopId}">Vào shop</a>
+                </div>
+            </div>
+        </article>
+    `;
+}
+
+async function loadPetMallShops() {
+    const section = document.getElementById('petMallShopsSection');
+    const container = document.getElementById('petMallShopsGrid');
+    if (!section || !container) return;
+
+    try {
+        const response = await api.getShops({ label: 'petmall', limit: 6 });
+        const shops = response.data || [];
+
+        if (!shops.length) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = '';
+        container.innerHTML = shops.map(createShopSpotlightCard).join('');
+    } catch (error) {
+        console.error('Failed to load PetMall shops:', error);
+        section.style.display = 'none';
+    }
+}
+
+function isSellerBuyingBlocked() {
+    return authManager.isAuthenticated && authManager.user?.role === 'seller';
+}
+
+function buildCatalogActionButtons(productId) {
+    if (isSellerBuyingBlocked()) {
+        return `
+            <a class="btn btn-secondary btn-small" href="#product?id=${productId}">Xem chi tiết</a>
+            <a class="btn btn-secondary btn-small" href="/pages/seller/dashboard.html">Về dashboard</a>
+        `;
+    }
+
+    return `
+        <a class="btn btn-secondary btn-small" href="#product?id=${productId}">Xem chi tiết</a>
+        <button class="btn btn-primary btn-small quick-add" type="button" data-product-action="quick-add" data-product-id="${productId}">Thêm giỏ</button>
+        <button class="btn btn-secondary btn-small" type="button" data-product-action="buy-now" data-product-id="${productId}">Mua ngay</button>
+    `;
+}
+
 function createProductCard(product) {
     const price = product.price || 0;
     const originalPrice = product.originalPrice || product.salePrice;
@@ -353,6 +478,8 @@ function createProductCard(product) {
     const rating = product.rating || 4.5;
     const reviewCount = product.reviewCount || 0;
     const productId = product._id || product.id;
+    const shop = product.shop || {};
+    const shopId = shop._id || '';
 
     return `
         <div class="product-card" data-product-id="${productId}">
@@ -365,6 +492,7 @@ function createProductCard(product) {
             <div class="product-info">
                 <span class="product-brand">${product.brand || 'Cửa hàng thú cưng'}</span>
                 <h4 class="product-name"><a href="#product?id=${productId}">${name}</a></h4>
+                ${shopId ? `<div class="product-shop-meta"><a class="product-shop-link" href="#shop-detail?id=${shopId}">${escapeHtml(shop.name || 'Cửa hàng')}</a>${renderShopLabelBadges(shop)}</div>` : ''}
                 <div class="product-rating">
                     <div class="stars">${appGenerateStars(rating)}</div>
                     <span>(${reviewCount})</span>
@@ -375,9 +503,7 @@ function createProductCard(product) {
                 </div>
                 <div class="product-delivery"><i class="fas fa-truck"></i> Giao nhanh trong ngày</div>
                 <div class="product-card-actions">
-                    <a class="btn btn-secondary btn-small" href="#product?id=${productId}">Xem chi tiết</a>
-                    <button class="btn btn-primary btn-small quick-add" type="button" data-product-action="quick-add" data-product-id="${productId}">Thêm giỏ</button>
-                    <button class="btn btn-secondary btn-small" type="button" data-product-action="buy-now" data-product-id="${productId}">Mua ngay</button>
+                    ${buildCatalogActionButtons(productId)}
                 </div>
             </div>
         </div>
@@ -397,13 +523,13 @@ function appGenerateStars(rating) {
 function loadSampleProducts() {
     const sampleProducts = [
         { _id: '1', name: 'Hạt cao cấp cho chó', price: 42.99, originalPrice: 54.99, rating: 4.5, reviewCount: 2456, images: [displayImage('food')] },
-        { _id: '2', name: 'Thức ăn trong nhà cho mèo', price: 38.49, rating: 5, reviewCount: 1892, images: [displayImage('cat')] },
+        { _id: '2', name: 'Cát vệ sinh khử mùi cho mèo', price: 18.49, originalPrice: 23.99, rating: 4.8, reviewCount: 1892, images: [displayImage('litter')] },
         { _id: '3', name: 'Bánh thưởng dinh dưỡng cho chó', price: 15.99, originalPrice: 21.99, rating: 4, reviewCount: 3221, images: [displayImage('food')] },
-        { _id: '4', name: 'Thức ăn cho chim Forti-Diet', price: 12.99, rating: 4.5, reviewCount: 567, images: [displayImage('bird')] },
-        { _id: '5', name: 'Thức ăn cá Tropical Flakes', price: 8.49, rating: 5, reviewCount: 4102, images: [displayImage('fish')] },
-        { _id: '6', name: 'Cỏ khô Timothy cho thỏ', price: 18.99, rating: 4.5, reviewCount: 892, images: [displayImage('rabbit')] },
-        { _id: '7', name: 'Đồ chơi Kong Classic cho chó', price: 16.99, rating: 5, reviewCount: 5678, images: [displayImage('toy')] },
-        { _id: '8', name: 'Đồ chơi đào bới cho mèo', price: 19.99, originalPrice: 24.99, rating: 4, reviewCount: 1234, images: [displayImage('toy')] }
+        { _id: '4', name: 'Lồng nuôi chim gỗ cao cấp', price: 62.99, rating: 4.5, reviewCount: 567, images: [displayImage('habitat')] },
+        { _id: '5', name: 'Bể cá mini kèm lọc', price: 88.49, rating: 5, reviewCount: 1402, images: [displayImage('aquarium')] },
+        { _id: '6', name: 'Đệm ngủ êm cho thỏ và hamster', price: 24.99, rating: 4.5, reviewCount: 892, images: [displayImage('bed')] },
+        { _id: '7', name: 'Đồ chơi gặm nhai cao su cho chó', price: 16.99, rating: 5, reviewCount: 5678, images: [displayImage('toy')] },
+        { _id: '8', name: 'Yếm và vòng cổ thời trang cho mèo', price: 19.99, originalPrice: 24.99, rating: 4.2, reviewCount: 1234, images: [displayImage('fashion')] }
     ];
     renderProducts(sampleProducts);
 }
@@ -446,6 +572,11 @@ async function addToCart(productId) {
         return false;
     }
 
+    if (authManager.user?.role === 'seller') {
+        authManager.showNotification('Tài khoản người bán không được thêm sản phẩm vào giỏ hàng.', 'error');
+        return false;
+    }
+
     try {
         await api.addToCart(productId, 1);
         authManager.showNotification('Đã thêm vào giỏ hàng!', 'success');
@@ -463,13 +594,39 @@ async function buyNow(productId) {
         return false;
     }
 
-    const added = await addToCart(productId);
-    if (added) window.location.hash = 'checkout';
-    return added;
+    if (authManager.user?.role === 'seller') {
+        authManager.showNotification('Tài khoản người bán không được mua hàng theo luồng người mua.', 'error');
+        return false;
+    }
+
+    try {
+        const response = await api.getProduct(productId);
+        const product = response?.data?.product || response?.data;
+
+        if (!product?._id) {
+            throw new Error('Không tìm thấy sản phẩm để thanh toán ngay.');
+        }
+
+        sessionStorage.setItem('buyNowCheckoutItems', JSON.stringify([{
+            product,
+            quantity: 1
+        }]));
+
+        window.location.hash = 'checkout';
+        return true;
+    } catch (error) {
+        authManager.showNotification(error.message || 'Không thể chuyển sang bước thanh toán ngay.', 'error');
+        return false;
+    }
 }
 
 async function updateCartCount() {
     if (!authManager.isAuthenticated) {
+        document.querySelectorAll('.cart-count').forEach(el => el.textContent = '0');
+        return;
+    }
+
+    if (authManager.user?.role === 'seller') {
         document.querySelectorAll('.cart-count').forEach(el => el.textContent = '0');
         return;
     }
@@ -754,6 +911,7 @@ function mapLegacyHrefToHash(href) {
     if (href === '/pages/shop/checkout.html') return 'checkout';
     if (href === '/pages/account/profile.html') return 'account';
     if (href === '/pages/account/orders.html') return 'orders';
+    if (href === '/pages/account/service-bookings.html') return 'service-bookings';
     if (href === '/pages/account/wishlist.html') return 'wishlist';
     return null;
 }
@@ -795,6 +953,7 @@ async function renderHashView() {
         if (route === 'checkout') return await renderCheckoutView();
         if (route === 'account') return await renderAccountView();
         if (route === 'orders') return await renderOrdersView();
+        if (route === 'service-bookings') return await renderCareServiceBookingsView();
         if (route === 'order') return await renderOrderDetailView(params.get('id'));
         if (route === 'wishlist') return await renderWishlistView();
         if (route === 'notifications') return await renderNotificationsView();
@@ -841,6 +1000,7 @@ async function renderShopView(params = new URLSearchParams()) {
     const inStock = params.get('inStock') || '';
     const onSale = params.get('onSale') || '';
     const minRating = params.get('minRating') || '';
+    const mallOnly = params.get('mallOnly') || '';
     const sortBy = params.get('sortBy') || 'createdAt';
     const sortOrder = params.get('sortOrder') || 'desc';
     const shop = params.get('shop') || '';
@@ -848,7 +1008,7 @@ async function renderShopView(params = new URLSearchParams()) {
     const [categoriesRes, filtersRes, productsRes] = await Promise.all([
         api.getCategories(),
         api.getProductFilters(),
-        api.getProducts({ search, category, petType, brand, minPrice, maxPrice, inStock, onSale, minRating, sortBy, sortOrder, shop, limit: 24 })
+        api.getProducts({ search, category, petType, brand, minPrice, maxPrice, inStock, onSale, minRating, mallOnly, sortBy, sortOrder, shop, limit: 24 })
     ]);
 
     const categories = categoriesRes.data || [];
@@ -857,6 +1017,7 @@ async function renderShopView(params = new URLSearchParams()) {
     const totalProducts = productsRes.meta?.total ?? products.length;
 
     const titleParts = ['Sản phẩm'];
+    if (mallOnly === 'true') titleParts.push('PetMall');
     if (petType) titleParts.push(petType);
     if (search) titleParts.push(`"${search}"`);
 
@@ -865,33 +1026,33 @@ async function renderShopView(params = new URLSearchParams()) {
             <aside class="shop-sidebar">
                 <div class="filter-section">
                     <h3>Tìm kiếm</h3>
-                    <input id="spaSearch" value="${search}" placeholder="Tìm sản phẩm..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    <input id="spaSearch" value="${escapeHtml(search)}" placeholder="Tìm sản phẩm..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                 </div>
                 <div class="filter-section">
                     <h3>Danh mục</h3>
                     <select id="spaCategory" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                         <option value="">Tất cả danh mục</option>
-                        ${categories.map(item => `<option value="${item._id}" ${item._id === category ? 'selected' : ''}>${item.name} (${item.productCount || 0})</option>`).join('')}
+                        ${categories.map(item => `<option value="${item._id}" ${item._id === category ? 'selected' : ''}>${escapeHtml(item.name)} (${item.productCount || 0})</option>`).join('')}
                     </select>
                 </div>
                 <div class="filter-section">
                     <h3>Loại thú cưng</h3>
                     <select id="spaPetType" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                         <option value="">Tất cả thú cưng</option>
-                        ${(filters.petTypes || []).map(item => `<option value="${item}" ${item === petType ? 'selected' : ''}>${item}</option>`).join('')}
+                        ${(filters.petTypes || []).map(item => `<option value="${item}" ${item === petType ? 'selected' : ''}>${escapeHtml(item)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="filter-section">
                     <h3>Thương hiệu</h3>
                     <select id="spaBrand" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                         <option value="">Tất cả thương hiệu</option>
-                        ${(filters.brands || []).map(item => `<option value="${item}" ${item === brand ? 'selected' : ''}>${item}</option>`).join('')}
+                        ${(filters.brands || []).map(item => `<option value="${item}" ${item === brand ? 'selected' : ''}>${escapeHtml(item)}</option>`).join('')}
                     </select>
                 </div>
                 <div class="filter-section">
                     <h3>Giá</h3>
-                    <input id="spaMinPrice" type="number" min="0" value="${minPrice}" placeholder="Từ" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:8px;">
-                    <input id="spaMaxPrice" type="number" min="0" value="${maxPrice}" placeholder="Đến" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    <input id="spaMinPrice" type="number" min="0" value="${escapeHtml(minPrice)}" placeholder="Từ" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:8px;">
+                    <input id="spaMaxPrice" type="number" min="0" value="${escapeHtml(maxPrice)}" placeholder="Đến" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                 </div>
                 <div class="filter-section">
                     <h3>Đánh giá</h3>
@@ -915,17 +1076,23 @@ async function renderShopView(params = new URLSearchParams()) {
                     <label><input type="checkbox" id="spaInStock" ${inStock === 'true' ? 'checked' : ''}> Còn hàng</label><br>
                     <label><input type="checkbox" id="spaOnSale" ${onSale === 'true' ? 'checked' : ''}> Đang giảm giá</label>
                 </div>
-                <button class="btn btn-primary" id="spaApplyFilters">Áp dụng bộ lọc</button>
+                <div class="filter-section">
+                    <label><input type="checkbox" id="spaMallOnly" ${mallOnly === 'true' ? 'checked' : ''}> Chỉ xem sản phẩm từ shop PetMall</label>
+                </div>
+                <button class="btn btn-primary" id="spaApplyFilters" type="button">Áp dụng bộ lọc</button>
             </aside>
             <main>
                 <div class="shop-results-header">
                     <div>
                         <strong>${totalProducts}</strong> sản phẩm phù hợp
-                        ${category || petType || brand || search || minPrice || maxPrice || inStock || onSale || minRating ? '<span class="filter-active-note">Đang áp dụng bộ lọc</span>' : ''}
+                        ${category || petType || brand || search || minPrice || maxPrice || inStock || onSale || minRating || mallOnly === 'true' ? '<span class="filter-active-note">Đang áp dụng bộ lọc</span>' : ''}
                     </div>
-                    <button class="btn btn-secondary btn-small" id="spaResetFilters" type="button">Xóa lọc</button>
+                    <div class="shop-results-actions">
+                        <a class="btn btn-secondary btn-small" href="#shop?mallOnly=true">Chỉ xem PetMall</a>
+                        <button class="btn btn-secondary btn-small" id="spaResetFilters" type="button">Xóa lọc</button>
+                    </div>
                 </div>
-                <div class="products-grid">
+                <div class="products-grid" id="spaView">
                     ${products.map(createProductCard).join('') || '<div class="account-content" style="grid-column:1/-1;"><h3>Không có sản phẩm phù hợp</h3><p>Thử bỏ bớt bộ lọc hoặc chọn danh mục khác.</p></div>'}
                 </div>
             </main>
@@ -953,6 +1120,7 @@ async function renderShopView(params = new URLSearchParams()) {
         if (nextSortOrder) next.set('sortOrder', nextSortOrder);
         if (document.getElementById('spaInStock').checked) next.set('inStock', 'true');
         if (document.getElementById('spaOnSale').checked) next.set('onSale', 'true');
+        if (document.getElementById('spaMallOnly')?.checked) next.set('mallOnly', 'true');
         if (shop) next.set('shop', shop);
         window.location.hash = `shop${next.toString() ? '?' + next.toString() : ''}`;
     };
@@ -968,7 +1136,7 @@ async function renderShopView(params = new URLSearchParams()) {
         window.location.hash = shop ? `shop?shop=${shop}` : 'shop';
     });
 
-    ['spaCategory', 'spaPetType', 'spaBrand', 'spaMinRating', 'spaSort', 'spaInStock', 'spaOnSale'].forEach(id => {
+    ['spaCategory', 'spaPetType', 'spaBrand', 'spaMinRating', 'spaSort', 'spaInStock', 'spaOnSale', 'spaMallOnly'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', applyShopFilters);
     });
 
@@ -986,19 +1154,64 @@ async function renderShopView(params = new URLSearchParams()) {
     bindProductCards(document.getElementById('spaView'));
 }
 
+function formatCareServiceType(value = '') {
+    const map = {
+        bathing_drying: 'Tắm, sấy',
+        grooming_spa: 'Grooming, spa',
+        nail_ear_hygiene: 'Vệ sinh tai, móng',
+        pet_hotel: 'Khách sạn thú cưng',
+        pet_boarding: 'Giữ thú cưng',
+        basic_care: 'Chăm sóc cơ bản'
+    };
+    return map[String(value || '').toLowerCase()] || formatReadableStatus(value || '');
+}
+
+function formatCareServiceLabel(value = '') {
+    const map = {
+        premium_care_partner: 'Premium Care Partner',
+        standard: 'Dịch vụ thường'
+    };
+    return map[String(value || '').toLowerCase()] || formatReadableStatus(value || '');
+}
+
+function formatCareServiceAddress(address = {}) {
+    return [address.street, address.ward, address.district, address.city].filter(Boolean).join(', ');
+}
+
+function buildCareServiceMapUrl(careService = {}, fallbackShop = {}) {
+    const address = formatCareServiceAddress(careService.address || {}) || formatShopMapAddress(fallbackShop.address || {});
+    return address ? `https://www.google.com/maps?q=${encodeURIComponent(address)}` : buildShopMapUrl(fallbackShop);
+}
+
+function buildCareServiceMapEmbedUrl(careService = {}, fallbackShop = {}) {
+    const address = formatCareServiceAddress(careService.address || {}) || formatShopMapAddress(fallbackShop.address || {});
+    return address ? `https://maps.google.com/maps?q=${encodeURIComponent(address)}&z=15&output=embed` : buildShopMapEmbedUrl(fallbackShop);
+}
+
 async function renderShopDetailView(shopId) {
     if (!shopId) return renderShopView();
 
     try {
-        const [shopRes, productsRes] = await Promise.all([
+        const [shopRes, productsRes, careRes] = await Promise.all([
             api.getShop(shopId),
-            api.getShopProducts(shopId, { limit: 24, sortBy: 'createdAt', sortOrder: 'desc' })
+            api.getShopProducts(shopId, { limit: 24, sortBy: 'createdAt', sortOrder: 'desc' }),
+            api.getShopCareServices(shopId).catch(() => ({ data: { careService: null, offerings: [], reviews: [], stats: {} } }))
         ]);
         const shop = shopRes.data || productsRes.data?.shop || {};
         const products = productsRes.data?.products || [];
+        const carePayload = careRes.data || {};
+        const careService = carePayload.careService || null;
+        const careOfferings = carePayload.offerings || [];
+        const careReviews = carePayload.reviews || [];
+        const careStats = carePayload.stats || {};
+        const hasCareServices = Boolean(careService);
         const address = formatShopMapAddress(shop.address);
         const mapUrl = buildShopMapUrl(shop);
         const embedUrl = buildShopMapEmbedUrl(shop);
+        const careAddress = formatCareServiceAddress(careService?.address || {});
+        const careMapUrl = buildCareServiceMapUrl(careService || {}, shop);
+        const careMapEmbedUrl = buildCareServiceMapEmbedUrl(careService || {}, shop);
+        const canBookCareService = authManager.isAuthenticated && authManager.user?.role === 'buyer';
 
         setSpaContent(shop.name || 'Cửa hàng', `
             <section class="shop-profile-card">
@@ -1009,6 +1222,7 @@ async function renderShopDetailView(shopId) {
                     <img class="shop-profile-logo" src="${resolveImage(shop.logo, 'generic')}" alt="${shop.name || 'Cửa hàng'}">
                     <div>
                         <h2>${shop.name || 'Cửa hàng'}</h2>
+                        ${renderShopLabelBadges(shop)}
                         <p>${shop.description || 'Shop đang bán sản phẩm chăm sóc thú cưng.'}</p>
                         <p>${appGenerateStars(shop.rating || 0)} <strong>${shop.rating ?? 'Chưa có'}</strong> (${shop.reviewCount || 0} đánh giá)</p>
                         <p><strong>Liên hệ:</strong> ${shop.phone || ''} ${shop.email ? `- ${shop.email}` : ''}</p>
@@ -1029,15 +1243,168 @@ async function renderShopDetailView(shopId) {
                     <iframe src="${embedUrl}" title="Bản đồ cửa hàng" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%; min-height:320px; border:0; border-radius:14px; background:#f4f4f5;"></iframe>
                 </section>
             ` : ''}
-            <section style="margin-top:32px;">
+            ${hasCareServices ? `
+                <section class="account-content" style="margin-top:24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; flex-wrap:wrap;">
+                        <div>
+                            <h3 style="margin-bottom:6px;">Khám phá shop</h3>
+                            <p style="margin:0; color:#6b7280;">Chuyển nhanh giữa sản phẩm và dịch vụ chăm sóc đã được Admin phê duyệt.</p>
+                        </div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn btn-secondary shop-detail-tab active" type="button" data-shop-tab-target="products">Sản phẩm</button>
+                            <button class="btn btn-secondary shop-detail-tab" type="button" data-shop-tab-target="care-services">Dịch vụ chăm sóc</button>
+                        </div>
+                    </div>
+                </section>
+            ` : ''}
+            <section style="margin-top:32px;${hasCareServices ? '' : ''}" data-shop-tab-panel="products">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px;">
                     <h2>Sản phẩm của shop</h2>
                     <a class="btn btn-secondary" href="#shop?shop=${shop._id || shopId}">Lọc trong shop</a>
                 </div>
                 <div class="products-grid">${products.map(createProductCard).join('') || '<p>Shop chưa có sản phẩm đang bán.</p>'}</div>
             </section>
+            ${hasCareServices ? `
+                <section class="account-content" data-shop-tab-panel="care-services" hidden style="margin-top:32px;">
+                    <div style="display:grid; gap:18px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+                            <div>
+                                <h2 style="margin-bottom:6px;">Dịch vụ chăm sóc thú cưng</h2>
+                                <p style="margin:0 0 8px; color:#6b7280;">${careService.description || 'Shop đã được Admin phê duyệt cung cấp dịch vụ chăm sóc cho thú cưng.'}</p>
+                                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                    <span class="status-badge status-badge-success">${formatCareServiceLabel(careService.label || 'standard')}</span>
+                                    ${(careService.serviceTypes || []).map((type) => `<span class="status-badge status-badge-info">${formatCareServiceType(type)}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div style="min-width:220px;">
+                                <p><strong>Hotline:</strong> ${careService.hotline || shop.phone || 'Đang cập nhật'}</p>
+                                <p><strong>Email:</strong> ${careService.email || shop.email || 'Đang cập nhật'}</p>
+                                <p><strong>Giờ hoạt động:</strong> ${careService.operatingHours?.open || '--'} - ${careService.operatingHours?.close || '--'}</p>
+                                <p><strong>Hỗ trợ tại nhà:</strong> ${careService.supportsHomeService ? 'Có' : 'Không'}</p>
+                                ${careAddress ? `<p><strong>Địa chỉ:</strong> ${careAddress}</p>` : ''}
+                            </div>
+                        </div>
+
+                        ${careService.images?.length ? `
+                            <div class="products-grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+                                ${careService.images.map((imageUrl, index) => `
+                                    <div class="product-card">
+                                        <img class="product-img" src="${imageUrl}" alt="Không gian dịch vụ ${index + 1}">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px;">
+                            ${careOfferings.length ? careOfferings.map((offering) => `
+                                <article class="product-card">
+                                    <img class="product-img" src="${resolveImage(offering.image, 'grooming')}" alt="${offering.name}">
+                                    <div class="product-info">
+                                        <span class="product-brand">${formatCareServiceType(offering.serviceType)}</span>
+                                        <h4 class="product-name">${offering.name}</h4>
+                                        <p>${offering.description || 'Dịch vụ chăm sóc dành cho thú cưng.'}</p>
+                                        <div class="product-price">
+                                            <span class="price-current">${formatCurrency(offering.price || 0)}</span>
+                                            <span class="price-old" style="text-decoration:none; color:#6b7280;">${offering.durationMinutes || 0} phút</span>
+                                        </div>
+                                        <div class="product-card-actions">
+                                            ${canBookCareService
+                                                ? `<button class="btn btn-primary btn-small" type="button" data-care-book-service="${offering._id}">Đặt lịch</button>`
+                                                : '<button class="btn btn-secondary btn-small" type="button" data-action="login">Đăng nhập để đặt lịch</button>'}
+                                        </div>
+                                    </div>
+                                </article>
+                            `).join('') : '<p>Shop đang hoàn thiện bảng giá dịch vụ chăm sóc. Vui lòng quay lại sau.</p>'}
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+                            <div class="order-detail-box">
+                                <h3>Thống kê dịch vụ</h3>
+                                <p>Tổng lịch hoàn thành: ${careStats.totalBookings || 0}</p>
+                                <p>Đánh giá đã ghi nhận: ${careStats.reviewCount || 0}</p>
+                                <p>Điểm trung bình: ${Number(careStats.averageRating || 0).toFixed(1)} / 5</p>
+                            </div>
+                            <div class="order-detail-box">
+                                <h3>Bản đồ cơ sở dịch vụ</h3>
+                                <p>${careAddress || address || 'Chưa có địa chỉ chi tiết.'}</p>
+                                ${careMapUrl ? `<p><a href="${careMapUrl}" target="_blank" rel="noreferrer">Mở bản đồ dịch vụ</a></p>` : ''}
+                            </div>
+                        </div>
+
+                        ${careMapEmbedUrl ? `
+                            <iframe src="${careMapEmbedUrl}" title="Bản đồ dịch vụ chăm sóc" loading="lazy" referrerpolicy="no-referrer-when-downgrade" style="width:100%; min-height:300px; border:0; border-radius:14px; background:#f4f4f5;"></iframe>
+                        ` : ''}
+
+                        <section>
+                            <h3>Đánh giá dịch vụ gần đây</h3>
+                            ${careReviews.map((review) => `
+                                <div class="review-item">
+                                    <strong>${review.buyer?.name || 'Khách hàng'}</strong> ${appGenerateStars(review.rating || 0)}
+                                    <p>${review.service?.name || 'Dịch vụ chăm sóc'}</p>
+                                    <p>${review.comment || 'Khách chưa để lại nhận xét chi tiết.'}</p>
+                                </div>
+                            `).join('') || '<p>Chưa có đánh giá dịch vụ nào.</p>'}
+                        </section>
+                    </div>
+                </section>
+            ` : ''}
         `);
         bindProductCards(document.getElementById('spaView'));
+
+        if (hasCareServices) {
+            document.querySelectorAll('[data-shop-tab-target]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const nextTab = button.dataset.shopTabTarget;
+                    document.querySelectorAll('[data-shop-tab-target]').forEach((item) => item.classList.toggle('active', item === button));
+                    document.querySelectorAll('[data-shop-tab-panel]').forEach((panel) => {
+                        panel.hidden = panel.dataset.shopTabPanel !== nextTab;
+                    });
+                });
+            });
+        }
+
+        document.querySelectorAll('[data-care-book-service]').forEach((button) => {
+            button.addEventListener('click', async () => {
+                const service = careOfferings.find((item) => item._id === button.dataset.careBookService);
+                if (!service) return;
+                if (!authManager.isAuthenticated) {
+                    authManager.showLoginModal();
+                    return;
+                }
+
+                const contactName = prompt('Tên người liên hệ đặt lịch', authManager.user?.name || '');
+                if (!contactName) return;
+                const contactPhone = prompt('Số điện thoại liên hệ', authManager.user?.phone || '');
+                if (!contactPhone) return;
+                const petName = prompt('Tên thú cưng', '');
+                if (petName === null) return;
+                const petType = prompt('Loại thú cưng', '');
+                if (petType === null) return;
+                const appointmentDate = prompt('Ngày hẹn (YYYY-MM-DD)', new Date().toISOString().slice(0, 10));
+                if (!appointmentDate) return;
+                const timeSlot = prompt('Khung giờ', '09:00');
+                if (!timeSlot) return;
+                const notes = prompt('Ghi chú thêm cho shop', '') || '';
+
+                try {
+                    await api.createCareServiceBooking(shop._id || shopId, {
+                        serviceId: service._id,
+                        contactName,
+                        contactPhone,
+                        contactEmail: authManager.user?.email || '',
+                        petName,
+                        petType,
+                        appointmentDate,
+                        timeSlot,
+                        notes
+                    });
+                    authManager.showNotification('Đã đặt lịch dịch vụ chăm sóc thành công.', 'success');
+                    window.location.hash = 'service-bookings';
+                } catch (error) {
+                    authManager.showNotification(error.message || 'Không thể đặt lịch dịch vụ.', 'error');
+                }
+            });
+        });
     } catch (error) {
         setSpaContent('Không tìm thấy cửa hàng', `<p>${error.message || 'Không thể tải cửa hàng này.'}</p><p><a href="#shop">Quay lại gian hàng</a></p>`);
     }
@@ -1098,6 +1465,7 @@ async function renderProductView(productId) {
         const shopId = shop._id || shop;
         const shopName = shop.name || 'Cửa hàng';
         const shopLogo = resolveImage(shop.logo, inferProductImageKey(product));
+        const sellerViewOnly = isSellerBuyingBlocked();
 
         setSpaContent(product.name, `
             <div class="product-detail-grid">
@@ -1114,14 +1482,22 @@ async function renderProductView(productId) {
                         <img src="${shopLogo}" alt="${shopName}">
                         <div>
                             <strong>${shopName}</strong>
+                            ${renderShopLabelBadges(shop)}
                             <p>${appGenerateStars(shop.rating || 0)} ${shop.reviewCount || 0} đánh giá</p>
                         </div>
                         ${shopId ? `<a class="btn btn-secondary btn-small" href="#shop-detail?id=${shopId}">Xem shop</a>` : ''}
                     </div>
                     <div class="product-detail-actions">
-                        <button class="btn btn-primary" id="spaAddToCart">Thêm vào giỏ</button>
-                        <button class="btn btn-primary" id="spaBuyNow">Đặt hàng ngay</button>
-                        <button class="btn btn-secondary" id="spaAddWishlist">Yêu thích</button>
+                        ${sellerViewOnly
+                            ? `
+                                <a class="btn btn-secondary" href="/pages/seller/dashboard.html">Về dashboard người bán</a>
+                                ${shopId ? `<a class="btn btn-secondary" href="#shop-detail?id=${shopId}">Xem shop</a>` : ''}
+                            `
+                            : `
+                                <button class="btn btn-primary" id="spaAddToCart">Thêm vào giỏ</button>
+                                <button class="btn btn-primary" id="spaBuyNow">Đặt hàng ngay</button>
+                                <button class="btn btn-secondary" id="spaAddWishlist">Yêu thích</button>
+                            `}
                     </div>
                 </div>
             </div>
@@ -1135,16 +1511,18 @@ async function renderProductView(productId) {
             </section>
         `);
 
-        document.getElementById('spaAddToCart').addEventListener('click', () => addToCart(product._id));
-        document.getElementById('spaBuyNow').addEventListener('click', () => buyNow(product._id));
-        document.getElementById('spaAddWishlist').addEventListener('click', async () => {
-            if (!authManager.isAuthenticated) {
-                authManager.showLoginModal();
-                return;
-            }
-            await api.addToWishlist(product._id);
-            authManager.showNotification('Đã thêm vào danh sách yêu thích.', 'success');
-        });
+        if (!sellerViewOnly) {
+            document.getElementById('spaAddToCart').addEventListener('click', () => addToCart(product._id));
+            document.getElementById('spaBuyNow').addEventListener('click', () => buyNow(product._id));
+            document.getElementById('spaAddWishlist').addEventListener('click', async () => {
+                if (!authManager.isAuthenticated) {
+                    authManager.showLoginModal();
+                    return;
+                }
+                await api.addToWishlist(product._id);
+                authManager.showNotification('Đã thêm vào danh sách yêu thích.', 'success');
+            });
+        }
         bindProductCards(document.getElementById('spaView'));
     } catch (error) {
         const sample = getSampleProduct(productId);
@@ -1178,13 +1556,13 @@ async function renderProductView(productId) {
 function getSampleProduct(productId) {
     return [
         { _id: '1', name: 'Hạt cao cấp cho chó', price: 42.99, originalPrice: 54.99, rating: 4.5, reviewCount: 2456, images: [displayImage('food')] },
-        { _id: '2', name: 'Thức ăn trong nhà cho mèo', price: 38.49, rating: 5, reviewCount: 1892, images: [displayImage('cat')] },
+        { _id: '2', name: 'Cát vệ sinh khử mùi cho mèo', price: 18.49, originalPrice: 23.99, rating: 4.8, reviewCount: 1892, images: [displayImage('litter')] },
         { _id: '3', name: 'Bánh thưởng dinh dưỡng cho chó', price: 15.99, originalPrice: 21.99, rating: 4, reviewCount: 3221, images: [displayImage('food')] },
-        { _id: '4', name: 'Thức ăn cho chim Forti-Diet', price: 12.99, rating: 4.5, reviewCount: 567, images: [displayImage('bird')] },
-        { _id: '5', name: 'Thức ăn cá Tropical Flakes', price: 8.49, rating: 5, reviewCount: 4102, images: [displayImage('fish')] },
-        { _id: '6', name: 'Cỏ khô Timothy cho thỏ', price: 18.99, rating: 4.5, reviewCount: 892, images: [displayImage('rabbit')] },
-        { _id: '7', name: 'Đồ chơi Kong Classic cho chó', price: 16.99, rating: 5, reviewCount: 5678, images: [displayImage('toy')] },
-        { _id: '8', name: 'Đồ chơi đào bới cho mèo', price: 19.99, originalPrice: 24.99, rating: 4, reviewCount: 1234, images: [displayImage('toy')] }
+        { _id: '4', name: 'Lồng nuôi chim gỗ cao cấp', price: 62.99, rating: 4.5, reviewCount: 567, images: [displayImage('habitat')] },
+        { _id: '5', name: 'Bể cá mini kèm lọc', price: 88.49, rating: 5, reviewCount: 1402, images: [displayImage('aquarium')] },
+        { _id: '6', name: 'Đệm ngủ êm cho thỏ và hamster', price: 24.99, rating: 4.5, reviewCount: 892, images: [displayImage('bed')] },
+        { _id: '7', name: 'Đồ chơi gặm nhai cao su cho chó', price: 16.99, rating: 5, reviewCount: 5678, images: [displayImage('toy')] },
+        { _id: '8', name: 'Yếm và vòng cổ thời trang cho mèo', price: 19.99, originalPrice: 24.99, rating: 4.2, reviewCount: 1234, images: [displayImage('fashion')] }
     ].find(product => product._id === productId);
 }
 
@@ -1299,6 +1677,12 @@ async function renderResetPasswordView(params) {
 function requireBuyerView() {
     if (!authManager.isAuthenticated) {
         authManager.showLoginModal();
+        return false;
+    }
+
+    if (authManager.user?.role === 'seller') {
+        authManager.showNotification('Tài khoản người bán không sử dụng được giỏ hàng, thanh toán và đơn mua.', 'error');
+        window.location.hash = '';
         return false;
     }
 
@@ -1835,6 +2219,11 @@ async function renderAccountView() {
                 <button class="btn btn-secondary" type="submit">Đổi mật khẩu</button>
             </form>
         </section>
+        <section class="account-content" style="margin-top:24px;">
+            <h2>Lịch hẹn chăm sóc</h2>
+            <p>Theo dõi các lịch tắm, grooming, khách sạn thú cưng và những dịch vụ chăm sóc khác bạn đã đặt.</p>
+            <a class="btn btn-secondary" href="#service-bookings">Xem lịch hẹn chăm sóc</a>
+        </section>
     `);
 
     document.getElementById('spaProfileForm').addEventListener('submit', async event => {
@@ -1977,6 +2366,66 @@ async function renderOrdersView() {
             if (!confirm('Bạn có chắc muốn hủy đơn này không?')) return;
             await api.cancelOrder(button.dataset.orderId, 'Customer requested');
             renderOrdersView();
+        });
+    });
+}
+
+async function renderCareServiceBookingsView() {
+    if (!requireBuyerView()) return;
+
+    const response = await api.getMyCareServiceBookings({ limit: 50 });
+    const bookings = response.data || [];
+
+    setSpaContent('Lịch hẹn chăm sóc của tôi', `
+        <div class="account-content orders-shell">
+            ${bookings.map((booking) => `
+                <article class="order-card">
+                    <div class="order-card-top">
+                        <div>
+                            <h3>${booking.service?.name || 'Dịch vụ chăm sóc'}</h3>
+                            <p class="order-card-date">${new Date(booking.appointmentDate).toLocaleString('vi-VN')}</p>
+                        </div>
+                        <div class="order-card-total">${formatCurrency(booking.totalAmount || 0)}</div>
+                    </div>
+                    <div class="order-card-badges">
+                        ${buildStatusBadge(formatReadableStatus(booking.status || 'pending'), booking.status === 'completed' ? 'success' : (booking.status === 'cancelled' || booking.status === 'rejected' ? 'danger' : 'info'))}
+                        <span class="status-badge status-badge-neutral">${booking.shop?.name || 'Shop dịch vụ'}</span>
+                    </div>
+                    <div class="order-card-meta">
+                        <span>${formatCareServiceType(booking.service?.serviceType || '')}</span>
+                        <span>${booking.timeSlot || 'Chưa chọn khung giờ'}</span>
+                        <span>${booking.petName ? `${booking.petName} • ` : ''}${booking.petType || 'Chưa có thông tin thú cưng'}</span>
+                    </div>
+                    <div class="order-card-actions">
+                        ${['pending', 'confirmed'].includes(booking.status) ? `<button class="btn btn-secondary cancel-care-booking" data-care-booking-id="${booking._id}">Hủy lịch</button>` : ''}
+                        ${booking.status === 'completed' && !booking.reviewedAt ? `<button class="btn btn-primary review-care-booking" data-care-booking-id="${booking._id}">Đánh giá dịch vụ</button>` : ''}
+                        ${booking.shop?._id ? `<a class="btn btn-secondary" href="#shop-detail?id=${booking.shop._id}">Xem shop</a>` : ''}
+                    </div>
+                </article>
+            `).join('') || '<p>Bạn chưa có lịch hẹn chăm sóc nào.</p>'}
+        </div>
+    `);
+
+    document.querySelectorAll('.cancel-care-booking').forEach((button) => {
+        button.addEventListener('click', async () => {
+            if (!confirm('Bạn có chắc muốn hủy lịch hẹn này không?')) return;
+            await api.cancelMyCareServiceBooking(button.dataset.careBookingId, 'Khách hàng hủy lịch');
+            authManager.showNotification('Đã hủy lịch hẹn dịch vụ.', 'success');
+            renderCareServiceBookingsView();
+        });
+    });
+
+    document.querySelectorAll('.review-care-booking').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const rating = prompt('Chấm điểm dịch vụ từ 1 đến 5 sao', '5');
+            if (!rating) return;
+            const comment = prompt('Nhận xét về dịch vụ', '') || '';
+            await api.createCareServiceReview(button.dataset.careBookingId, {
+                rating: Number(rating),
+                comment
+            });
+            authManager.showNotification('Đã gửi đánh giá dịch vụ.', 'success');
+            renderCareServiceBookingsView();
         });
     });
 }
@@ -2176,3 +2625,6 @@ function appShowLoading(element) {
     if (!element) return;
     element.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
 }
+
+
+

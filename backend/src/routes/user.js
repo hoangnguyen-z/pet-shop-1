@@ -5,6 +5,16 @@ const { authenticate } = require('../middleware/auth');
 const { sendSuccess } = require('../middleware/responseHandler');
 const ApiError = require('../utils/ApiError');
 
+function requireBuyer(req, res, next) {
+    if (req.user.role !== 'buyer') {
+        return next(ApiError.forbidden('Chi tai khoan nguoi mua moi duoc su dung gio hang va danh sach yeu thich'));
+    }
+    next();
+}
+
+router.use(authenticate);
+router.use(requireBuyer);
+
 router.get('/cart', authenticate, async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id).populate('cart.items.product');

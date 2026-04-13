@@ -39,7 +39,20 @@ class ApiClient {
                 headers
             });
 
-            const data = response.status === 204 ? {} : await response.json();
+            let data = {};
+            if (response.status !== 204) {
+                const rawBody = await response.text();
+                if (rawBody) {
+                    try {
+                        data = JSON.parse(rawBody);
+                    } catch (parseError) {
+                        data = {
+                            success: false,
+                            message: rawBody
+                        };
+                    }
+                }
+            }
 
             if (!response.ok) {
                 const isAuthFlow = endpoint.startsWith('/auth/login/')
@@ -99,6 +112,17 @@ class ApiClient {
         formData.append('image', file);
 
         return this.request('/uploads/image', {
+            method: 'POST',
+            body: formData
+        });
+    }
+
+    async uploadDocument(file, folder = 'documents') {
+        const formData = new FormData();
+        formData.append('folder', folder);
+        formData.append('document', file);
+
+        return this.request('/uploads/document', {
             method: 'POST',
             body: formData
         });
@@ -298,6 +322,30 @@ class ApiClient {
         return this.post('/orders', orderData);
     }
 
+    createPayment(data) {
+        return this.post('/payments/create', data);
+    }
+
+    getPaymentQr(id) {
+        return this.get(`/payments/${id}/qr`);
+    }
+
+    getPaymentStatus(id) {
+        return this.get(`/payments/${id}/status`);
+    }
+
+    checkPayment(id) {
+        return this.post(`/payments/${id}/check`, {});
+    }
+
+    verifyPayment(id, verificationCode) {
+        return this.post(`/payments/${id}/verify`, { verification_code: verificationCode });
+    }
+
+    submitPaymentCallback(data) {
+        return this.post('/payments/callback', data);
+    }
+
     validateCoupon(code, orderData = {}) {
         const payload = typeof orderData === 'number'
             ? { code, subtotal: orderData }
@@ -339,6 +387,90 @@ class ApiClient {
 
     updateBankAccount(bankInfo) {
         return this.put('/shops/my-shop/bank', bankInfo);
+    }
+
+    getSellerApplication() {
+        return this.get('/seller-applications/me');
+    }
+
+    saveSellerApplication(data) {
+        return this.put('/seller-applications/me', data);
+    }
+
+    submitSellerApplication(data) {
+        return this.post('/seller-applications/me/submit', data);
+    }
+
+    resubmitSellerApplication(data) {
+        return this.post('/seller-applications/me/resubmit', data);
+    }
+
+    getSellerCareService() {
+        return this.get('/seller/care-services/me');
+    }
+
+    saveSellerCareServiceApplication(data) {
+        return this.put('/seller/care-services/me', data);
+    }
+
+    submitSellerCareServiceApplication(data) {
+        return this.post('/seller/care-services/me/submit', data);
+    }
+
+    resubmitSellerCareServiceApplication(data) {
+        return this.post('/seller/care-services/me/resubmit', data);
+    }
+
+    getSellerCareServiceOfferings() {
+        return this.get('/seller/care-services/offerings');
+    }
+
+    createSellerCareServiceOffering(data) {
+        return this.post('/seller/care-services/offerings', data);
+    }
+
+    updateSellerCareServiceOffering(id, data) {
+        return this.put(`/seller/care-services/offerings/${id}`, data);
+    }
+
+    deleteSellerCareServiceOffering(id) {
+        return this.delete(`/seller/care-services/offerings/${id}`);
+    }
+
+    getSellerCareServiceBookings(params = {}) {
+        return this.get('/seller/care-services/bookings', params);
+    }
+
+    updateSellerCareServiceBookingStatus(id, status, sellerNote = '') {
+        return this.put(`/seller/care-services/bookings/${id}/status`, { status, sellerNote });
+    }
+
+    getShopCareServices(id) {
+        return this.get(`/shops/${id}/care-services`);
+    }
+
+    createCareServiceBooking(shopId, data) {
+        return this.post(`/shops/${shopId}/care-services/bookings`, data);
+    }
+
+    getMyCareServiceBookings(params = {}) {
+        return this.get('/user/care-services/bookings', params);
+    }
+
+    getMyCareServiceBooking(id) {
+        return this.get(`/user/care-services/bookings/${id}`);
+    }
+
+    cancelMyCareServiceBooking(id, note = '') {
+        return this.put(`/user/care-services/bookings/${id}/cancel`, { note });
+    }
+
+    rescheduleMyCareServiceBooking(id, data) {
+        return this.put(`/user/care-services/bookings/${id}/reschedule`, data);
+    }
+
+    createCareServiceReview(id, data) {
+        return this.post(`/user/care-services/bookings/${id}/reviews`, data);
     }
 
     getSellerProducts(params = {}) {
@@ -485,6 +617,38 @@ class ApiClient {
         return this.get('/admin/categories/categories');
     }
 
+    getAdminCareServiceApplications(params = {}) {
+        return this.get('/admin/care-services/applications', params);
+    }
+
+    getAdminCareServiceApplication(id) {
+        return this.get(`/admin/care-services/applications/${id}`);
+    }
+
+    startAdminCareServiceReview(id, data = {}) {
+        return this.post(`/admin/care-services/applications/${id}/start-review`, data);
+    }
+
+    requestAdminCareServiceMoreInfo(id, data) {
+        return this.post(`/admin/care-services/applications/${id}/request-more-info`, data);
+    }
+
+    approveAdminCareServiceApplication(id, data = {}) {
+        return this.post(`/admin/care-services/applications/${id}/approve`, data);
+    }
+
+    rejectAdminCareServiceApplication(id, data) {
+        return this.post(`/admin/care-services/applications/${id}/reject`, data);
+    }
+
+    suspendAdminCareServiceApplication(id, data) {
+        return this.post(`/admin/care-services/applications/${id}/suspend`, data);
+    }
+
+    banAdminCareServiceApplication(id, data) {
+        return this.post(`/admin/care-services/applications/${id}/ban`, data);
+    }
+
     createCategory(data) {
         return this.post('/admin/categories/categories', data);
     }
@@ -515,6 +679,12 @@ api.buyerApi = {
     getOrder: api.getOrder.bind(api),
     getOrderQuote: api.getOrderQuote.bind(api),
     createOrder: api.createOrder.bind(api),
+    createPayment: api.createPayment.bind(api),
+    getPaymentQr: api.getPaymentQr.bind(api),
+    getPaymentStatus: api.getPaymentStatus.bind(api),
+    checkPayment: api.checkPayment.bind(api),
+    verifyPayment: api.verifyPayment.bind(api),
+    submitPaymentCallback: api.submitPaymentCallback.bind(api),
     cancelOrder: api.cancelOrder.bind(api),
     validateCoupon: api.validateCoupon.bind(api),
     createReview: api.createReview.bind(api)
@@ -523,6 +693,7 @@ api.sellerApi = {
     getDashboard: api.getSellerDashboard.bind(api),
     getRevenue: api.getSellerRevenue.bind(api),
     uploadImage: api.uploadImage.bind(api),
+    uploadDocument: api.uploadDocument.bind(api),
     getProducts: api.getSellerProducts.bind(api),
     createProduct: api.createProduct.bind(api),
     updateProduct: api.updateProduct.bind(api),

@@ -1,23 +1,23 @@
 const express = require('express');
-const { body, param } = require('express-validator');
-const router = express.Router();
+const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+
+const router = express.Router();
+
 const config = require('../config/env');
-const { User, Shop } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { User, SellerApplication } = require('../models');
+const { authenticate } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { sendSuccess, sendCreated } = require('../middleware/responseHandler');
 const ApiError = require('../utils/ApiError');
-const { ROLES, SHOP_STATUS } = require('../config/constants');
-
-const makeShopSlug = (name) => {
-    const base = String(name || 'shop')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '') || 'shop';
-    return `${base}-${Date.now().toString(36)}`;
-};
+const {
+    ROLES,
+    SELLER_APPLICATION_STATUS,
+    SELLER_APPLICATION_TYPE
+} = require('../config/constants');
+const { resolveSellerAccessContext } = require('../services/sellerAccessService');
+const { normalizeAddress, syncUserSellerState } = require('../services/sellerApplicationWorkflow');
 
 const generateTokens = (userId) => {
     const accessToken = jwt.sign(
@@ -38,111 +38,174 @@ const generateTokens = (userId) => {
 const buyerRegisterValidation = [
     body('name')
         .trim()
-        .notEmpty().withMessage('Họ tên là bắt buộc')
-        .isLength({ max: 100 }).withMessage('Họ tên không quá 100 ký tự'),
+        .notEmpty().withMessage('Ho ten la bat buoc')
+        .isLength({ max: 100 }).withMessage('Ho ten khong qua 100 ky tu'),
     body('email')
         .trim()
-        .notEmpty().withMessage('Email là bắt buộc')
-        .isEmail().withMessage('Email không hợp lệ')
+        .notEmpty().withMessage('Email la bat buoc')
+        .isEmail().withMessage('Email khong hop le')
         .normalizeEmail(),
     body('phone')
         .trim()
-        .notEmpty().withMessage('Số điện thoại là bắt buộc')
-        .matches(/^[0-9]{10,11}$/).withMessage('Số điện thoại phải có 10-11 chữ số'),
+        .notEmpty().withMessage('So dien thoai la bat buoc')
+        .matches(/^[0-9]{10,11}$/).withMessage('So dien thoai phai co 10-11 chu so'),
     body('password')
-        .notEmpty().withMessage('Mật khẩu là bắt buộc')
-        .isLength({ min: 6 }).withMessage('Mật khẩu phải có ít nhất 6 ký tự')
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số')
+        .notEmpty().withMessage('Mat khau la bat buoc')
+        .isLength({ min: 6 }).withMessage('Mat khau phai co it nhat 6 ky tu')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mat khau phai chua it nhat 1 chu hoa, 1 chu thuong va 1 so')
 ];
 
 const sellerRegisterValidation = [
     body('name')
         .trim()
-        .notEmpty().withMessage('Họ tên là bắt buộc')
-        .isLength({ max: 100 }).withMessage('Họ tên không quá 100 ký tự'),
+        .notEmpty().withMessage('Ho ten la bat buoc')
+        .isLength({ max: 100 }).withMessage('Ho ten khong qua 100 ky tu'),
     body('email')
         .trim()
-        .notEmpty().withMessage('Email là bắt buộc')
-        .isEmail().withMessage('Email không hợp lệ')
+        .notEmpty().withMessage('Email la bat buoc')
+        .isEmail().withMessage('Email khong hop le')
         .normalizeEmail(),
     body('phone')
         .trim()
-        .notEmpty().withMessage('Số điện thoại là bắt buộc')
-        .matches(/^[0-9]{10,11}$/).withMessage('Số điện thoại phải có 10-11 chữ số'),
+        .notEmpty().withMessage('So dien thoai la bat buoc')
+        .matches(/^[0-9]{10,11}$/).withMessage('So dien thoai phai co 10-11 chu so'),
     body('password')
-        .notEmpty().withMessage('Mật khẩu là bắt buộc')
-        .isLength({ min: 6 }).withMessage('Mật khẩu phải có ít nhất 6 ký tự')
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số'),
+        .notEmpty().withMessage('Mat khau la bat buoc')
+        .isLength({ min: 6 }).withMessage('Mat khau phai co it nhat 6 ky tu')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mat khau phai chua it nhat 1 chu hoa, 1 chu thuong va 1 so'),
+    body('applicationType')
+        .optional()
+        .isIn(Object.values(SELLER_APPLICATION_TYPE)).withMessage('Loai ho so mo shop khong hop le'),
     body('shopName')
+        .optional()
         .trim()
-        .notEmpty().withMessage('Tên cửa hàng là bắt buộc')
-        .isLength({ max: 200 }).withMessage('Tên cửa hàng không quá 200 ký tự'),
+        .isLength({ max: 200 }).withMessage('Ten shop du kien khong qua 200 ky tu'),
     body('shopDescription')
         .optional()
-        .isLength({ max: 2000 }).withMessage('Mô tả cửa hàng không quá 2000 ký tự'),
+        .isLength({ max: 2000 }).withMessage('Mo ta shop khong qua 2000 ky tu'),
     body('shopPhone')
         .optional()
-        .matches(/^[0-9]{10,11}$/).withMessage('Số điện thoại cửa hàng phải có 10-11 chữ số'),
+        .matches(/^[0-9]{10,11}$/).withMessage('So dien thoai shop phai co 10-11 chu so'),
     body('shopAddress')
         .optional()
-        .isObject()
+        .isObject(),
+    body('identityNumber')
+        .optional()
+        .trim()
+        .isLength({ max: 40 }).withMessage('Giay to dinh danh khong hop le')
 ];
 
 const loginValidation = [
     body('email')
         .trim()
-        .notEmpty().withMessage('Email là bắt buộc')
-        .isEmail().withMessage('Email không hợp lệ')
+        .notEmpty().withMessage('Email la bat buoc')
+        .isEmail().withMessage('Email khong hop le')
         .normalizeEmail(),
     body('password')
-        .notEmpty().withMessage('Mật khẩu là bắt buộc')
+        .notEmpty().withMessage('Mat khau la bat buoc')
 ];
 
 const forgotPasswordValidation = [
     body('email')
         .trim()
-        .notEmpty().withMessage('Email là bắt buộc')
-        .isEmail().withMessage('Email không hợp lệ')
+        .notEmpty().withMessage('Email la bat buoc')
+        .isEmail().withMessage('Email khong hop le')
         .normalizeEmail()
 ];
 
 const resetPasswordValidation = [
     body('token')
-        .notEmpty().withMessage('Token là bắt buộc'),
+        .notEmpty().withMessage('Token la bat buoc'),
     body('newPassword')
-        .notEmpty().withMessage('Mật khẩu mới là bắt buộc')
-        .isLength({ min: 6 }).withMessage('Mật khẩu phải có ít nhất 6 ký tự')
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số')
+        .notEmpty().withMessage('Mat khau moi la bat buoc')
+        .isLength({ min: 6 }).withMessage('Mat khau phai co it nhat 6 ky tu')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mat khau phai chua it nhat 1 chu hoa, 1 chu thuong va 1 so')
 ];
 
 const changePasswordValidation = [
     body('currentPassword')
-        .notEmpty().withMessage('Mật khẩu hiện tại là bắt buộc'),
+        .notEmpty().withMessage('Mat khau hien tai la bat buoc'),
     body('newPassword')
-        .notEmpty().withMessage('Mật khẩu mới là bắt buộc')
-        .isLength({ min: 6 }).withMessage('Mật khẩu phải có ít nhất 6 ký tự')
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số')
+        .notEmpty().withMessage('Mat khau moi la bat buoc')
+        .isLength({ min: 6 }).withMessage('Mat khau phai co it nhat 6 ky tu')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mat khau phai chua it nhat 1 chu hoa, 1 chu thuong va 1 so')
         .custom((value, { req }) => {
             if (value === req.body.currentPassword) {
-                throw new Error('Mật khẩu mới phải khác mật khẩu hiện tại');
+                throw new Error('Mat khau moi phai khac mat khau hien tai');
             }
             return true;
         })
 ];
 
+async function createDraftApplicationIfNeeded(user, payload) {
+    const {
+        shopName,
+        shopDescription,
+        shopPhone,
+        shopAddress,
+        identityNumber,
+        applicationType
+    } = payload;
+
+    if (!shopName && !shopDescription && !identityNumber && !applicationType) {
+        return null;
+    }
+
+    const application = await SellerApplication.findOneAndUpdate(
+        { user: user._id },
+        {
+            user: user._id,
+            applicationType: applicationType || SELLER_APPLICATION_TYPE.STANDARD,
+            representativeName: user.name,
+            representativeEmail: user.email,
+            representativePhone: user.phone,
+            identityNumber: identityNumber || '',
+            proposedShopName: shopName || `Shop cua ${user.name}`,
+            shopDescription: shopDescription || '',
+            shopPhone: shopPhone || user.phone,
+            shopEmail: user.email,
+            shopAddress: normalizeAddress(shopAddress),
+            status: SELLER_APPLICATION_STATUS.DRAFT
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true, runValidators: true }
+    );
+
+    await syncUserSellerState(user, {
+        status: SELLER_APPLICATION_STATUS.DRAFT,
+        applicationType: application.applicationType
+    });
+
+    return application;
+}
+
+async function buildSellerPayload(user) {
+    const sellerContext = await resolveSellerAccessContext(user);
+    return {
+        user: user.toJSON(),
+        shop: sellerContext.shop ? sellerContext.shop.toJSON() : null,
+        application: sellerContext.application ? sellerContext.application.toJSON() : null,
+        sellerAccess: {
+            status: sellerContext.sellerAccessStatus,
+            canAccessSellerCenter: sellerContext.canAccessSellerCenter,
+            verificationLevel: sellerContext.verificationLevel,
+            labels: sellerContext.labels
+        }
+    };
+}
+
 router.post('/register/buyer', buyerRegisterValidation, validate, async (req, res, next) => {
     try {
         const { name, email, phone, password } = req.body;
 
-        const existingUser = await User.findOne({ 
-            $or: [{ email }, { phone }] 
+        const existingUser = await User.findOne({
+            $or: [{ email }, { phone }]
         });
-        
+
         if (existingUser) {
             if (existingUser.email === email) {
-                throw ApiError.badRequest('Email đã được sử dụng');
+                throw ApiError.badRequest('Email da duoc su dung');
             }
-            throw ApiError.badRequest('Số điện thoại đã được sử dụng');
+            throw ApiError.badRequest('So dien thoai da duoc su dung');
         }
 
         const user = await User.create({
@@ -157,7 +220,7 @@ router.post('/register/buyer', buyerRegisterValidation, validate, async (req, re
         user.refreshToken = tokens.refreshToken;
         await user.save();
 
-        sendCreated(res, 'Đăng ký thành công', {
+        sendCreated(res, 'Dang ky thanh cong', {
             user: user.toJSON(),
             ...tokens
         });
@@ -168,17 +231,22 @@ router.post('/register/buyer', buyerRegisterValidation, validate, async (req, re
 
 router.post('/register/seller', sellerRegisterValidation, validate, async (req, res, next) => {
     try {
-        const { name, email, phone, password, shopName, shopDescription, shopPhone, shopAddress } = req.body;
+        const {
+            name,
+            email,
+            phone,
+            password
+        } = req.body;
 
-        const existingUser = await User.findOne({ 
-            $or: [{ email }, { phone }] 
+        const existingUser = await User.findOne({
+            $or: [{ email }, { phone }]
         });
-        
+
         if (existingUser) {
             if (existingUser.email === email) {
-                throw ApiError.badRequest('Email đã được sử dụng');
+                throw ApiError.badRequest('Email da duoc su dung');
             }
-            throw ApiError.badRequest('Số điện thoại đã được sử dụng');
+            throw ApiError.badRequest('So dien thoai da duoc su dung');
         }
 
         const user = await User.create({
@@ -189,24 +257,18 @@ router.post('/register/seller', sellerRegisterValidation, validate, async (req, 
             role: ROLES.SELLER
         });
 
-        const shop = await Shop.create({
-            owner: user._id,
-            name: shopName,
-            slug: makeShopSlug(shopName),
-            description: shopDescription || '',
-            phone: shopPhone || phone,
-            address: shopAddress || {},
-            status: SHOP_STATUS.PENDING,
-            email: email
-        });
-
+        const application = await createDraftApplicationIfNeeded(user, req.body);
         const tokens = generateTokens(user._id);
         user.refreshToken = tokens.refreshToken;
         await user.save();
 
-        sendCreated(res, 'Đăng ký thành công', {
+        sendCreated(res, 'Dang ky tai khoan nguoi ban thanh cong. Vui long gui ho so mo shop de duoc Admin xet duyet.', {
             user: user.toJSON(),
-            shop: shop.toJSON(),
+            application: application ? application.toJSON() : null,
+            sellerAccess: {
+                status: application?.status || null,
+                canAccessSellerCenter: false
+            },
             ...tokens
         });
     } catch (error) {
@@ -219,18 +281,18 @@ router.post('/login/buyer', loginValidation, validate, async (req, res, next) =>
         const { email, password } = req.body;
 
         const user = await User.findOne({ email, role: ROLES.BUYER }).select('+password');
-        
+
         if (!user) {
-            throw ApiError.unauthorized('Email hoặc mật khẩu không đúng');
+            throw ApiError.unauthorized('Email hoac mat khau khong dung');
         }
 
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
-            throw ApiError.unauthorized('Email hoặc mật khẩu không đúng');
+            throw ApiError.unauthorized('Email hoac mat khau khong dung');
         }
 
         if (user.status === 'banned') {
-            throw ApiError.forbidden('Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.');
+            throw ApiError.forbidden('Tai khoan da bi khoa. Vui long lien he ho tro.');
         }
 
         const tokens = generateTokens(user._id);
@@ -238,7 +300,7 @@ router.post('/login/buyer', loginValidation, validate, async (req, res, next) =>
         user.lastLoginAt = new Date();
         await user.save();
 
-        sendSuccess(res, 'Đăng nhập thành công', {
+        sendSuccess(res, 'Dang nhap thanh cong', {
             user: user.toJSON(),
             ...tokens
         });
@@ -252,24 +314,18 @@ router.post('/login/seller', loginValidation, validate, async (req, res, next) =
         const { email, password } = req.body;
 
         const user = await User.findOne({ email, role: ROLES.SELLER }).select('+password');
-        
+
         if (!user) {
-            throw ApiError.unauthorized('Email hoặc mật khẩu không đúng');
+            throw ApiError.unauthorized('Email hoac mat khau khong dung');
         }
 
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
-            throw ApiError.unauthorized('Email hoặc mật khẩu không đúng');
+            throw ApiError.unauthorized('Email hoac mat khau khong dung');
         }
 
         if (user.status === 'banned') {
-            throw ApiError.forbidden('Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.');
-        }
-
-        const shop = await Shop.findOne({ owner: user._id });
-        
-        if (!shop) {
-            throw ApiError.badRequest('Cửa hàng không tồn tại');
+            throw ApiError.forbidden('Tai khoan da bi khoa. Vui long lien he ho tro.');
         }
 
         const tokens = generateTokens(user._id);
@@ -277,9 +333,10 @@ router.post('/login/seller', loginValidation, validate, async (req, res, next) =
         user.lastLoginAt = new Date();
         await user.save();
 
-        sendSuccess(res, 'Đăng nhập thành công', {
-            user: user.toJSON(),
-            shop: shop.toJSON(),
+        const payload = await buildSellerPayload(user);
+
+        sendSuccess(res, 'Dang nhap thanh cong', {
+            ...payload,
             ...tokens
         });
     } catch (error) {
@@ -290,7 +347,7 @@ router.post('/login/seller', loginValidation, validate, async (req, res, next) =
 router.post('/logout', authenticate, async (req, res, next) => {
     try {
         await User.findByIdAndUpdate(req.user.id, { refreshToken: null });
-        sendSuccess(res, 'Đăng xuất thành công');
+        sendSuccess(res, 'Dang xuat thanh cong');
     } catch (error) {
         next(error);
     }
@@ -301,32 +358,32 @@ router.post('/refresh-token', async (req, res, next) => {
         const { refreshToken } = req.body;
 
         if (!refreshToken) {
-            throw ApiError.badRequest('Refresh token là bắt buộc');
+            throw ApiError.badRequest('Refresh token la bat buoc');
         }
 
         try {
             const decoded = jwt.verify(refreshToken, config.jwt.secret);
 
             if (decoded.type !== 'refresh') {
-                throw ApiError.badRequest('Token không hợp lệ');
+                throw ApiError.badRequest('Token khong hop le');
             }
 
             const user = await User.findById(decoded.id).select('+refreshToken');
             if (!user || user.refreshToken !== refreshToken) {
-                throw ApiError.badRequest('Token không hợp lệ');
+                throw ApiError.badRequest('Token khong hop le');
             }
 
             if (user.status === 'banned') {
-                throw ApiError.forbidden('Tài khoản đã bị khóa');
+                throw ApiError.forbidden('Tai khoan da bi khoa');
             }
 
             const tokens = generateTokens(user._id);
             user.refreshToken = tokens.refreshToken;
             await user.save();
 
-            sendSuccess(res, 'Làm mới token thành công', tokens);
-        } catch (e) {
-            throw ApiError.unauthorized('Token đã hết hạn hoặc không hợp lệ');
+            sendSuccess(res, 'Lam moi token thanh cong', tokens);
+        } catch (error) {
+            throw ApiError.unauthorized('Token da het han hoac khong hop le');
         }
     } catch (error) {
         next(error);
@@ -338,23 +395,22 @@ router.post('/forgot-password', forgotPasswordValidation, validate, async (req, 
         const { email } = req.body;
 
         const user = await User.findOne({ email });
-        
+
         if (!user) {
-            return sendSuccess(res, 'Nếu email tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu');
+            return sendSuccess(res, 'Neu email ton tai, chung toi da tao lien ket dat lai mat khau');
         }
 
         const resetToken = crypto.randomBytes(32).toString('hex');
         const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-        
+
         user.resetPasswordToken = resetTokenHash;
         user.resetPasswordExpires = Date.now() + 30 * 60 * 1000;
         await user.save();
 
         const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5500'}/#reset-password?token=${resetToken}&email=${email}`;
-        
         console.log(`Password Reset Link: ${resetUrl}`);
-        
-        sendSuccess(res, 'Nếu email tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu');
+
+        sendSuccess(res, 'Neu email ton tai, chung toi da tao lien ket dat lai mat khau');
     } catch (error) {
         next(error);
     }
@@ -372,7 +428,7 @@ router.post('/reset-password', resetPasswordValidation, validate, async (req, re
         });
 
         if (!user) {
-            throw ApiError.badRequest('Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn');
+            throw ApiError.badRequest('Token dat lai mat khau khong hop le hoac da het han');
         }
 
         user.password = newPassword;
@@ -381,7 +437,7 @@ router.post('/reset-password', resetPasswordValidation, validate, async (req, re
         user.refreshToken = null;
         await user.save();
 
-        sendSuccess(res, 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.');
+        sendSuccess(res, 'Dat lai mat khau thanh cong. Vui long dang nhap lai.');
     } catch (error) {
         next(error);
     }
@@ -390,15 +446,21 @@ router.post('/reset-password', resetPasswordValidation, validate, async (req, re
 router.get('/me', authenticate, async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
-        let shop = null;
 
-        if (user.role === ROLES.SELLER) {
-            shop = await Shop.findOne({ owner: user._id });
+        if (!user) {
+            throw ApiError.notFound('Nguoi dung khong ton tai');
         }
 
-        sendSuccess(res, 'Lấy thông tin thành công', {
+        if (user.role === ROLES.SELLER) {
+            const payload = await buildSellerPayload(user);
+            return sendSuccess(res, 'Lay thong tin thanh cong', payload);
+        }
+
+        sendSuccess(res, 'Lay thong tin thanh cong', {
             user: user.toJSON(),
-            shop: shop ? shop.toJSON() : null
+            shop: null,
+            application: null,
+            sellerAccess: null
         });
     } catch (error) {
         next(error);
@@ -407,10 +469,10 @@ router.get('/me', authenticate, async (req, res, next) => {
 
 router.put('/profile', authenticate, async (req, res, next) => {
     try {
-        const allowedFields = ['name', 'phone', 'avatar', 'dateOfBirth', 'gender', 'addresses'];
+        const allowedFields = ['name', 'phone', 'avatar', 'dateOfBirth', 'gender', 'addresses', 'linkedPaymentAccounts'];
         const updates = {};
 
-        allowedFields.forEach(field => {
+        allowedFields.forEach((field) => {
             if (req.body[field] !== undefined) {
                 updates[field] = req.body[field];
             }
@@ -422,7 +484,7 @@ router.put('/profile', authenticate, async (req, res, next) => {
             { new: true, runValidators: true }
         );
 
-        sendSuccess(res, 'Cập nhật hồ sơ thành công', user.toJSON());
+        sendSuccess(res, 'Cap nhat ho so thanh cong', user.toJSON());
     } catch (error) {
         next(error);
     }
@@ -436,13 +498,13 @@ router.put('/change-password', authenticate, changePasswordValidation, validate,
 
         const isMatch = await user.comparePassword(currentPassword);
         if (!isMatch) {
-            throw ApiError.badRequest('Mật khẩu hiện tại không đúng');
+            throw ApiError.badRequest('Mat khau hien tai khong dung');
         }
 
         user.password = newPassword;
         await user.save();
 
-        sendSuccess(res, 'Đổi mật khẩu thành công');
+        sendSuccess(res, 'Doi mat khau thanh cong');
     } catch (error) {
         next(error);
     }

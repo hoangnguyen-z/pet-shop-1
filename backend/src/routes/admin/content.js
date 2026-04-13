@@ -661,6 +661,7 @@ const listSettlements = asyncHandler(async (req, res) => {
         model: Settlement,
         key: 'settlements',
         query,
+        sort: { createdAt: -1 },
         populate: [
             { path: 'shop', select: 'name slug bankAccount' },
             { path: 'seller', select: 'name email phone' },
@@ -673,10 +674,20 @@ const updateSettlement = asyncHandler(async (req, res) => {
     const settlement = await Settlement.findById(req.params.id);
     if (!settlement) throw ApiError.notFound('Settlement not found');
 
+    const nextStatus = req.body.status || settlement.status;
+    if (nextStatus === 'completed' && !(req.body.transactionId || settlement.transactionId)) {
+        throw ApiError.badRequest('Transaction ID is required when completing a settlement');
+    }
+
     ['status', 'transactionId', 'notes', 'bankInfo'].forEach(field => {
         if (req.body[field] !== undefined) settlement[field] = req.body[field];
     });
-    if (settlement.status === 'completed' && !settlement.completedAt) settlement.completedAt = new Date();
+    if (settlement.status === 'completed' && !settlement.completedAt) {
+        settlement.completedAt = new Date();
+    }
+    if (settlement.status !== 'completed' && req.body.status) {
+        settlement.completedAt = undefined;
+    }
 
     await settlement.save();
     await audit(req, 'update', 'settlement', settlement._id, `Updated settlement ${settlement._id}`, settlement);

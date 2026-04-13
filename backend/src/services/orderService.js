@@ -9,8 +9,6 @@ const {
     SHIPPING_STATUS
 } = require('../config/constants');
 
-const FRONTEND_BASE_URL = process.env.FRONTEND_URL || 'http://localhost:5500';
-
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function normalizePaymentMethod(value) {
@@ -102,6 +100,9 @@ function initialPaymentStatus(paymentMethod) {
 }
 
 function deriveShippingStatus(orderStatus) {
+    if ([ORDER_STATUS.WAITING_PAYMENT, ORDER_STATUS.PAID, ORDER_STATUS.PENDING, ORDER_STATUS.CONFIRMED, ORDER_STATUS.PREPARING].includes(orderStatus)) {
+        return SHIPPING_STATUS.PENDING;
+    }
     if (orderStatus === ORDER_STATUS.SHIPPING) return SHIPPING_STATUS.SHIPPING;
     if ([ORDER_STATUS.DELIVERED, ORDER_STATUS.COMPLETED].includes(orderStatus)) return SHIPPING_STATUS.DELIVERED;
     if ([ORDER_STATUS.CANCELLED, ORDER_STATUS.RETURNED].includes(orderStatus)) return SHIPPING_STATUS.CANCELLED;
@@ -398,7 +399,9 @@ async function reserveCouponUsage(coupon, session = null) {
 
 function buildOrderDocument({ user, shippingAddress, shippingMethod, paymentMethod, preparedItems, subtotal, shippingFee, couponResult, finalAmount, note, redirectUrl }) {
     const paymentStatus = initialPaymentStatus(paymentMethod);
-    const orderStatus = ORDER_STATUS.PENDING;
+    const orderStatus = paymentMethod === PAYMENT_METHODS.ONLINE
+        ? ORDER_STATUS.WAITING_PAYMENT
+        : ORDER_STATUS.PENDING;
 
     return {
         orderNumber: undefined,
@@ -412,7 +415,7 @@ function buildOrderDocument({ user, shippingAddress, shippingMethod, paymentMeth
             sku: item.sku,
             price: item.price,
             quantity: item.quantity,
-            shopStatus: ORDER_STATUS.PENDING
+            shopStatus: orderStatus
         })),
         shippingAddress,
         shippingMethod,
@@ -505,11 +508,6 @@ async function createOrderWithCompensation(context) {
 
         order = await Order.create(orderData);
 
-        if (context.paymentMethod === PAYMENT_METHODS.ONLINE) {
-            order.payment.redirectUrl = `${FRONTEND_BASE_URL}/#order?id=${order._id}&payment=online-pending`;
-            await order.save();
-        }
-
         await OrderLog.insertMany([
             {
                 order: order._id,
@@ -582,11 +580,6 @@ async function createOrder({ userId, payload }) {
 
                 const createdOrders = await Order.create([orderData], { session });
                 const order = createdOrders[0];
-
-                if (context.paymentMethod === PAYMENT_METHODS.ONLINE) {
-                    order.payment.redirectUrl = `${FRONTEND_BASE_URL}/#order?id=${order._id}&payment=online-pending`;
-                    await order.save({ session });
-                }
 
                 await OrderLog.insertMany([
                     {

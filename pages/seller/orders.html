@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/pages/seller/seller-portal.css">
+    <link rel="stylesheet" href="/pages/seller/seller-portal.css?v=20260413-payment">
 </head>
 <body class="seller-dashboard-body seller-orders-body">
     <div class="seller-sidebar-backdrop" id="sellerSidebarBackdrop"></div>
@@ -61,12 +61,12 @@
                     </button>
                     <label class="seller-topbar-search">
                         <span class="material-symbols-outlined">search</span>
-                        <input id="ordersSearchInput" type="text" placeholder="Tìm kiếm đơn hàng, khách hàng...">
+                        <input id="ordersSearchInput" type="text" placeholder="Tìm kiếm mã đơn, khách hàng, số điện thoại...">
                     </label>
                 </div>
 
                 <div class="seller-topbar-right">
-                    <button class="seller-icon-button" id="ordersNotificationButton" type="button">
+                    <button class="seller-icon-button" id="ordersNotificationButton" type="button" aria-label="Thông báo">
                         <span class="material-symbols-outlined">notifications</span>
                         <span class="seller-icon-dot" id="ordersNotificationDot"></span>
                     </button>
@@ -84,7 +84,7 @@
                 <div class="seller-orders-heading">
                     <div>
                         <h2>Quản lý đơn hàng</h2>
-                        <p>Theo dõi và cập nhật trạng thái đơn hàng của bạn bằng dữ liệu thật từ hệ thống.</p>
+                        <p>Theo dõi đơn hàng, trạng thái thanh toán và luồng tiền của shop theo thời gian thực.</p>
                     </div>
 
                     <div class="seller-orders-heading-actions">
@@ -102,9 +102,11 @@
                 <section class="seller-orders-filter-panel" id="ordersFilterPanel" hidden>
                     <div class="seller-orders-filter-grid">
                         <label class="seller-orders-filter-field">
-                            <span>Trạng thái</span>
+                            <span>Trạng thái đơn</span>
                             <select id="ordersStatusFilter">
                                 <option value="">Tất cả trạng thái</option>
+                                <option value="waiting_payment">Chờ thanh toán</option>
+                                <option value="paid">Đã thanh toán</option>
                                 <option value="pending">Chờ xác nhận</option>
                                 <option value="confirmed">Đã xác nhận</option>
                                 <option value="preparing">Đang chuẩn bị</option>
@@ -144,30 +146,30 @@
                             </div>
                             <span class="seller-orders-stat-delta" id="statPendingDelta">0 đơn cần xử lý</span>
                         </div>
-                        <p>Đang chờ xử lý</p>
+                        <p>Đơn cần xử lý</p>
                         <h3 id="statPendingCount">0</h3>
                     </article>
 
                     <article class="seller-orders-stat-card">
                         <div class="seller-orders-stat-top">
-                            <div class="seller-orders-stat-icon seller-orders-stat-icon-warm">
-                                <span class="material-symbols-outlined">local_shipping</span>
+                            <div class="seller-orders-stat-icon seller-orders-stat-icon-primary">
+                                <span class="material-symbols-outlined">shield</span>
                             </div>
-                            <span class="seller-orders-stat-delta" id="statShippingDelta">0 đơn đang giao</span>
+                            <span class="seller-orders-stat-delta" id="statHoldingDelta">0 đ đang được sàn giữ</span>
                         </div>
-                        <p>Đang giao hàng</p>
-                        <h3 id="statShippingCount">0</h3>
+                        <p>Sàn đang giữ</p>
+                        <h3 id="statHoldingCount">0 đ</h3>
                     </article>
 
                     <article class="seller-orders-stat-card">
                         <div class="seller-orders-stat-top">
-                            <div class="seller-orders-stat-icon seller-orders-stat-icon-primary">
-                                <span class="material-symbols-outlined">check_circle</span>
+                            <div class="seller-orders-stat-icon seller-orders-stat-icon-warm">
+                                <span class="material-symbols-outlined">schedule</span>
                             </div>
-                            <span class="seller-orders-stat-delta" id="statCompletedDelta">Hôm nay</span>
+                            <span class="seller-orders-stat-delta" id="statSettlementDelta">0 đ chờ đối soát</span>
                         </div>
-                        <p>Hoàn tất hôm nay</p>
-                        <h3 id="statCompletedToday">0</h3>
+                        <p>Chờ đối soát</p>
+                        <h3 id="statSettlementCount">0 đ</h3>
                     </article>
 
                     <article class="seller-orders-stat-card seller-orders-stat-card-danger">
@@ -175,9 +177,9 @@
                             <div class="seller-orders-stat-icon seller-orders-stat-icon-danger">
                                 <span class="material-symbols-outlined">cancel</span>
                             </div>
-                            <span class="seller-orders-stat-delta" id="statCancelledDelta">Cần theo dõi</span>
+                            <span class="seller-orders-stat-delta" id="statCancelledDelta">0 đơn bị hủy / hoàn tiền</span>
                         </div>
-                        <p>Đã hủy</p>
+                        <p>Hủy / hoàn tiền</p>
                         <h3 id="statCancelledCount">0</h3>
                     </article>
                 </section>
@@ -185,7 +187,7 @@
                 <section class="seller-orders-table-shell">
                     <div class="seller-orders-table-head">
                         <div>
-                            <h3>Danh sách đơn hàng mới nhất</h3>
+                            <h3>Danh sách đơn hàng</h3>
                             <p id="ordersTableSubtitle">Đang tải dữ liệu đơn hàng...</p>
                         </div>
                         <div class="seller-orders-table-pager">
@@ -202,17 +204,19 @@
                         <table class="seller-orders-table">
                             <thead>
                                 <tr>
-                                    <th>Mã đơn hàng</th>
+                                    <th>Mã đơn</th>
                                     <th>Khách hàng</th>
                                     <th>Ngày đặt</th>
-                                    <th>Doanh thu shop</th>
-                                    <th>Trạng thái</th>
+                                    <th>Tổng tiền shop</th>
+                                    <th>Trạng thái đơn</th>
+                                    <th>Thanh toán</th>
+                                    <th>Dòng tiền</th>
                                     <th class="seller-orders-table-actions-head">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody id="ordersTableBody">
                                 <tr>
-                                    <td colspan="6" class="seller-orders-loading-cell">Đang tải đơn hàng...</td>
+                                    <td colspan="8" class="seller-orders-loading-cell">Đang tải đơn hàng...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -231,8 +235,8 @@
                 <section class="seller-orders-lower-grid">
                     <div class="seller-orders-tip-card">
                         <div class="seller-orders-tip-copy">
-                            <h4>Mẹo quản lý đơn hàng</h4>
-                            <p id="ordersTipText">Hệ thống đang tổng hợp gợi ý xử lý theo trạng thái đơn mới nhất.</p>
+                            <h4>Gợi ý xử lý đơn</h4>
+                            <p id="ordersTipText">Hệ thống đang tổng hợp các đơn cần ưu tiên theo thanh toán, giao hàng và đối soát.</p>
                             <button class="seller-primary-button" type="button" id="ordersTipAction">Xem ngay</button>
                         </div>
                         <span class="material-symbols-outlined">rocket_launch</span>
@@ -268,10 +272,11 @@
         </div>
     </aside>
 
-    <script src="/js/config.js"></script>
-    <script src="/js/api/client.js"></script>
-    <script src="/js/utils.js"></script>
-    <script src="/js/components/auth.js"></script>
-    <script src="/pages/seller/orders.js"></script>
+    <script src="/js/config.js?v=20260413-payment"></script>
+    <script src="/js/api/client.js?v=20260413-payment"></script>
+    <script src="/js/utils.js?v=20260413-payment"></script>
+    <script src="/js/components/auth.js?v=20260413-payment"></script>
+    <script src="/js/components/auth-seller-onboarding.js?v=20260413-payment"></script>
+    <script src="/pages/seller/orders.js?v=20260413-payment"></script>
 </body>
 </html>

@@ -8,14 +8,22 @@ const { sendSuccess } = require('../middleware/responseHandler');
 const ApiError = require('../utils/ApiError');
 const { SHOP_STATUS } = require('../config/constants');
 
-async function getApprovedShopIds(shopId) {
+const PUBLIC_SHOP_POPULATE = 'name logo rating labels verificationLevel';
+
+async function getApprovedShopIds(shopId, options = {}) {
     const filter = { status: SHOP_STATUS.APPROVED };
     if (shopId) filter._id = shopId;
+    if (options.mallOnly) {
+        filter.$or = [
+            { labels: { $in: ['petmall'] } },
+            { verificationLevel: 'petmall' }
+        ];
+    }
     return Shop.find(filter).distinct('_id');
 }
 
-async function getPublicProductFilter(extra = {}, shopId = null) {
-    const approvedShopIds = await getApprovedShopIds(shopId);
+async function getPublicProductFilter(extra = {}, shopId = null, options = {}) {
+    const approvedShopIds = await getApprovedShopIds(shopId, options);
     return {
         isActive: true,
         shop: { $in: approvedShopIds },
@@ -39,11 +47,12 @@ router.get('/', optionalAuth, pagination(20), async (req, res, next) => {
             minRating,
             sortBy = 'createdAt',
             sortOrder = 'desc',
+            mallOnly,
             featured,
             isActive = true
         } = req.query;
 
-        const filter = await getPublicProductFilter({}, shop);
+        const filter = await getPublicProductFilter({}, shop, { mallOnly: mallOnly === 'true' });
         if (isActive === 'false' && req.user?.role === 'admin') filter.isActive = false;
         const andFilters = [];
 
@@ -88,7 +97,7 @@ router.get('/', optionalAuth, pagination(20), async (req, res, next) => {
         const [products, total] = await Promise.all([
             Product.find(filter)
                 .populate('category', 'name slug')
-                .populate('shop', 'name logo rating')
+                .populate('shop', PUBLIC_SHOP_POPULATE)
                 .sort(sort)
                 .skip(skip)
                 .limit(limit),
@@ -106,7 +115,7 @@ router.get('/featured', async (req, res, next) => {
         const { limit = 8 } = req.query;
         const products = await Product.find(await getPublicProductFilter({ isFeatured: true }))
             .populate('category', 'name slug')
-            .populate('shop', 'name logo rating')
+            .populate('shop', PUBLIC_SHOP_POPULATE)
             .sort({ soldCount: -1, createdAt: -1 })
             .limit(parseInt(limit));
 
@@ -121,7 +130,7 @@ router.get('/new', async (req, res, next) => {
         const { limit = 8 } = req.query;
         const products = await Product.find(await getPublicProductFilter())
             .populate('category', 'name slug')
-            .populate('shop', 'name logo rating')
+            .populate('shop', PUBLIC_SHOP_POPULATE)
             .sort({ createdAt: -1 })
             .limit(parseInt(limit));
 
@@ -138,7 +147,7 @@ router.get('/sale', async (req, res, next) => {
             $expr: { $gt: ['$originalPrice', '$price'] }
         }))
             .populate('category', 'name slug')
-            .populate('shop', 'name logo rating')
+            .populate('shop', PUBLIC_SHOP_POPULATE)
             .sort({ createdAt: -1 })
             .limit(parseInt(limit));
 
@@ -153,7 +162,7 @@ router.get('/bestsellers', async (req, res, next) => {
         const { limit = 8 } = req.query;
         const products = await Product.find(await getPublicProductFilter())
             .populate('category', 'name slug')
-            .populate('shop', 'name logo rating')
+            .populate('shop', PUBLIC_SHOP_POPULATE)
             .sort({ soldCount: -1 })
             .limit(parseInt(limit));
 
@@ -178,7 +187,7 @@ router.get('/search', async (req, res, next) => {
             ]
         }))
             .populate('category', 'name slug')
-            .populate('shop', 'name logo rating')
+            .populate('shop', PUBLIC_SHOP_POPULATE)
             .limit(parseInt(limit));
 
         sendSuccess(res, 'Tim kiem thanh cong', products);
@@ -234,7 +243,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
         const product = await Product.findOne({ _id: req.params.id, isActive: true, shop: { $in: await getApprovedShopIds() } })
             .populate('category', 'name slug')
             .populate('subcategory', 'name slug')
-            .populate('shop', 'name logo rating reviewCount description status');
+            .populate('shop', 'name logo rating reviewCount description status labels verificationLevel');
 
         if (!product) throw ApiError.notFound('San pham khong ton tai');
 
@@ -252,7 +261,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
             ]
         })
             .populate('category', 'name slug')
-            .populate('shop', 'name logo rating')
+            .populate('shop', PUBLIC_SHOP_POPULATE)
             .limit(8);
 
         sendSuccess(res, 'Lay thong tin san pham thanh cong', {

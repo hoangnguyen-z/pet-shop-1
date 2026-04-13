@@ -14,21 +14,38 @@ const sellerOrdersState = {
 };
 
 const ORDER_STATUS_LABELS = {
+    waiting_payment: 'Chờ thanh toán',
+    paid: 'Đã thanh toán',
     pending: 'Chờ xác nhận',
     confirmed: 'Đã xác nhận',
     preparing: 'Đang chuẩn bị',
     shipping: 'Đang giao',
     delivered: 'Đã giao',
     completed: 'Hoàn tất',
-    cancelled: 'Đã hủy'
+    cancelled: 'Đã hủy',
+    return_pending: 'Chờ xử lý hoàn trả',
+    returned: 'Đã hoàn trả'
 };
 
 const PAYMENT_STATUS_LABELS = {
     unpaid: 'Chưa thanh toán',
     pending: 'Chờ thanh toán',
+    processing: 'Đang xử lý thanh toán',
     paid: 'Đã thanh toán',
     failed: 'Thất bại',
+    expired: 'Hết hạn',
+    cancelled: 'Đã hủy',
     refunded: 'Đã hoàn tiền'
+};
+
+const FUND_FLOW_LABELS = {
+    unpaid: 'Chưa thu tiền',
+    platform_holding: 'Sàn đang giữ',
+    pending_settlement: 'Chờ đối soát',
+    settled: 'Đã đối soát',
+    refunded: 'Đã hoàn tiền',
+    disputed: 'Đang tranh chấp',
+    cancelled: 'Đã hủy'
 };
 
 const PAYMENT_METHOD_LABELS = {
@@ -45,21 +62,22 @@ const SHIPPING_METHOD_LABELS = {
 };
 
 const ORDER_ACTIONS = {
-    pending: { status: 'confirmed', label: 'Xác nhận', icon: 'check' },
+    paid: { status: 'confirmed', label: 'Xác nhận đơn', icon: 'check' },
+    pending: { status: 'confirmed', label: 'Xác nhận đơn', icon: 'check' },
     confirmed: { status: 'preparing', label: 'Chuẩn bị hàng', icon: 'inventory_2' },
     preparing: { status: 'shipping', label: 'Bàn giao vận chuyển', icon: 'local_shipping' },
     shipping: { status: 'delivered', label: 'Xác nhận đã giao', icon: 'check_circle' },
     delivered: { status: 'completed', label: 'Hoàn tất đơn', icon: 'task_alt' }
 };
 
-const ORDER_CANCELABLE = new Set(['pending', 'confirmed', 'preparing', 'shipping']);
-const ORDER_ACTIVE = new Set(['pending', 'confirmed', 'preparing', 'shipping', 'delivered']);
+const ORDER_CANCELABLE = new Set(['paid', 'pending', 'confirmed', 'preparing', 'shipping']);
 const DEFAULT_AVATAR = '/assets/photos/cat.jpg';
 const DEFAULT_PRODUCT = '/assets/photos/food.jpg';
 
-const sellerOrderMoneyFormatter = new Intl.NumberFormat('en-US', {
+const sellerOrderMoneyFormatter = new Intl.NumberFormat('vi-VN', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'VND',
+    maximumFractionDigits: 0
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -83,16 +101,12 @@ function bindSellerOrdersShell() {
         document.body.classList.remove('seller-sidebar-open');
     });
 
-    document.getElementById('ordersAddProductButton')?.addEventListener('click', () => {
-        window.location.href = '/pages/seller/create-product.html';
-    });
-
     document.getElementById('ordersNotificationButton')?.addEventListener('click', () => {
         document.getElementById('ordersActivitySection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     document.getElementById('ordersTipAction')?.addEventListener('click', () => {
-        if ((sellerOrdersState.stats?.pending?.count || 0) > 0) {
+        if ((sellerOrdersState.stats?.pendingActionCount || 0) > 0) {
             sellerOrdersState.status = 'pending';
             sellerOrdersState.page = 1;
             document.getElementById('ordersStatusFilter').value = 'pending';
@@ -110,7 +124,7 @@ function bindSellerOrdersShell() {
             sellerOrdersState.search = event.target.value.trim();
             sellerOrdersState.page = 1;
             loadSellerOrdersPage();
-        }, 420);
+        }, 350);
     });
 
     document.getElementById('ordersFilterToggle')?.addEventListener('click', () => {
@@ -131,32 +145,29 @@ function bindSellerOrdersShell() {
         sellerOrdersState.limit = 5;
         sellerOrdersState.actionable = 'all';
         sellerOrdersState.page = 1;
+        sellerOrdersState.search = '';
         document.getElementById('ordersStatusFilter').value = '';
         document.getElementById('ordersLimitFilter').value = '5';
         document.getElementById('ordersActionableFilter').value = 'all';
         document.getElementById('ordersSearchInput').value = '';
-        sellerOrdersState.search = '';
         loadSellerOrdersPage();
     });
 
     document.getElementById('ordersExportButton')?.addEventListener('click', exportSellerOrdersReport);
-
     document.getElementById('ordersPrevTop')?.addEventListener('click', () => changeOrdersPage(-1));
     document.getElementById('ordersNextTop')?.addEventListener('click', () => changeOrdersPage(1));
     document.getElementById('ordersPrevBottom')?.addEventListener('click', () => changeOrdersPage(-1));
     document.getElementById('ordersNextBottom')?.addEventListener('click', () => changeOrdersPage(1));
-
     document.getElementById('ordersCloseDrawer')?.addEventListener('click', closeSellerOrderDrawer);
     document.getElementById('sellerOrdersDrawerBackdrop')?.addEventListener('click', closeSellerOrderDrawer);
-
     document.getElementById('ordersTableBody')?.addEventListener('click', handleOrdersTableClick);
     document.getElementById('ordersPageList')?.addEventListener('click', handlePageListClick);
     document.getElementById('ordersDrawerBody')?.addEventListener('click', handleOrderDrawerClick);
 }
 
 function hydrateSellerIdentity() {
-    document.getElementById('ordersSellerName').textContent = authManager.user?.name || 'Người bán';
-    document.getElementById('ordersSellerRole').textContent = authManager.shop?.name || 'Chủ cửa hàng';
+    setText('ordersSellerName', authManager.user?.name || 'Người bán');
+    setText('ordersSellerRole', authManager.shop?.name || 'Chủ cửa hàng');
     document.getElementById('ordersSellerAvatar').src = authManager.user?.avatar || DEFAULT_AVATAR;
 }
 
@@ -164,20 +175,17 @@ async function loadSellerOrdersPage({ refreshSummary = false } = {}) {
     renderOrdersLoadingState();
 
     try {
-        const [visibleResult, summaryOrders, statsResponse] = await Promise.all([
+        const [visibleResult, summaryOrders] = await Promise.all([
             fetchVisibleOrders(),
             refreshSummary || !sellerOrdersState.summaryOrders.length
                 ? fetchOrderSummaryOrders()
-                : Promise.resolve(sellerOrdersState.summaryOrders),
-            refreshSummary || !sellerOrdersState.stats
-                ? api.sellerApi.getSellerOrderStats().catch(() => null)
-                : Promise.resolve({ data: sellerOrdersState.stats })
+                : Promise.resolve(sellerOrdersState.summaryOrders)
         ]);
 
         sellerOrdersState.orders = visibleResult.orders;
         sellerOrdersState.meta = visibleResult.meta;
         sellerOrdersState.summaryOrders = summaryOrders;
-        sellerOrdersState.stats = normalizeOrderStats(statsResponse?.data, summaryOrders);
+        sellerOrdersState.stats = buildOrderFinanceStats(summaryOrders);
 
         renderOrdersStats();
         renderOrdersTable();
@@ -249,71 +257,59 @@ function normalizeMeta(meta, fallbackPage, fallbackLimit) {
     };
 }
 
-function normalizeOrderStats(stats, summaryOrders) {
-    const fallback = {
-        pending: { count: 0, revenue: 0 },
-        confirmed: { count: 0, revenue: 0 },
-        preparing: { count: 0, revenue: 0 },
-        shipping: { count: 0, revenue: 0 },
-        delivered: { count: 0, revenue: 0 },
-        completed: { count: 0, revenue: 0 },
-        cancelled: { count: 0, revenue: 0 }
-    };
-
-    const safeStats = { ...fallback, ...(stats || {}) };
-    const totalCount = Object.values(safeStats).reduce((sum, item) => sum + Number(item?.count || 0), 0);
-
-    if (totalCount > 0) {
-        return safeStats;
-    }
-
-    return summaryOrders.reduce((acc, order) => {
+function buildOrderFinanceStats(orders) {
+    return (orders || []).reduce((acc, order) => {
         const status = getSellerOrderStatus(order);
-        const amount = getSellerOrderAmount(order);
-        if (!acc[status]) {
-            acc[status] = { count: 0, revenue: 0 };
+        const financial = order.sellerFinancial || {};
+        if (['pending', 'confirmed', 'preparing'].includes(status)) {
+            acc.pendingActionCount += 1;
         }
-        acc[status].count += 1;
-        acc[status].revenue += amount;
+        if (financial.fundFlowStatus === 'platform_holding') {
+            acc.holdingBalance += Number(financial.netAmount || 0);
+        }
+        if (financial.fundFlowStatus === 'pending_settlement') {
+            acc.pendingSettlementBalance += Number(financial.netAmount || 0);
+        }
+        if (['cancelled', 'refunded'].includes(financial.fundFlowStatus)) {
+            acc.cancelledCount += 1;
+        }
         return acc;
-    }, { ...fallback });
+    }, {
+        pendingActionCount: 0,
+        holdingBalance: 0,
+        pendingSettlementBalance: 0,
+        cancelledCount: 0
+    });
 }
 
 function renderOrdersLoadingState() {
     document.getElementById('ordersTableBody').innerHTML = `
         <tr>
-            <td colspan="6" class="seller-orders-loading-cell">Đang tải đơn hàng...</td>
+            <td colspan="8" class="seller-orders-loading-cell">Đang tải đơn hàng...</td>
         </tr>
     `;
-    document.getElementById('ordersTableSubtitle').textContent = 'Đang đồng bộ danh sách đơn hàng từ hệ thống.';
+    setText('ordersTableSubtitle', 'Đang đồng bộ danh sách đơn hàng từ hệ thống.');
 }
 
 function renderOrdersErrorState(message) {
     document.getElementById('ordersTableBody').innerHTML = `
         <tr>
-            <td colspan="6" class="seller-orders-loading-cell seller-orders-loading-cell-error">${escapeHtml(message)}</td>
+            <td colspan="8" class="seller-orders-loading-cell seller-orders-loading-cell-error">${escapeHtml(message)}</td>
         </tr>
     `;
-    document.getElementById('ordersTableSubtitle').textContent = message;
+    setText('ordersTableSubtitle', message);
 }
 
 function renderOrdersStats() {
     const stats = sellerOrdersState.stats || {};
-    const pending = Number(stats.pending?.count || 0);
-    const shipping = Number(stats.shipping?.count || 0) + Number(stats.preparing?.count || 0);
-    const cancelled = Number(stats.cancelled?.count || 0);
-    const completedToday = sellerOrdersState.summaryOrders.filter((order) => {
-        return getSellerOrderStatus(order) === 'completed' && isToday(order.updatedAt || order.createdAt);
-    }).length;
-
-    document.getElementById('statPendingCount').textContent = String(pending);
-    document.getElementById('statPendingDelta').textContent = pending ? `${pending} đơn cần xử lý ngay` : 'Không có đơn tồn';
-    document.getElementById('statShippingCount').textContent = String(shipping);
-    document.getElementById('statShippingDelta').textContent = shipping ? `${shipping} đơn đang vận hành` : 'Không có đơn đang giao';
-    document.getElementById('statCompletedToday').textContent = String(completedToday);
-    document.getElementById('statCompletedDelta').textContent = completedToday ? 'Đã hoàn tất trong hôm nay' : 'Chưa có đơn hoàn tất hôm nay';
-    document.getElementById('statCancelledCount').textContent = String(cancelled);
-    document.getElementById('statCancelledDelta').textContent = cancelled ? `${cancelled} đơn cần rà soát nguyên nhân` : 'Không có đơn hủy gần đây';
+    setText('statPendingCount', String(stats.pendingActionCount || 0));
+    setText('statPendingDelta', `${stats.pendingActionCount || 0} đơn cần xác nhận hoặc chuẩn bị`);
+    setText('statHoldingCount', formatOrderMoney(stats.holdingBalance || 0));
+    setText('statHoldingDelta', `${formatOrderMoney(stats.holdingBalance || 0)} đang được sàn giữ`);
+    setText('statSettlementCount', formatOrderMoney(stats.pendingSettlementBalance || 0));
+    setText('statSettlementDelta', `${formatOrderMoney(stats.pendingSettlementBalance || 0)} chờ đối soát`);
+    setText('statCancelledCount', String(stats.cancelledCount || 0));
+    setText('statCancelledDelta', `${stats.cancelledCount || 0} đơn bị hủy hoặc hoàn tiền`);
 }
 
 function renderOrdersTable() {
@@ -323,17 +319,17 @@ function renderOrdersTable() {
     if (!orders.length) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="seller-orders-loading-cell">
+                <td colspan="8" class="seller-orders-loading-cell">
                     Không có đơn hàng phù hợp với bộ lọc hiện tại.
                 </td>
             </tr>
         `;
-        document.getElementById('ordersTableSubtitle').textContent = buildOrdersSubtitle();
+        setText('ordersTableSubtitle', buildOrdersSubtitle());
         return;
     }
 
     tbody.innerHTML = orders.map((order) => renderOrderRow(order)).join('');
-    document.getElementById('ordersTableSubtitle').textContent = buildOrdersSubtitle();
+    setText('ordersTableSubtitle', buildOrdersSubtitle());
 }
 
 function renderOrderRow(order) {
@@ -341,8 +337,7 @@ function renderOrderRow(order) {
     const action = getPrimaryOrderAction(status);
     const buyerName = getBuyerName(order);
     const buyerEmail = order.buyer?.email || order.shippingAddress?.email || 'Chưa có email';
-    const amount = formatOrderMoney(getSellerOrderAmount(order));
-    const paymentLabel = PAYMENT_STATUS_LABELS[order.paymentStatus] || formatLabel(order.paymentStatus);
+    const financial = order.sellerFinancial || {};
 
     return `
         <tr class="seller-orders-row" data-order-row="${order._id}">
@@ -361,13 +356,22 @@ function renderOrderRow(order) {
             </td>
             <td class="seller-orders-date-cell">${escapeHtml(formatShortDate(order.createdAt))}</td>
             <td class="seller-orders-total-cell">
-                <strong>${escapeHtml(amount)}</strong>
-                <span>${escapeHtml(paymentLabel)}</span>
+                <strong>${escapeHtml(formatOrderMoney(financial.grossAmount || 0))}</strong>
+                <span>Thực nhận ${escapeHtml(formatOrderMoney(financial.netAmount || 0))}</span>
+            </td>
+            <td>
+                <span class="seller-orders-status-badge ${statusBadgeClass(status)}">${escapeHtml(ORDER_STATUS_LABELS[status] || formatLabel(status))}</span>
             </td>
             <td>
                 <div class="seller-orders-status-stack">
-                    <span class="seller-orders-status-badge ${statusBadgeClass(status)}">${escapeHtml(ORDER_STATUS_LABELS[status] || formatLabel(status))}</span>
-                    <small>${escapeHtml(PAYMENT_METHOD_LABELS[order.paymentMethod] || formatLabel(order.paymentMethod || 'cod'))}</small>
+                    <span class="seller-orders-status-badge ${paymentBadgeClass(financial.paymentStatus)}">${escapeHtml(formatPaymentLabel(financial.paymentStatus || order.paymentStatus))}</span>
+                    <small>${escapeHtml(PAYMENT_METHOD_LABELS[financial.paymentMethod || order.paymentMethod] || formatLabel(order.paymentMethod || 'cod'))}</small>
+                </div>
+            </td>
+            <td>
+                <div class="seller-orders-status-stack">
+                    <span class="seller-orders-status-badge ${fundFlowBadgeClass(financial.fundFlowStatus)}">${escapeHtml(FUND_FLOW_LABELS[financial.fundFlowStatus] || formatLabel(financial.fundFlowStatus))}</span>
+                    <small>${escapeHtml(formatSettlementHint(financial))}</small>
                 </div>
             </td>
             <td class="seller-orders-row-actions-cell">
@@ -393,16 +397,9 @@ function renderOrderRow(order) {
 
 function buildOrdersSubtitle() {
     const filters = [];
-
-    if (sellerOrdersState.status) {
-        filters.push(ORDER_STATUS_LABELS[sellerOrdersState.status] || formatLabel(sellerOrdersState.status));
-    }
-    if (sellerOrdersState.search) {
-        filters.push(`từ khóa "${sellerOrdersState.search}"`);
-    }
-    if (sellerOrdersState.actionable === 'actionable') {
-        filters.push('chỉ đơn còn thao tác');
-    }
+    if (sellerOrdersState.status) filters.push(ORDER_STATUS_LABELS[sellerOrdersState.status] || formatLabel(sellerOrdersState.status));
+    if (sellerOrdersState.search) filters.push(`từ khóa "${sellerOrdersState.search}"`);
+    if (sellerOrdersState.actionable === 'actionable') filters.push('chỉ đơn còn thao tác');
 
     return filters.length
         ? `Đang hiển thị ${sellerOrdersState.meta.total} đơn theo ${filters.join(' · ')}.`
@@ -412,41 +409,31 @@ function buildOrdersSubtitle() {
 function renderOrdersPagination() {
     const meta = sellerOrdersState.meta;
     const visibleCount = ((meta.page - 1) * meta.limit) + sellerOrdersState.orders.length;
-    document.getElementById('ordersPaginationSummary').textContent = meta.total
+    setText('ordersPaginationSummary', meta.total
         ? `Hiển thị ${Math.min(meta.total, visibleCount)} trên ${meta.total} đơn hàng`
-        : 'Hiển thị 0 đơn hàng';
+        : 'Hiển thị 0 đơn hàng');
 
     const prevDisabled = meta.page <= 1;
     const nextDisabled = meta.page >= meta.totalPages;
-
-    ['ordersPrevTop', 'ordersPrevBottom'].forEach((id) => {
-        document.getElementById(id).disabled = prevDisabled;
-    });
-    ['ordersNextTop', 'ordersNextBottom'].forEach((id) => {
-        document.getElementById(id).disabled = nextDisabled;
-    });
+    ['ordersPrevTop', 'ordersPrevBottom'].forEach((id) => { document.getElementById(id).disabled = prevDisabled; });
+    ['ordersNextTop', 'ordersNextBottom'].forEach((id) => { document.getElementById(id).disabled = nextDisabled; });
 
     const pages = [];
     const start = Math.max(1, meta.page - 1);
     const end = Math.min(meta.totalPages, start + 2);
-
     for (let page = start; page <= end; page += 1) {
         pages.push(`<button type="button" class="${page === meta.page ? 'active' : ''}" data-page="${page}">${page}</button>`);
     }
-
     document.getElementById('ordersPageList').innerHTML = pages.join('');
 }
 
 function renderRecentOrderActivity() {
     const activityList = document.getElementById('ordersActivityList');
-    const activities = (sellerOrdersState.orders || [])
-        .map((order) => {
-            const latest = getLatestOrderEvent(order);
-            return latest ? { ...latest, order } : null;
-        })
+    const activities = (sellerOrdersState.summaryOrders || [])
+        .map((order) => getLatestOrderEvent(order))
         .filter(Boolean)
         .sort((left, right) => new Date(right.timestamp) - new Date(left.timestamp))
-        .slice(0, 5);
+        .slice(0, 6);
 
     if (!activities.length) {
         activityList.innerHTML = '<li class="seller-orders-empty-activity">Chưa có hoạt động nào để hiển thị.</li>';
@@ -465,20 +452,23 @@ function renderRecentOrderActivity() {
 }
 
 function renderOrdersTip() {
-    const pending = Number(sellerOrdersState.stats?.pending?.count || 0);
-    const actionable = (sellerOrdersState.summaryOrders || []).filter((order) => canOrderReceiveAction(order)).length;
-    const tip = pending
-        ? `Bạn đang có ${pending} đơn chờ xác nhận. Xử lý sớm sẽ giữ tỷ lệ phản hồi và thời gian giao hàng ổn định cho shop.`
-        : actionable
-            ? `Có ${actionable} đơn vẫn còn bước xử lý tiếp theo. Bạn có thể lọc theo "chỉ đơn còn thao tác" để làm việc tập trung hơn.`
-            : 'Mọi đơn hàng gần đây đã được xử lý ổn. Bạn có thể xuất báo cáo để rà soát lại tiến độ giao và tỷ lệ hoàn tất.';
+    const stats = sellerOrdersState.stats || {};
+    let tip = 'Don hang dang duoc dong bo on dinh. Ban co the theo doi thanh toan va doi soat ngay trong chi tiet tung don.';
 
-    document.getElementById('ordersTipText').textContent = tip;
+    if ((stats.pendingActionCount || 0) > 0) {
+        tip = `Co ${stats.pendingActionCount} don dang cho xac nhan hoac chuan bi. Xu ly som giup mo dong tien ve doi soat nhanh hon.`;
+    } else if ((stats.holdingBalance || 0) > 0) {
+        tip = `${formatOrderMoney(stats.holdingBalance)} dang o trang thai "San dang giu". Hay theo doi cac don da thanh toan de chuyen sang doi soat sau khi hoan tat.`;
+    } else if ((stats.pendingSettlementBalance || 0) > 0) {
+        tip = `${formatOrderMoney(stats.pendingSettlementBalance)} dang cho doi soat. Ban co the gui yeu cau doi soat tu dashboard doanh thu.`;
+    }
+
+    setText('ordersTipText', tip);
 }
 
 function updateOrdersNotificationState() {
     document.getElementById('ordersNotificationDot').style.display =
-        Number(sellerOrdersState.stats?.pending?.count || 0) > 0 ? 'block' : 'none';
+        Number(sellerOrdersState.stats?.pendingActionCount || 0) > 0 ? 'block' : 'none';
 }
 
 function handleOrdersTableClick(event) {
@@ -532,9 +522,7 @@ function handleOrderDrawerClick(event) {
 
 function changeOrdersPage(delta) {
     const nextPage = sellerOrdersState.page + delta;
-    if (nextPage < 1 || nextPage > sellerOrdersState.meta.totalPages) {
-        return;
-    }
+    if (nextPage < 1 || nextPage > sellerOrdersState.meta.totalPages) return;
     sellerOrdersState.page = nextPage;
     loadSellerOrdersPage();
 }
@@ -555,13 +543,12 @@ async function quickAdvanceOrder(order) {
     }
 
     await submitOrderStatusChange(order._id, action.status, {
-        reason: `Seller cập nhật trạng thái sang ${ORDER_STATUS_LABELS[action.status] || action.status}`
+        reason: `Seller cap nhat trang thai sang ${ORDER_STATUS_LABELS[action.status] || action.status}`
     });
 }
 
 async function requestOrderCancellation(order, { fromDrawer = false } = {}) {
     if (!order) return;
-
     const confirmed = window.confirm(`Bạn có chắc muốn hủy đơn #${order.orderNumber || order._id}?`);
     if (!confirmed) return;
 
@@ -571,7 +558,6 @@ async function requestOrderCancellation(order, { fromDrawer = false } = {}) {
 
 async function submitOrderStatusChange(orderId, status, { reason = '', fromDrawer = false } = {}) {
     const tracking = {};
-
     if (fromDrawer) {
         const carrier = document.getElementById('ordersDrawerCarrier')?.value.trim();
         const trackingNumber = document.getElementById('ordersDrawerTrackingNumber')?.value.trim();
@@ -588,14 +574,10 @@ async function submitOrderStatusChange(orderId, status, { reason = '', fromDrawe
         await api.sellerApi.updateOrderStatus(orderId, status, reason, tracking);
         authManager.showNotification(`Đã cập nhật đơn sang "${ORDER_STATUS_LABELS[status] || status}"`, 'success');
         await loadSellerOrdersPage({ refreshSummary: true });
-        if (fromDrawer) {
-            await openSellerOrderDetail(orderId, { silent: true });
-        }
+        if (fromDrawer) await openSellerOrderDetail(orderId, { silent: true });
     } catch (error) {
         authManager.showNotification(error.message || 'Không thể cập nhật trạng thái đơn', 'error');
-        if (fromDrawer) {
-            await openSellerOrderDetail(orderId, { silent: true });
-        }
+        if (fromDrawer) await openSellerOrderDetail(orderId, { silent: true });
     }
 }
 
@@ -620,9 +602,7 @@ async function openSellerOrderDetail(orderId, { silent = false } = {}) {
         renderOrderDrawer(sellerOrdersState.selectedOrder);
     } catch (error) {
         body.innerHTML = `<div class="seller-orders-drawer-loading seller-orders-drawer-loading-error">${escapeHtml(error.message || 'Không thể tải chi tiết đơn hàng')}</div>`;
-        if (!silent) {
-            authManager.showNotification(error.message || 'Không thể tải chi tiết đơn hàng', 'error');
-        }
+        if (!silent) authManager.showNotification(error.message || 'Không thể tải chi tiết đơn hàng', 'error');
     }
 }
 
@@ -638,9 +618,9 @@ function renderOrderDrawer(order) {
     const body = document.getElementById('ordersDrawerBody');
     const status = getSellerOrderStatus(order);
     const action = getPrimaryOrderAction(status);
+    const financial = order.sellerFinancial || {};
 
-    document.getElementById('ordersDrawerTitle').textContent = `#${order.orderNumber || order._id}`;
-
+    setText('ordersDrawerTitle', `#${order.orderNumber || order._id}`);
     body.innerHTML = `
         <section class="seller-orders-drawer-summary">
             <div class="seller-orders-drawer-summary-head">
@@ -651,9 +631,9 @@ function renderOrderDrawer(order) {
                 </button>
             </div>
             <div class="seller-orders-drawer-metrics">
-                <article><span>Doanh thu shop</span><strong>${escapeHtml(formatOrderMoney(getSellerOrderAmount(order)))}</strong></article>
-                <article><span>Thanh toán</span><strong>${escapeHtml(PAYMENT_STATUS_LABELS[order.paymentStatus] || formatLabel(order.paymentStatus || 'pending'))}</strong></article>
-                <article><span>Vận chuyển</span><strong>${escapeHtml(SHIPPING_METHOD_LABELS[order.shippingMethod] || formatLabel(order.shippingMethod || 'standard'))}</strong></article>
+                <article><span>Tổng tiền shop</span><strong>${escapeHtml(formatOrderMoney(financial.grossAmount || 0))}</strong></article>
+                <article><span>Trạng thái thanh toán</span><strong>${escapeHtml(formatPaymentLabel(financial.paymentStatus || order.paymentStatus))}</strong></article>
+                <article><span>Dòng tiền</span><strong>${escapeHtml(FUND_FLOW_LABELS[financial.fundFlowStatus] || formatLabel(financial.fundFlowStatus))}</strong></article>
             </div>
         </section>
 
@@ -670,13 +650,16 @@ function renderOrderDrawer(order) {
             </article>
 
             <article class="seller-orders-drawer-card">
-                <h4>Vận chuyển &amp; thanh toán</h4>
+                <h4>Thông tin thanh toán</h4>
                 <dl>
-                    <div><dt>Phương thức</dt><dd>${escapeHtml(PAYMENT_METHOD_LABELS[order.paymentMethod] || formatLabel(order.paymentMethod || 'cod'))}</dd></div>
-                    <div><dt>Trạng thái tiền</dt><dd>${escapeHtml(PAYMENT_STATUS_LABELS[order.paymentStatus] || formatLabel(order.paymentStatus || 'pending'))}</dd></div>
-                    <div><dt>Đơn vị VC</dt><dd>${escapeHtml(order.tracking?.carrier || 'Chưa cập nhật')}</dd></div>
-                    <div><dt>Mã vận đơn</dt><dd>${escapeHtml(order.tracking?.trackingNumber || 'Chưa cập nhật')}</dd></div>
-                    <div><dt>Đặt lúc</dt><dd>${escapeHtml(formatDateTime(order.createdAt))}</dd></div>
+                    <div><dt>Phương thức</dt><dd>${escapeHtml(PAYMENT_METHOD_LABELS[financial.paymentMethod || order.paymentMethod] || formatLabel(order.paymentMethod || 'cod'))}</dd></div>
+                    <div><dt>Kênh thanh toán</dt><dd>${escapeHtml(formatLabel(financial.paymentChannel || order.payment?.channel || 'cod'))}</dd></div>
+                    <div><dt>Trạng thái thanh toán</dt><dd>${escapeHtml(formatPaymentLabel(financial.paymentStatus || order.paymentStatus))}</dd></div>
+                    <div><dt>Trạng thái dòng tiền</dt><dd>${escapeHtml(FUND_FLOW_LABELS[financial.fundFlowStatus] || formatLabel(financial.fundFlowStatus))}</dd></div>
+                    <div><dt>Tổng tiền đơn</dt><dd>${escapeHtml(formatOrderMoney(financial.grossAmount || 0))}</dd></div>
+                    <div><dt>Phí sàn</dt><dd>${escapeHtml(formatOrderMoney(financial.platformFee || 0))}</dd></div>
+                    <div><dt>Thực nhận</dt><dd>${escapeHtml(formatOrderMoney(financial.netAmount || 0))}</dd></div>
+                    <div><dt>Dự kiến đối soát</dt><dd>${escapeHtml(formatDateTime(financial.estimatedSettlementAt))}</dd></div>
                 </dl>
             </article>
         </section>
@@ -731,7 +714,6 @@ function renderOrderDrawer(order) {
 
 function buildOrderTimeline(order) {
     const history = [...(order.statusHistory || [])].sort((left, right) => new Date(right.updatedAt) - new Date(left.updatedAt));
-
     if (!history.length) {
         return '<li><strong>Chưa có lịch sử cập nhật nào.</strong></li>';
     }
@@ -754,16 +736,20 @@ function exportSellerOrdersReport() {
         return;
     }
 
-    const header = ['order_number', 'buyer_name', 'phone', 'created_at', 'seller_amount', 'status', 'payment_status'];
-    const rows = orders.map((order) => [
-        order.orderNumber || order._id,
-        getBuyerName(order),
-        order.shippingAddress?.phone || order.buyer?.phone || '',
-        formatDateTime(order.createdAt),
-        String(getSellerOrderAmount(order)),
-        getSellerOrderStatus(order),
-        order.paymentStatus || ''
-    ]);
+    const header = ['order_number', 'buyer_name', 'created_at', 'gross_amount', 'order_status', 'payment_status', 'fund_flow_status', 'net_amount'];
+    const rows = orders.map((order) => {
+        const financial = order.sellerFinancial || {};
+        return [
+            order.orderNumber || order._id,
+            getBuyerName(order),
+            formatDateTime(order.createdAt),
+            String(financial.grossAmount || 0),
+            getSellerOrderStatus(order),
+            financial.paymentStatus || '',
+            financial.fundFlowStatus || '',
+            String(financial.netAmount || 0)
+        ];
+    });
 
     const csv = [header, ...rows]
         .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
@@ -798,11 +784,7 @@ function canCancelOrder(order) {
 
 function canOrderReceiveAction(order) {
     const status = getSellerOrderStatus(order);
-    return Boolean(getPrimaryOrderAction(status) || canCancelOrder(order) || ORDER_ACTIVE.has(status));
-}
-
-function getSellerOrderAmount(order) {
-    return (order.items || []).reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 0)), 0);
+    return Boolean(getPrimaryOrderAction(status) || canCancelOrder(order));
 }
 
 function getBuyerName(order) {
@@ -817,30 +799,34 @@ function getLatestOrderEvent(order) {
     const history = order.statusHistory || [];
     const latest = history[history.length - 1];
     const status = latest?.status || getSellerOrderStatus(order);
+    const financial = order.sellerFinancial || {};
     return {
         status,
         timestamp: latest?.updatedAt || order.updatedAt || order.createdAt,
-        title: latest ? `${ORDER_STATUS_LABELS[status] || formatLabel(status)} đơn #${order.orderNumber || order._id}` : `Đơn #${order.orderNumber || order._id} mới được tạo`,
-        meta: `${getBuyerName(order)} · ${timeAgo(latest?.updatedAt || order.updatedAt || order.createdAt)}`
+        title: `${ORDER_STATUS_LABELS[status] || formatLabel(status)} đơn #${order.orderNumber || order._id}`,
+        meta: `${getBuyerName(order)} · ${formatPaymentLabel(financial.paymentStatus || order.paymentStatus)} · ${timeAgo(latest?.updatedAt || order.updatedAt || order.createdAt)}`
     };
 }
 
 function statusBadgeClass(status) {
-    switch (status) {
-        case 'completed':
-        case 'paid':
-        case 'confirmed':
-            return 'seller-orders-status-success';
-        case 'shipping':
-        case 'preparing':
-        case 'delivered':
-            return 'seller-orders-status-warm';
-        case 'cancelled':
-        case 'failed':
-            return 'seller-orders-status-danger';
-        default:
-            return 'seller-orders-status-neutral';
-    }
+    if (['completed', 'paid', 'confirmed', 'settled'].includes(status)) return 'seller-orders-status-success';
+    if (['shipping', 'preparing', 'delivered', 'platform_holding', 'pending_settlement', 'waiting_payment'].includes(status)) return 'seller-orders-status-warm';
+    if (['cancelled', 'failed', 'refunded', 'disputed'].includes(status)) return 'seller-orders-status-danger';
+    return 'seller-orders-status-neutral';
+}
+
+function paymentBadgeClass(status) {
+    if (status === 'paid') return 'seller-orders-status-success';
+    if (['pending', 'processing'].includes(status)) return 'seller-orders-status-warm';
+    if (['failed', 'cancelled', 'refunded', 'expired'].includes(status)) return 'seller-orders-status-danger';
+    return 'seller-orders-status-neutral';
+}
+
+function fundFlowBadgeClass(status) {
+    if (status === 'settled') return 'seller-orders-status-success';
+    if (['platform_holding', 'pending_settlement'].includes(status)) return 'seller-orders-status-warm';
+    if (['cancelled', 'refunded', 'disputed'].includes(status)) return 'seller-orders-status-danger';
+    return 'seller-orders-status-neutral';
 }
 
 function formatOrderMoney(amount) {
@@ -868,6 +854,16 @@ function formatOrderAddress(address) {
     return [address.addressLine || address.street, address.ward, address.district, address.city, address.country].filter(Boolean).join(', ');
 }
 
+function formatPaymentLabel(status = '') {
+    return PAYMENT_STATUS_LABELS[status] || formatLabel(status);
+}
+
+function formatSettlementHint(financial = {}) {
+    if (financial.settledAt) return `Đã xử lý ${formatShortDate(financial.settledAt)}`;
+    if (financial.estimatedSettlementAt) return `Dự kiến ${formatShortDate(financial.estimatedSettlementAt)}`;
+    return 'Chưa có lịch đối soát';
+}
+
 function formatLabel(value) {
     return String(value || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
 }
@@ -882,12 +878,9 @@ function timeAgo(value) {
     return `${Math.round(hours / 24)} ngày trước`;
 }
 
-function isToday(value) {
-    const date = new Date(value);
-    const today = new Date();
-    return date.getFullYear() === today.getFullYear()
-        && date.getMonth() === today.getMonth()
-        && date.getDate() === today.getDate();
+function setText(id, value) {
+    const node = document.getElementById(id);
+    if (node) node.textContent = value;
 }
 
 function escapeHtml(value) {

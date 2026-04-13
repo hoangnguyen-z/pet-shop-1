@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dang ky mo shop | Paws & Palette</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#964300',
+                        surface: '#f7f7f2',
+                        surfaceMuted: '#f1f1ec',
+                        line: '#d7d7d1',
+                        textMain: '#2d2f2c',
+                        textSoft: '#5a5c58',
+                        success: '#006b1b',
+                        danger: '#b02500'
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; }
+        h1, h2, h3, h4, strong, button, a { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-surface text-textMain">
+    <header class="sticky top-0 z-20 border-b border-line/70 bg-surface/95 backdrop-blur">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white">
+                    <span class="material-symbols-outlined">pets</span>
+                </span>
+                <div>
+                    <p class="text-2xl font-extrabold tracking-tight text-primary">Paws &amp; Palette</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-textSoft">Dang ky mo shop</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <a class="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-white px-5 text-sm font-bold text-textMain transition hover:border-primary/30 hover:text-primary" href="/pages/account/shop-terms.html">Dieu khoan</a>
+                <button class="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5" id="goToSellerCenterButton" hidden>Vao Seller Center</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="mx-auto grid max-w-7xl gap-8 px-6 py-8 lg:grid-cols-[320px,minmax(0,1fr)]">
+        <aside class="space-y-6">
+            <section class="rounded-3xl border border-line bg-white p-6 shadow-sm">
+                <p class="text-xs font-bold uppercase tracking-[0.22em] text-textSoft">Trang thai ho so</p>
+                <h1 class="mt-2 text-3xl font-extrabold tracking-tight">Mo shop tren san</h1>
+                <div class="mt-4 flex items-center justify-between gap-4">
+                    <span class="text-sm text-textSoft">Ho so hien tai</span>
+                    <span class="inline-flex rounded-full bg-surfaceMuted px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary" id="applicationStatusBadge">Chua tao</span>
+                </div>
+                <p class="mt-4 text-sm leading-7 text-textSoft" id="applicationStatusDescription">Hoan tat ho so, tai giay to va gui cho Admin xet duyet. Chi khi duoc phe duyet, tai khoan moi co the vao Seller Center va van hanh shop.</p>
+                <div class="mt-6 space-y-3 text-sm text-textSoft">
+                    <div class="flex items-center justify-between gap-4">
+                        <span>Loai ho so</span>
+                        <strong class="text-textMain" id="applicationTypePreview">Shop thuong</strong>
+                    </div>
+                    <div class="flex items-center justify-between gap-4">
+                        <span>Nhan shop</span>
+                        <strong class="text-textMain" id="applicationLabelPreview">Shop thuong</strong>
+                    </div>
+                    <div class="flex items-center justify-between gap-4">
+                        <span>Cap xac minh</span>
+                        <strong class="text-textMain" id="applicationVerificationPreview">Chua cap</strong>
+                    </div>
+                </div>
+                <div class="mt-6 rounded-2xl bg-surface p-4 text-sm text-textSoft" id="adminNoteBox" hidden>
+                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Ghi chu tu Admin</p>
+                    <p class="mt-2 leading-7" id="adminNoteText"></p>
+                </div>
+            </section>
+
+            <section class="rounded-3xl border border-line bg-white p-6 shadow-sm">
+                <h2 class="text-lg font-bold">Tien do ho so</h2>
+                <div class="mt-5 space-y-4 text-sm">
+                    <div class="flex items-center gap-3"><span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surfaceMuted"><span class="material-symbols-outlined text-primary">account_circle</span></span><div><p class="font-semibold">Tao tai khoan</p><p class="text-textSoft">Da hoan tat khi dang nhap.</p></div></div>
+                    <div class="flex items-center gap-3"><span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surfaceMuted"><span class="material-symbols-outlined text-primary">description</span></span><div><p class="font-semibold">Gui ho so</p><p class="text-textSoft" id="progressApplicationText">Chua gui ho so.</p></div></div>
+                    <div class="flex items-center gap-3"><span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surfaceMuted"><span class="material-symbols-outlined text-primary">admin_panel_settings</span></span><div><p class="font-semibold">Admin xet duyet</p><p class="text-textSoft" id="progressReviewText">Chua tiep nhan.</p></div></div>
+                    <div class="flex items-center gap-3"><span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surfaceMuted"><span class="material-symbols-outlined text-primary">storefront</span></span><div><p class="font-semibold">Seller Center</p><p class="text-textSoft" id="progressCenterText">Chua co quyen truy cap.</p></div></div>
+                </div>
+            </section>
+
+            <section class="rounded-3xl border border-line bg-white p-6 shadow-sm">
+                <h2 class="text-lg font-bold">Giay to da tai len</h2>
+                <div class="mt-4 space-y-3" id="documentSummaryList">
+                    <p class="text-sm text-textSoft">Chua co giay to nao.</p>
+                </div>
+            </section>
+        </aside>
+
+        <section class="space-y-6">
+            <div class="rounded-3xl border border-line bg-white p-6 shadow-sm">
+                <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.22em] text-textSoft">Quy trinh bat buoc</p>
+                        <h2 class="mt-2 text-3xl font-extrabold tracking-tight">Gui ho so dang ky mo shop</h2>
+                        <p class="mt-2 text-sm leading-7 text-textSoft">Nguoi ban khong duoc tu tao shop neu chua duoc Admin phe duyet. Ho so nay la can cu de san kiem soat giay to va cap nhan shop.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <button class="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-white px-5 text-sm font-bold text-textMain transition hover:border-primary/30 hover:text-primary" id="saveDraftButton" type="button">Luu nhap</button>
+                        <button class="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5" id="submitApplicationButton" type="button">Gui ho so</button>
+                    </div>
+                </div>
+            </div>
+
+            <form class="space-y-6" id="sellerApplicationForm">
+                <section class="rounded-3xl border border-line bg-white p-6 shadow-sm">
+                    <h3 class="text-xl font-bold">1. Loai shop dang ky</h3>
+                    <div class="mt-5 grid gap-4 md:grid-cols-2">
+                        <label class="rounded-2xl border border-line p-5 transition hover:border-primary/40">
+                            <input class="mr-3" type="radio" name="applicationType" value="standard" checked>
+                            <strong>Shop thuong</strong>
+                            <p class="mt-2 text-sm leading-7 text-textSoft">Seller ca nhan hoac shop nho.</p>
+                        </label>
+                        <label class="rounded-2xl border border-line p-5 transition hover:border-primary/40">
+                            <input class="mr-3" type="radio" name="applicationType" value="petmall">
+                            <strong>PetMall / Thuong hieu</strong>
+                            <p class="mt-2 text-sm leading-7 text-textSoft">Shop lon, brand chinh hang, nha phan phoi.</p>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="rounded-3xl border border-line bg-white p-6 shadow-sm">
+                    <h3 class="text-xl font-bold">2. Nguoi dai dien</h3>
+                    <div class="mt-5 grid gap-4 md:grid-cols-2">
+                        <label class="space-y-2"><span class="text-sm font-semibold">Ho va ten *</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="representativeName" name="representativeName" type="text" required></label>
+                        <label class="space-y-2"><span class="text-sm font-semibold">So dien thoai *</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="representativePhone" name="representativePhone" type="tel" required></label>
+                        <label class="space-y-2 md:col-span-2"><span class="text-sm font-semibold">Email *</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="representativeEmail" name="representativeEmail" type="email" required></label>
+                        <label class="space-y-2 md:col-span-2"><span class="text-sm font-semibold">CCCD / CMND / Giay to dinh danh</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="identityNumber" name="identityNumber" type="text"></label>
+                    </div>
+                </section>
+
+                <section class="rounded-3xl border border-line bg-white p-6 shadow-sm">
+                    <h3 class="text-xl font-bold">3. Thong tin shop du kien</h3>
+                    <div class="mt-5 grid gap-4 md:grid-cols-2">
+                        <label class="space-y-2 md:col-span-2"><span class="text-sm font-semibold">Ten shop du kien *</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="proposedShopName" name="proposedShopName" type="text" required></label>
+                        <label class="space-y-2"><span class="text-sm font-semibold">So dien thoai shop</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="shopPhone" name="shopPhone" type="tel"></label>
+                        <label class="space-y-2"><span class="text-sm font-semibold">Email shop</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="shopEmail" name="shopEmail" type="email"></label>
+                        <label class="space-y-2 md:col-span-2"><span class="text-sm font-semibold">Loai hang hoa</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="goodsCategories" name="goodsCategories" type="text" placeholder="Vi du: thuc an, phu kien, cham soc"></label>
+                        <label class="space-y-2 md:col-span-2"><span class="text-sm font-semibold">Mo ta shop</span><textarea class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="shopDescription" name="shopDescription" rows="4"></textarea></label>
+                        <label class="space-y-2 md:col-span-2"><span class="text-sm font-semibold">Dia chi</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="shopStreet" name="shopStreet" type="text"></label>
+                        <label class="space-y-2"><span class="text-sm font-semibold">Phuong / Xa</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="shopWard" name="shopWard" type="text"></label>
+                        <label class="space-y-2"><span class="text-sm font-semibold">Quan / Huyen</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="shopDistrict" name="shopDistrict" type="text"></label>
+                        <label class="space-y-2 md:col-span-2"><span class="text-sm font-semibold">Tinh / Thanh pho</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="shopCity" name="shopCity" type="text"></label>
+                    </div>
+                </section>
+
+                <section class="rounded-3xl border border-line bg-white p-6 shadow-sm">
+                    <h3 class="text-xl font-bold">4. Thong tin phap ly</h3>
+                    <div class="mt-5 grid gap-4 md:grid-cols-2">
+                        <label class="space-y-2"><span class="text-sm font-semibold">Ten phap nhan / cong ty</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="legalEntityName" name="legalEntityName" type="text"></label>
+                        <label class="space-y-2"><span class="text-sm font-semibold">Nguoi dai dien phap luat</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="legalRepresentative" name="legalRepresentative" type="text"></label>
+                        <label class="space-y-2"><span class="text-sm font-semibold">Ma so thue</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="taxCode" name="taxCode" type="text"></label>
+                        <label class="space-y-2"><span class="text-sm font-semibold">So giay phep kinh doanh</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="businessLicenseNumber" name="businessLicenseNumber" type="text"></label>
+                        <label class="space-y-2 md:col-span-2"><span class="text-sm font-semibold">Thong tin giay phep / uy quyen thuong hieu</span><input class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="operatingLicenseNumber" name="operatingLicenseNumber" type="text"></label>
+                        <label class="space-y-2 md:col-span-2"><span class="text-sm font-semibold">Nguon goc hang hoa</span><textarea class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="sourceOfGoodsDescription" name="sourceOfGoodsDescription" rows="4"></textarea></label>
+                        <label class="space-y-2 md:col-span-2"><span class="text-sm font-semibold">Cam ket chat luong</span><textarea class="w-full rounded-2xl border border-line bg-surface px-4 py-3" id="qualityCommitment" name="qualityCommitment" rows="4"></textarea></label>
+                    </div>
+                </section>
+
+                <section class="rounded-3xl border border-line bg-white p-6 shadow-sm">
+                    <h3 class="text-xl font-bold">5. Tai giay to</h3>
+                    <div class="mt-5 rounded-3xl border border-dashed border-line bg-surface p-5">
+                        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold">Tai len tu may</p>
+                                <p class="text-sm text-textSoft">Ho tro JPG, PNG, GIF, WEBP va PDF, toi da 10MB moi tep.</p>
+                            </div>
+                            <div class="flex flex-wrap gap-3">
+                                <select class="rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold" id="documentTypeSelect">
+                                    <option value="identity_document">Giay to dinh danh</option>
+                                    <option value="business_license">Giay phep kinh doanh</option>
+                                    <option value="tax_code">Ma so thue</option>
+                                    <option value="brand_authorization">Uy quyen thuong hieu</option>
+                                    <option value="source_of_goods">Nguon goc hang hoa</option>
+                                    <option value="quality_commitment">Cam ket chat luong</option>
+                                    <option value="operating_license">Giay phep hoat dong</option>
+                                    <option value="other">Tai lieu khac</option>
+                                </select>
+                                <button class="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-white px-5 text-sm font-bold text-textMain transition hover:border-primary/30 hover:text-primary" id="pickDocumentButton" type="button">Chon tai lieu</button>
+                            </div>
+                        </div>
+                        <input class="hidden" id="documentFileInput" type="file" multiple>
+                    </div>
+                    <div class="mt-5 space-y-3" id="documentsList"><p class="text-sm text-textSoft">Chua co giay to nao duoc tai len.</p></div>
+                </section>
+
+                <section class="rounded-3xl border border-line bg-white p-6 shadow-sm">
+                    <h3 class="text-xl font-bold">6. Xac nhan dieu khoan</h3>
+                    <div class="mt-5 space-y-4 rounded-3xl bg-surface p-5 text-sm leading-7 text-textSoft">
+                        <label class="flex items-start gap-3"><input class="mt-1" id="termsAccepted" name="termsAccepted" type="checkbox"><span>Toi da doc, hieu va dong y voi dieu khoan kinh doanh tren san, bao gom cac quy dinh cam ban hang gia, hang nhai, hang khong ro nguon goc, dong vat cam, dong vat hoang da trai phep va noi dung vi pham phap luat.</span></label>
+                        <label class="flex items-start gap-3"><input class="mt-1" id="legalResponsibilityConfirmed" name="legalResponsibilityConfirmed" type="checkbox"><span>Toi xac nhan chiu trach nhiem truoc phap luat doi voi hang hoa, giay to va noi dung do shop cung cap. Neu vi pham, san co quyen khoa, xoa shop va luu lich su xu ly.</span></label>
+                    </div>
+                </section>
+            </form>
+
+            <div class="hidden rounded-3xl border border-red-200 bg-red-50 p-5 text-sm text-red-700 shadow-sm" id="applicationAlert"></div>
+            <div class="hidden rounded-3xl border border-green-200 bg-green-50 p-5 text-sm text-green-700 shadow-sm" id="applicationToast"></div>
+        </section>
+    </main>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/api/client.js"></script>
+    <script src="/js/components/auth.js"></script>
+    <script src="/js/components/auth-seller-onboarding.js"></script>
+    <script src="/pages/account/seller-application.js"></script>
+</body>
+</html>

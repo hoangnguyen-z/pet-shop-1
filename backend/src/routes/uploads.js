@@ -2,18 +2,23 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+
 const { authenticate } = require('../middleware/auth');
 const { sendCreated } = require('../middleware/responseHandler');
 const ApiError = require('../utils/ApiError');
 
 const router = express.Router();
 const uploadRoot = path.join(__dirname, '..', '..', 'uploads');
-const allowedFolders = new Set(['avatars', 'shops', 'products', 'general']);
-const allowedMimeTypes = new Set([
+const allowedFolders = new Set(['avatars', 'shops', 'products', 'general', 'documents']);
+const allowedImageMimeTypes = new Set([
     'image/jpeg',
     'image/png',
     'image/webp',
     'image/gif'
+]);
+const allowedDocumentMimeTypes = new Set([
+    ...allowedImageMimeTypes,
+    'application/pdf'
 ]);
 
 function normalizeFolder(folder) {
@@ -22,9 +27,9 @@ function normalizeFolder(folder) {
 }
 
 function buildFileName(file = {}) {
-    const originalName = String(file.originalname || 'image').replace(/[^\w.-]+/g, '-').toLowerCase();
-    const extension = path.extname(originalName) || '.jpg';
-    const baseName = path.basename(originalName, extension).replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || 'image';
+    const originalName = String(file.originalname || 'file').replace(/[^\w.-]+/g, '-').toLowerCase();
+    const extension = path.extname(originalName) || '.bin';
+    const baseName = path.basename(originalName, extension).replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || 'file';
     return `${Date.now()}-${Math.round(Math.random() * 1e9)}-${baseName}${extension}`;
 }
 
@@ -41,14 +46,12 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({
+const imageUpload = multer({
     storage,
-    limits: {
-        fileSize: 5 * 1024 * 1024
-    },
+    limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter(req, file, cb) {
-        if (!allowedMimeTypes.has(file.mimetype)) {
-            cb(ApiError.badRequest('Chỉ hỗ trợ ảnh JPG, PNG, WEBP hoặc GIF'));
+        if (!allowedImageMimeTypes.has(file.mimetype)) {
+            cb(ApiError.badRequest('Chi ho tro anh JPG, PNG, WEBP hoac GIF'));
             return;
         }
 
@@ -56,36 +59,67 @@ const upload = multer({
     }
 });
 
-router.post('/image', authenticate, (req, res, next) => {
-    upload.single('image')(req, res, (error) => {
-        if (error) {
-            if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
-                next(ApiError.badRequest('Ảnh tải lên tối đa 5MB'));
-                return;
-            }
-
-            next(error);
+const documentUpload = multer({
+    storage,
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter(req, file, cb) {
+        if (!allowedDocumentMimeTypes.has(file.mimetype)) {
+            cb(ApiError.badRequest('Chi ho tro tep JPG, PNG, WEBP, GIF hoac PDF'));
             return;
         }
 
-        next();
+        cb(null, true);
+    }
+});
+
+function handleMulter(uploadMiddleware, fieldName, tooLargeMessage) {
+    return (req, res, next) => {
+        uploadMiddleware.single(fieldName)(req, res, (error) => {
+            if (error) {
+                if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
+                    next(ApiError.badRequest(tooLargeMessage));
+                    return;
+                }
+
+                next(error);
+                return;
+            }
+
+            next();
+        });
+    };
+}
+
+function sendUploadSuccess(res, file, folder, message) {
+    const url = `/api/uploads/${folder}/${file.filename}`;
+    sendCreated(res, message, {
+        url,
+        folder,
+        originalName: file.originalname,
+        size: file.size,
+        mimeType: file.mimetype
     });
-}, async (req, res, next) => {
+}
+
+router.post('/image', authenticate, handleMulter(imageUpload, 'image', 'Anh tai len toi da 5MB'), async (req, res, next) => {
     try {
         if (!req.file) {
-            throw ApiError.badRequest('Vui lòng chọn ảnh để tải lên');
+            throw ApiError.badRequest('Vui long chon anh de tai len');
         }
 
-        const folder = normalizeFolder(req.uploadFolder);
-        const url = `/api/uploads/${folder}/${req.file.filename}`;
+        sendUploadSuccess(res, req.file, normalizeFolder(req.uploadFolder), 'Tai anh len thanh cong');
+    } catch (error) {
+        next(error);
+    }
+});
 
-        sendCreated(res, 'Tải ảnh lên thành công', {
-            url,
-            folder,
-            originalName: req.file.originalname,
-            size: req.file.size,
-            mimeType: req.file.mimetype
-        });
+router.post('/document', authenticate, handleMulter(documentUpload, 'document', 'Tai lieu tai len toi da 10MB'), async (req, res, next) => {
+    try {
+        if (!req.file) {
+            throw ApiError.badRequest('Vui long chon tai lieu de tai len');
+        }
+
+        sendUploadSuccess(res, req.file, normalizeFolder(req.uploadFolder || 'documents'), 'Tai tai lieu len thanh cong');
     } catch (error) {
         next(error);
     }

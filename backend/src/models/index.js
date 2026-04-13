@@ -11,6 +11,21 @@ const Notification = require('./Notification');
 const InventoryLog = require('./InventoryLog');
 const Settlement = require('./Settlement');
 const OrderLog = require('./OrderLog');
+const SellerApplication = require('./SellerApplication');
+const SellerDocument = require('./SellerDocument');
+const SellerTermsAcceptance = require('./SellerTermsAcceptance');
+const ViolationRecord = require('./ViolationRecord');
+const AdminReviewLog = require('./AdminReviewLog');
+const ShopStatusHistory = require('./ShopStatusHistory');
+const ShopVerificationLevel = require('./ShopVerificationLevel');
+const CareServiceApplication = require('./CareServiceApplication');
+const CareServiceDocument = require('./CareServiceDocument');
+const CareServiceTermsAcceptance = require('./CareServiceTermsAcceptance');
+const CareServiceAdminReviewLog = require('./CareServiceAdminReviewLog');
+const CareServiceOffering = require('./CareServiceOffering');
+const CareServiceBooking = require('./CareServiceBooking');
+const CareServiceReview = require('./CareServiceReview');
+const PaymentTransaction = require('./PaymentTransaction');
 
 module.exports = {
     User,
@@ -25,5 +40,20 @@ module.exports = {
     Notification,
     InventoryLog,
     Settlement,
-    OrderLog
+    OrderLog,
+    SellerApplication,
+    SellerDocument,
+    SellerTermsAcceptance,
+    ViolationRecord,
+    AdminReviewLog,
+    ShopStatusHistory,
+    ShopVerificationLevel,
+    CareServiceApplication,
+    CareServiceDocument,
+    CareServiceTermsAcceptance,
+    CareServiceAdminReviewLog,
+    CareServiceOffering,
+    CareServiceBooking,
+    CareServiceReview,
+    PaymentTransaction
 };

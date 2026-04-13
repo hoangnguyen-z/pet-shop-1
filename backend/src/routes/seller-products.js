@@ -1,13 +1,14 @@
 ﻿const express = require('express');
 const router = express.Router();
 const { Product, Order, Category, InventoryLog } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate, requireApprovedSeller } = require('../middleware/auth');
 const { pagination, getPaginationMeta } = require('../middleware/pagination');
 const { sendSuccess, sendCreated } = require('../middleware/responseHandler');
 const ApiError = require('../utils/ApiError');
 const { ROLES, ORDER_STATUS } = require('../config/constants');
 
 router.use(authenticate);
+router.use(requireApprovedSeller);
 
 function sanitizeProductInput(body = {}) {
     const allowedFields = [

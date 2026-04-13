@@ -51,7 +51,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
         throw ApiError.notFound('Không tìm thấy đơn hàng');
     }
 
-    const validStatuses = ['pending', 'confirmed', 'preparing', 'shipping', 'delivered', 'completed', 'cancelled', 'return_pending', 'returned'];
+    const validStatuses = ['waiting_payment', 'paid', 'pending', 'confirmed', 'preparing', 'shipping', 'delivered', 'completed', 'cancelled', 'return_pending', 'returned'];
     if (!validStatuses.includes(status)) {
         throw ApiError.badRequest('Trạng thái không hợp lệ');
     }
@@ -60,6 +60,10 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     syncOrderState(order, {
         orderStatus: status,
         shippingStatus: deriveShippingStatus(status)
+    });
+    order.items = (order.items || []).map((item) => {
+        item.shopStatus = status;
+        return item;
     });
     if (note) {
         order.statusHistory = order.statusHistory || [];
@@ -104,7 +108,7 @@ const updatePaymentStatus = asyncHandler(async (req, res) => {
         throw ApiError.notFound('Order not found');
     }
 
-    if (status && !['unpaid', 'pending', 'paid', 'failed', 'refunded'].includes(status)) {
+    if (status && !['unpaid', 'pending', 'processing', 'paid', 'failed', 'expired', 'cancelled', 'refunded'].includes(status)) {
         throw ApiError.badRequest('Invalid payment status');
     }
 
@@ -151,6 +155,8 @@ const updatePaymentStatus = asyncHandler(async (req, res) => {
 
 const getOrderStats = asyncHandler(async (req, res) => {
     const totalOrders = await Order.countDocuments();
+    const waitingPaymentOrders = await Order.countDocuments({ status: 'waiting_payment' });
+    const paidOrders = await Order.countDocuments({ status: 'paid' });
     const pendingOrders = await Order.countDocuments({ status: 'pending' });
     const confirmedOrders = await Order.countDocuments({ status: 'confirmed' });
     const shippingOrders = await Order.countDocuments({ status: 'shipping' });
@@ -182,6 +188,8 @@ const getOrderStats = asyncHandler(async (req, res) => {
 
     sendSuccess(res, {
         total: totalOrders,
+        waitingPayment: waitingPaymentOrders,
+        paid: paidOrders,
         pending: pendingOrders,
         confirmed: confirmedOrders,
         shipping: shippingOrders,
@@ -234,7 +242,26 @@ const processRefund = asyncHandler(async (req, res) => {
     await refund.save();
 
     if (status === 'approved' || status === 'completed') {
-        await Order.findByIdAndUpdate(refund.order, { status: 'refunded' });
+        const order = await Order.findById(refund.order);
+        if (order) {
+            syncOrderState(order, {
+                orderStatus: 'cancelled',
+                shippingStatus: deriveShippingStatus('cancelled'),
+                paymentStatus: 'refunded'
+            });
+            order.items = (order.items || []).map((item) => {
+                item.shopStatus = 'cancelled';
+                return item;
+            });
+            order.statusHistory = order.statusHistory || [];
+            order.statusHistory.push({
+                status: 'cancelled',
+                note: `Hoan tien duoc xu ly boi Admin: ${status}`,
+                updatedBy: req.admin._id,
+                updatedAt: new Date()
+            });
+            await order.save();
+        }
     }
 
     await AuditLog.create({

@@ -7,20 +7,14 @@ const Page = require('../models/admin/Page');
 const SiteSetting = require('../models/admin/SiteSetting');
 const { ROLES, SHOP_STATUS, COUPON_TYPES, COUPON_STATUS } = require('../config/constants');
 const { getDemoShopLocation } = require('./shop-location-pool');
+const { unsplashPhoto } = require('./storefront-media');
+const { localizeCategoryToVi, localizeProductToVi } = require('./product-localization');
 
-const localImageMap = {
-    'photo-1589924691995-400dc9ecc119': '/assets/images/pet-food.svg',
-    'photo-1583337130417-3346a1be7dee': '/assets/images/pet-cat.svg',
-    'photo-1568640347023-a616a30bc3bd': '/assets/images/pet-food.svg',
-    'photo-1552728089-57bdde30beb3': '/assets/images/pet-bird.svg',
-    'photo-1522069169874-c58ec4b76be5': '/assets/images/pet-fish.svg',
-    'photo-1535294435445-d7249524ef2e': '/assets/images/pet-toy.svg',
-    'photo-1601758124510-52d02ddb7cbd': '/assets/images/pet-dog.svg',
-    'photo-1558788353-f76d92427f16': '/assets/images/pet-vet.svg',
-    'photo-1601758177266-bc599de87707': '/assets/images/pet-article.svg'
+const image = (id) => {
+    if (String(id).startsWith('http') || String(id).startsWith('/')) return id;
+    if (!id) return unsplashPhoto('photo-1548199973-03cce0bbc87b');
+    return unsplashPhoto(id);
 };
-
-const image = (id) => localImageMap[id] || '/assets/images/pet-generic.svg';
 
 const categories = [
     { name: 'Dog Food', slug: 'dog-food', icon: 'dog', order: 1 },
@@ -185,9 +179,10 @@ async function upsertDemoData() {
 
     const categoryMap = new Map();
     for (const category of categories) {
+        const localizedCategory = localizeCategoryToVi(category);
         const doc = await Category.findOneAndUpdate(
             { slug: category.slug },
-            { ...category, isActive: true },
+            { ...category, ...localizedCategory, isActive: true },
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
         categoryMap.set(category.slug, doc);
@@ -195,10 +190,22 @@ async function upsertDemoData() {
 
     for (const product of products) {
         const category = categoryMap.get(product.categorySlug);
+        const localizedProduct = localizeProductToVi({
+            ...product,
+            categoryName: category?.name,
+            petType: product.tags?.[0],
+            attributes: [
+                { name: 'Pet Type', value: product.tags?.[0] },
+                { name: 'Brand', value: product.brand }
+            ]
+        });
         await Product.findOneAndUpdate(
             { sku: product.sku },
             {
                 ...product,
+                name: localizedProduct.name,
+                shortDescription: localizedProduct.shortDescription,
+                description: localizedProduct.description,
                 categorySlug: undefined,
                 shop: shop._id,
                 seller: seller._id,
@@ -206,10 +213,7 @@ async function upsertDemoData() {
                 isActive: true,
                 isVerified: true,
                 unit: 'item',
-                attributes: [
-                    { name: 'Pet Type', value: product.tags[0] },
-                    { name: 'Brand', value: product.brand }
-                ]
+                attributes: localizedProduct.attributes
             },
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );

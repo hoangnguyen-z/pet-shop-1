@@ -2,24 +2,14 @@ const express = require('express');
 const router = express.Router();
 
 const { Product, Order, Coupon, Promotion, Review, Settlement, InventoryLog } = require('../models');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, requireApprovedSeller } = require('../middleware/auth');
 const { sendSuccess, sendCreated } = require('../middleware/responseHandler');
 const ApiError = require('../utils/ApiError');
 const { ROLES, COUPON_STATUS, ORDER_STATUS } = require('../config/constants');
+const { enrichSellerOrder, buildSellerWalletSummary } = require('../services/sellerFinanceService');
 
 router.use(authenticate);
-
-const requireSeller = (req, res, next) => {
-    if (req.user.role !== ROLES.SELLER) {
-        return next(ApiError.forbidden('Seller account required'));
-    }
-    if (!req.user.shop) {
-        return next(ApiError.badRequest('Create a shop before using Seller Center'));
-    }
-    next();
-};
-
-router.use(requireSeller);
+router.use(requireApprovedSeller);
 
 const periodMatch = (field, from, to) => {
     const match = {};
@@ -67,8 +57,10 @@ router.get('/dashboard', async (req, res, next) => {
             bestSellingProducts,
             slowMovingProducts,
             recentOrders,
+            walletOrders,
             recentReviews,
-            settlements
+            settlements,
+            allSettlements
         ] = await Promise.all([
             Product.countDocuments({ seller: sellerId }),
             Product.countDocuments({ seller: sellerId, isActive: true }),
@@ -87,8 +79,12 @@ router.get('/dashboard', async (req, res, next) => {
             Product.find({ seller: sellerId }).select('name sku soldCount stock price images thumbnail').sort({ soldCount: -1 }).limit(5),
             Product.find({ seller: sellerId, soldCount: 0 }).select('name sku soldCount stock price images thumbnail').sort({ createdAt: -1 }).limit(5),
             Order.find({ 'items.seller': sellerId }).populate('buyer', 'name email phone').sort({ createdAt: -1 }).limit(5),
+            Order.find({ 'items.seller': sellerId })
+                .select('items paymentMethod paymentStatus payment orderStatus status createdAt updatedAt')
+                .sort({ createdAt: -1 }),
             Review.find({ shop: shopId }).populate('user', 'name avatar').populate('product', 'name images thumbnail').sort({ createdAt: -1 }).limit(5),
-            Settlement.find({ seller: sellerId }).sort({ createdAt: -1 }).limit(5)
+            Settlement.find({ seller: sellerId }).sort({ createdAt: -1 }).limit(5),
+            Settlement.find({ seller: sellerId }).sort({ createdAt: -1 })
         ]);
 
         const statusCounts = {};
@@ -100,6 +96,8 @@ router.get('/dashboard', async (req, res, next) => {
             total: totalRevenue[0]?.revenue || 0
         };
         const feeRate = 0.05;
+        const wallet = buildSellerWalletSummary(walletOrders, sellerId, { settlements: allSettlements });
+        const recentOrdersWithFinancial = recentOrders.map((order) => enrichSellerOrder(order, sellerId, { settlements: allSettlements }));
 
         sendSuccess(res, 'Seller dashboard loaded', {
             shop: req.user.shop,
@@ -113,9 +111,10 @@ router.get('/dashboard', async (req, res, next) => {
                 platformFee: revenue.total * feeRate,
                 netRevenue: revenue.total * (1 - feeRate)
             },
+            wallet,
             bestSellingProducts,
             slowMovingProducts,
-            recentOrders,
+            recentOrders: recentOrdersWithFinancial,
             recentReviews,
             settlements
         });
@@ -314,18 +313,35 @@ router.get('/settlements', async (req, res, next) => {
 
 router.post('/settlements/request', async (req, res, next) => {
     try {
-        const revenue = await Order.aggregate(sellerRevenuePipeline(req.user._id, {
-            'payment.status': 'paid'
-        }));
-        const amount = revenue[0]?.revenue || 0;
-        if (amount <= 0) throw ApiError.badRequest('No paid revenue available for settlement');
-        const fee = amount * 0.05;
+        const candidateOrders = await Order.find({ 'items.seller': req.user._id }).select(
+            'items paymentMethod paymentStatus payment orderStatus status createdAt updatedAt'
+        );
+        const allSettlements = await Settlement.find({ seller: req.user._id }).select('_id orders status completedAt createdAt amount fee netAmount');
+
+        const pendingOrders = candidateOrders.filter((order) => {
+            const financial = enrichSellerOrder(order, req.user._id, { settlements: allSettlements }).sellerFinancial;
+            return financial.fundFlowStatus === 'pending_settlement' && !financial.settlementId;
+        });
+
+        if (!pendingOrders.length) {
+            throw ApiError.badRequest('Khong co don nao dang cho doi soat');
+        }
+
+        const totals = pendingOrders.reduce((accumulator, order) => {
+            const financial = enrichSellerOrder(order, req.user._id, { settlements: allSettlements }).sellerFinancial;
+            accumulator.amount += financial.grossAmount;
+            accumulator.fee += financial.platformFee;
+            accumulator.netAmount += financial.netAmount;
+            return accumulator;
+        }, { amount: 0, fee: 0, netAmount: 0 });
+
         const settlement = await Settlement.create({
             shop: req.user.shop._id,
             seller: req.user._id,
-            amount,
-            fee,
-            netAmount: amount - fee,
+            orders: pendingOrders.map((order) => order._id),
+            amount: totals.amount,
+            fee: totals.fee,
+            netAmount: totals.netAmount,
             bankInfo: req.user.shop.bankAccount || {},
             status: 'pending',
             notes: req.body.notes

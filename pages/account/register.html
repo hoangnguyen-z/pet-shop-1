@@ -206,13 +206,45 @@
 
             try {
                 const data = await api.register(formData, currentRole);
+                const payload = data.data || {};
+                const user = payload.user || { role: currentRole };
+                const token = payload.accessToken || payload.token;
+
+                if (token) {
+                    localStorage.setItem('accessToken', token);
+                }
+                if (payload.refreshToken) {
+                    localStorage.setItem('refreshToken', payload.refreshToken);
+                }
+                localStorage.setItem('user', JSON.stringify({ ...user, role: currentRole }));
+                localStorage.setItem('role', currentRole);
+
+                if (currentRole === 'seller' && payload.shop) {
+                    localStorage.setItem('shop', JSON.stringify(payload.shop));
+                } else {
+                    localStorage.removeItem('shop');
+                }
+
+                if (currentRole === 'seller' && payload.application) {
+                    localStorage.setItem('sellerApplication', JSON.stringify(payload.application));
+                } else {
+                    localStorage.removeItem('sellerApplication');
+                }
+
+                if (currentRole === 'seller' && payload.sellerAccess) {
+                    localStorage.setItem('sellerAccess', JSON.stringify(payload.sellerAccess));
+                } else {
+                    localStorage.removeItem('sellerAccess');
+                }
 
                 messageBox.className = 'p-4 rounded-xl bg-secondary-container/20 border border-secondary-container/30';
                 messageBox.innerHTML = `<p class="text-sm text-secondary font-semibold">${data.message}</p>`;
                 messageBox.classList.remove('hidden');
                 
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    window.location.href = currentRole === 'seller'
+                        ? '../seller/dashboard.html'
+                        : '../../index.html';
                 }, 2000);
             } catch (error) {
                 messageBox.className = 'p-4 rounded-xl bg-error-container/20 border border-error-container/30';

@@ -8,10 +8,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/pages/seller/seller-portal.css">
+    <link rel="stylesheet" href="/pages/seller/seller-portal.css?v=20260413-payment">
 </head>
 <body class="seller-dashboard-body">
     <div class="seller-sidebar-backdrop" id="sellerSidebarBackdrop"></div>
+
     <div class="seller-dashboard-shell">
         <aside class="seller-side-nav" id="sellerSidebar">
             <div class="seller-side-brand">
@@ -59,7 +60,7 @@
                     </button>
                     <label class="seller-topbar-search">
                         <span class="material-symbols-outlined">search</span>
-                        <input id="dashboardSearch" type="text" placeholder="Tìm kiếm sản phẩm, đơn hàng...">
+                        <input id="dashboardSearch" type="text" placeholder="Tìm kiếm đơn hàng, sản phẩm, đánh giá...">
                     </label>
                 </div>
 
@@ -72,7 +73,7 @@
                     <div class="seller-profile-chip">
                         <div class="seller-profile-copy">
                             <strong id="dashboardSellerName">Người bán</strong>
-                            <span id="dashboardSellerRole">Nhà bán đã xác minh</span>
+                            <span id="dashboardSellerRole">Shop đã xác minh</span>
                         </div>
                         <img id="dashboardSellerAvatar" src="/assets/photos/cat.jpg" alt="Ảnh đại diện người bán">
                     </div>
@@ -82,8 +83,8 @@
             <main class="seller-dashboard-content">
                 <section class="seller-welcome-section">
                     <div>
-                        <h2 id="dashboardGreeting">Chào buổi sáng!</h2>
-                        <p id="dashboardHeroDescription">Đây là những gì đang diễn ra với cửa hàng của bạn hôm nay.</p>
+                        <h2 id="dashboardGreeting">Chào bạn!</h2>
+                        <p id="dashboardHeroDescription">Đây là bức tranh tổng quan về đơn hàng, thanh toán và dòng tiền của shop hôm nay.</p>
                     </div>
 
                     <div class="seller-welcome-actions">
@@ -93,11 +94,11 @@
                         </div>
                         <button class="seller-success-button" id="dashboardExportButton" type="button">
                             <span class="material-symbols-outlined">download</span>
-                            <span>Xuất Báo Cáo</span>
+                            <span>Xuất báo cáo</span>
                         </button>
                         <button class="seller-secondary-button" type="button" data-dashboard-view-orders>
                             <span class="material-symbols-outlined">pending_actions</span>
-                            <span>Đơn chờ xử lý</span>
+                            <span>Xử lý đơn hàng</span>
                         </button>
                     </div>
                 </section>
@@ -107,43 +108,43 @@
                         <div class="seller-stat-icon seller-stat-icon-primary">
                             <span class="material-symbols-outlined">shopping_bag</span>
                         </div>
-                        <p>Tổng Đơn Hàng</p>
+                        <p>Tổng đơn hàng</p>
                         <h3 id="statTotalOrders">0</h3>
-                        <small id="statTotalOrdersDelta">Đang tính toán...</small>
+                        <small id="statTotalOrdersDelta">Đang đồng bộ...</small>
                     </article>
 
                     <article class="seller-stat-card">
                         <div class="seller-stat-icon seller-stat-icon-success">
                             <span class="material-symbols-outlined">payments</span>
                         </div>
-                        <p>Doanh Thu Nay</p>
-                        <h3 id="statTodayRevenue">$0.00</h3>
-                        <small id="statTodayRevenueDelta">Đồng bộ từ đơn hàng đã ghi nhận</small>
+                        <p>Doanh thu hôm nay</p>
+                        <h3 id="statTodayRevenue">0 đ</h3>
+                        <small id="statTodayRevenueDelta">Đang lấy dữ liệu thanh toán</small>
                     </article>
 
                     <article class="seller-stat-card seller-stat-card-highlight">
                         <div class="seller-stat-icon seller-stat-icon-highlight">
                             <span class="material-symbols-outlined">analytics</span>
                         </div>
-                        <p>Doanh Thu Tháng</p>
-                        <h3 id="statMonthRevenue">$0.00</h3>
-                        <small id="statMonthRevenueDelta">Mục tiêu doanh thu đang cập nhật</small>
+                        <p>Doanh thu tháng</p>
+                        <h3 id="statMonthRevenue">0 đ</h3>
+                        <small id="statMonthRevenueDelta">Theo các đơn đã ghi nhận</small>
                     </article>
 
                     <article class="seller-stat-card">
                         <div class="seller-stat-icon seller-stat-icon-tertiary">
                             <span class="material-symbols-outlined">inventory_2</span>
                         </div>
-                        <p>Sản Phẩm Đang Bán</p>
+                        <p>Sản phẩm đang bán</p>
                         <h3 id="statProductCount">0</h3>
-                        <small id="statVisibleProducts">0 sản phẩm đang hiển thị trên sàn</small>
+                        <small id="statVisibleProducts">0 sản phẩm đang hiển thị</small>
                     </article>
 
                     <article class="seller-stat-card seller-stat-card-alert">
                         <div class="seller-stat-icon seller-stat-icon-alert">
                             <span class="material-symbols-outlined">pending_actions</span>
                         </div>
-                        <p>Chờ Xử Lý</p>
+                        <p>Đơn cần xử lý</p>
                         <h3 id="statPendingOrders">0</h3>
                         <small id="statConfirmedOrders">Không có đơn cần xử lý ngay</small>
                     </article>
@@ -153,8 +154,8 @@
                     <article class="seller-panel seller-panel-large" id="revenue-section">
                         <div class="seller-panel-head">
                             <div>
-                                <h3>Xu Hướng Doanh Thu</h3>
-                                <p>Thống kê doanh thu lấy trực tiếp từ các đơn hàng của shop</p>
+                                <h3>Xu hướng doanh thu</h3>
+                                <p>Dữ liệu doanh thu được lấy trực tiếp từ các đơn thuộc shop của bạn.</p>
                             </div>
                             <select id="dashboardTrendRange" class="seller-select">
                                 <option value="7">7 ngày gần nhất</option>
@@ -170,27 +171,27 @@
                         <div class="seller-metric-row">
                             <div class="seller-metric-chip">
                                 <span>Hôm nay</span>
-                                <strong id="revenueToday">$0.00</strong>
+                                <strong id="revenueToday">0 đ</strong>
                             </div>
                             <div class="seller-metric-chip">
                                 <span>Tháng này</span>
-                                <strong id="revenueMonth">$0.00</strong>
+                                <strong id="revenueMonth">0 đ</strong>
                             </div>
                             <div class="seller-metric-chip">
                                 <span>Năm nay</span>
-                                <strong id="revenueYear">$0.00</strong>
+                                <strong id="revenueYear">0 đ</strong>
                             </div>
                             <div class="seller-metric-chip">
                                 <span>Tổng doanh thu</span>
-                                <strong id="revenueTotal">$0.00</strong>
+                                <strong id="revenueTotal">0 đ</strong>
                             </div>
                             <div class="seller-metric-chip">
                                 <span>Phí sàn</span>
-                                <strong id="revenuePlatformFee">$0.00</strong>
+                                <strong id="revenuePlatformFee">0 đ</strong>
                             </div>
                             <div class="seller-metric-chip">
                                 <span>Thực nhận</span>
-                                <strong id="revenueNet">$0.00</strong>
+                                <strong id="revenueNet">0 đ</strong>
                             </div>
                         </div>
                     </article>
@@ -198,15 +199,15 @@
                     <article class="seller-panel">
                         <div class="seller-panel-head">
                             <div>
-                                <h3>Thống Kê Đơn Hàng</h3>
-                                <p>Phân loại theo trạng thái xử lý của seller</p>
+                                <h3>Thống kê đơn hàng</h3>
+                                <p>Phân loại theo tiến độ xử lý của shop và trạng thái thanh toán.</p>
                             </div>
                         </div>
 
                         <div class="seller-progress-stack">
                             <div class="seller-progress-item">
                                 <div class="seller-progress-copy">
-                                    <span>Thành Công</span>
+                                    <span>Đã hoàn tất</span>
                                     <strong id="orderSuccessLabel">0%</strong>
                                 </div>
                                 <div class="seller-progress-bar">
@@ -216,7 +217,7 @@
 
                             <div class="seller-progress-item">
                                 <div class="seller-progress-copy">
-                                    <span>Đang Xử Lý / Đang Giao</span>
+                                    <span>Đang xử lý / đang giao</span>
                                     <strong id="orderShippingLabel">0%</strong>
                                 </div>
                                 <div class="seller-progress-bar">
@@ -226,7 +227,7 @@
 
                             <div class="seller-progress-item">
                                 <div class="seller-progress-copy">
-                                    <span>Đã Hủy / Trả hàng</span>
+                                    <span>Đã hủy / hoàn tiền</span>
                                     <strong id="orderCancelledLabel">0%</strong>
                                 </div>
                                 <div class="seller-progress-bar">
@@ -239,19 +240,81 @@
                             <div class="seller-mini-avatars">
                                 <div class="seller-mini-avatar" id="dashboardNewBuyerCount">0</div>
                             </div>
-                            <p id="dashboardOrderSummaryText">Chưa có biến động đáng chú ý hôm nay.</p>
+                            <p id="dashboardOrderSummaryText">Đang tổng hợp nhịp mua hàng gần đây của shop.</p>
                         </div>
                     </article>
+                </section>
+
+                <section class="seller-wallet-grid">
+                    <article class="seller-wallet-card">
+                        <div class="seller-wallet-head">
+                            <div class="seller-stat-icon seller-stat-icon-success">
+                                <span class="material-symbols-outlined">account_balance_wallet</span>
+                            </div>
+                            <div>
+                                <p>Số dư khả dụng</p>
+                                <h3 id="walletAvailableBalance">0 đ</h3>
+                            </div>
+                        </div>
+                        <small>Đã đối soát hoặc đã chuyển cho shop.</small>
+                    </article>
+
+                    <article class="seller-wallet-card">
+                        <div class="seller-wallet-head">
+                            <div class="seller-stat-icon seller-stat-icon-primary">
+                                <span class="material-symbols-outlined">schedule</span>
+                            </div>
+                            <div>
+                                <p>Chờ đối soát</p>
+                                <h3 id="walletPendingSettlement">0 đ</h3>
+                            </div>
+                        </div>
+                        <small>Các đơn đã hoàn tất và đang chờ tạo/hoàn tất đối soát.</small>
+                    </article>
+
+                    <article class="seller-wallet-card">
+                        <div class="seller-wallet-head">
+                            <div class="seller-stat-icon seller-stat-icon-warm">
+                                <span class="material-symbols-outlined">shield</span>
+                            </div>
+                            <div>
+                                <p>Sàn đang giữ</p>
+                                <h3 id="walletHoldingBalance">0 đ</h3>
+                            </div>
+                        </div>
+                        <small>Đơn đã thanh toán nhưng chưa hoàn tất giao nhận.</small>
+                    </article>
+
+                    <article class="seller-wallet-card">
+                        <div class="seller-wallet-head">
+                            <div class="seller-stat-icon seller-stat-icon-danger">
+                                <span class="material-symbols-outlined">currency_exchange</span>
+                            </div>
+                            <div>
+                                <p>Đã hủy / hoàn tiền</p>
+                                <h3 id="walletRefundedBalance">0 đ</h3>
+                            </div>
+                        </div>
+                        <small>Giá trị đơn không còn được giữ để đối soát cho shop.</small>
+                    </article>
+                </section>
+
+                <section class="seller-wallet-toolbar">
+                    <p id="walletSummaryNote">Hệ thống sẽ tự phân loại tiền đang giữ, chờ đối soát và đã đối soát cho shop.</p>
+                    <button class="seller-secondary-button" id="walletRequestSettlementButton" type="button">
+                        <span class="material-symbols-outlined">payments</span>
+                        <span>Tạo yêu cầu đối soát</span>
+                    </button>
                 </section>
 
                 <section class="seller-content-grid">
                     <article class="seller-panel seller-panel-large" id="recent-orders-overview">
                         <div class="seller-panel-head">
                             <div>
-                                <h3>Đơn Hàng Gần Đây</h3>
-                                <p>Những đơn mới nhất thuộc shop của bạn</p>
+                                <h3>Đơn hàng gần đây</h3>
+                                <p>Mỗi đơn đều hiển thị rõ trạng thái thanh toán và dòng tiền của shop.</p>
                             </div>
-                            <button class="seller-link-button" type="button" data-dashboard-view-orders>Xem trong đơn hàng</button>
+                            <button class="seller-link-button" type="button" data-dashboard-view-orders>Xem toàn bộ</button>
                         </div>
                         <div class="seller-list-stack" id="dashboardRecentOrders"></div>
                     </article>
@@ -259,17 +322,17 @@
                     <article class="seller-panel" id="marketing-section">
                         <div class="seller-panel-head">
                             <div>
-                                <h3>Sản Phẩm Bán Chạy</h3>
-                                <p>Top sản phẩm dẫn doanh số của shop</p>
+                                <h3>Sản phẩm bán chạy</h3>
+                                <p>Các sản phẩm đang dẫn doanh số của shop.</p>
                             </div>
                         </div>
                         <div class="seller-top-product-stack" id="dashboardBestSelling"></div>
                         <div class="seller-insight-card">
                             <div class="seller-insight-head">
                                 <span class="material-symbols-outlined">star</span>
-                                <strong>Lời khuyên Merchant</strong>
+                                <strong>Gợi ý vận hành</strong>
                             </div>
-                            <p id="dashboardInsight">Đang phân tích tín hiệu vận hành của shop...</p>
+                            <p id="dashboardInsight">Đang phân tích doanh số, tồn kho và các đơn cần ưu tiên.</p>
                         </div>
                     </article>
                 </section>
@@ -278,8 +341,8 @@
                     <article class="seller-panel" id="inventory-section">
                         <div class="seller-panel-head">
                             <div>
-                                <h3>Cảnh Báo Tồn Kho</h3>
-                                <p>Những sản phẩm cần restock sớm</p>
+                                <h3>Cảnh báo tồn kho</h3>
+                                <p>Những sản phẩm cần bổ sung sớm.</p>
                             </div>
                             <button class="seller-link-button" type="button" data-dashboard-add-product>Quản lý sản phẩm</button>
                         </div>
@@ -289,8 +352,8 @@
                     <article class="seller-panel" id="reviews-section">
                         <div class="seller-panel-head">
                             <div>
-                                <h3>Đánh Giá Gần Đây</h3>
-                                <p>Phản hồi mới nhất từ khách hàng</p>
+                                <h3>Đánh giá gần đây</h3>
+                                <p>Phản hồi mới nhất từ khách hàng.</p>
                             </div>
                         </div>
                         <div class="seller-list-stack" id="dashboardRecentReviews"></div>
@@ -299,8 +362,8 @@
                     <article class="seller-panel" id="activity-section">
                         <div class="seller-panel-head">
                             <div>
-                                <h3>Đối Soát &amp; Thông Báo</h3>
-                                <p>Lịch sử thanh toán seller và trạng thái xử lý</p>
+                                <h3>Lịch sử đối soát</h3>
+                                <p>Theo dõi các đợt đối soát và số tiền đã chuyển cho shop.</p>
                             </div>
                         </div>
                         <div class="seller-list-stack" id="dashboardSettlements"></div>
@@ -316,12 +379,13 @@
                                 <div>
                                     <h3 id="dashboardShopName">Cửa hàng của bạn</h3>
                                     <div class="seller-badge-row">
-                                        <span class="seller-status-pill" id="dashboardShopStatus">Chờ duyệt</span>
+                                        <span class="seller-status-pill" id="dashboardShopStatus">Đang chờ</span>
                                         <span class="seller-muted-pill" id="dashboardShopRating">0.0 điểm</span>
                                         <span class="seller-muted-pill"><span id="dashboardReviewCount">0</span> đánh giá</span>
                                     </div>
                                 </div>
                             </div>
+
                             <p class="seller-shop-description" id="dashboardShopSummary">Cập nhật mô tả shop để khách hàng hiểu rõ hơn về thương hiệu của bạn.</p>
 
                             <div class="seller-shop-meta">
@@ -360,7 +424,7 @@
                         <div class="seller-panel-head">
                             <div>
                                 <h3>Thao tác nhanh</h3>
-                                <p>Các thao tác nhanh để tiếp tục vận hành shop</p>
+                                <p>Các lối tắt quan trọng để bạn tiếp tục vận hành shop.</p>
                             </div>
                         </div>
 
@@ -369,7 +433,7 @@
                                 <span class="material-symbols-outlined">add_circle</span>
                                 <div>
                                     <strong>Thêm sản phẩm mới</strong>
-                                    <span>Đi tới màn hình đăng sản phẩm</span>
+                                    <span>Đi tới màn hình đăng sản phẩm.</span>
                                 </div>
                             </a>
 
@@ -377,31 +441,31 @@
                                 <span class="material-symbols-outlined">receipt_long</span>
                                 <div>
                                     <strong>Quản lý đơn hàng</strong>
-                                    <span>Xử lý các đơn đang chờ xác nhận hoặc giao hàng</span>
+                                    <span>Xử lý các đơn đang chờ xác nhận, giao hàng hoặc đối soát.</span>
                                 </div>
                             </button>
 
                             <button class="seller-quick-action" type="button" id="dashboardManageProductsButton">
                                 <span class="material-symbols-outlined">edit_square</span>
                                 <div>
-                                    <strong>Cập nhật kho &amp; giá</strong>
-                                    <span>Đi tới danh sách sản phẩm để chỉnh sửa</span>
+                                    <strong>Cập nhật giá và tồn kho</strong>
+                                    <span>Đi tới danh sách sản phẩm để chỉnh sửa nhanh.</span>
                                 </div>
                             </button>
 
                             <button class="seller-quick-action" type="button" id="dashboardGoStorefrontButton">
                                 <span class="material-symbols-outlined">storefront</span>
                                 <div>
-                                    <strong>Mở gian hàng</strong>
-                                    <span>Xem cách khách hàng nhìn thấy shop của bạn</span>
+                                    <strong>Xem gian hàng</strong>
+                                    <span>Kiểm tra cách khách hàng nhìn thấy shop của bạn trên sàn.</span>
                                 </div>
                             </button>
 
                             <button class="seller-quick-action" type="button" data-dashboard-logout>
                                 <span class="material-symbols-outlined">logout</span>
                                 <div>
-                                    <strong>Đăng xuất seller</strong>
-                                    <span>Thoát khỏi trung tâm người bán an toàn</span>
+                                    <strong>Đăng xuất</strong>
+                                    <span>Thoát khỏi trung tâm người bán an toàn.</span>
                                 </div>
                             </button>
                         </div>
@@ -415,10 +479,11 @@
         </div>
     </div>
 
-    <script src="/js/config.js"></script>
-    <script src="/js/api/client.js"></script>
-    <script src="/js/utils.js"></script>
-    <script src="/js/components/auth.js"></script>
-    <script src="/pages/seller/dashboard.js"></script>
+    <script src="/js/config.js?v=20260413-payment"></script>
+    <script src="/js/api/client.js?v=20260413-payment"></script>
+    <script src="/js/utils.js?v=20260413-payment"></script>
+    <script src="/js/components/auth.js?v=20260413-payment"></script>
+    <script src="/js/components/auth-seller-onboarding.js?v=20260413-payment"></script>
+    <script src="/pages/seller/dashboard.js?v=20260413-payment"></script>
 </body>
 </html>

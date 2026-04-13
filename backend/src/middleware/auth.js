@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config/env');
-const { User, Shop } = require('../models');
+const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { resolveSellerAccessContext } = require('../services/sellerAccessService');
 
 const authenticate = async (req, res, next) => {
     try {
@@ -25,14 +26,27 @@ const authenticate = async (req, res, next) => {
                 throw ApiError.forbidden('Tài khoản đã bị khóa');
             }
 
-            let shop = null;
-            if (user.role === 'seller') {
-                shop = await Shop.findOne({ owner: user._id });
-            }
-
             req.user = user;
-            req.user.shop = shop;
             req.user.id = user._id;
+
+            if (user.role === 'seller') {
+                const sellerContext = await resolveSellerAccessContext(user);
+                req.user.shop = sellerContext.shop;
+                req.user.sellerApplication = sellerContext.application;
+                req.user.sellerDocuments = sellerContext.documents;
+                req.user.sellerAccessStatus = sellerContext.sellerAccessStatus;
+                req.user.sellerVerificationLevel = sellerContext.verificationLevel;
+                req.user.sellerLabels = sellerContext.labels;
+                req.user.canAccessSellerCenter = sellerContext.canAccessSellerCenter;
+            } else {
+                req.user.shop = null;
+                req.user.sellerApplication = null;
+                req.user.sellerDocuments = [];
+                req.user.sellerAccessStatus = null;
+                req.user.sellerVerificationLevel = null;
+                req.user.sellerLabels = [];
+                req.user.canAccessSellerCenter = false;
+            }
 
             next();
         } catch (jwtError) {
@@ -81,4 +95,16 @@ const optionalAuth = async (req, res, next) => {
     }
 };
 
-module.exports = { authenticate, authorize, optionalAuth };
+const requireApprovedSeller = (req, res, next) => {
+    if (req.user.role !== 'seller') {
+        return next(ApiError.forbidden('Chi tai khoan nguoi ban moi duoc truy cap'));
+    }
+
+    if (!req.user.canAccessSellerCenter) {
+        return next(ApiError.forbidden('Tai khoan ban hang chua duoc phe duyet hoac shop dang bi khoa'));
+    }
+
+    next();
+};
+
+module.exports = { authenticate, authorize, optionalAuth, requireApprovedSeller };

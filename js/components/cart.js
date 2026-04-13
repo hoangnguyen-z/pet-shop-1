@@ -15,7 +15,9 @@ class CartManager {
 
     checkAuth() {
         const token = localStorage.getItem('accessToken');
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
         this.isLoggedIn = !!token;
+        this.userRole = user?.role || null;
     }
 
     setupEventListeners() {
@@ -33,6 +35,13 @@ class CartManager {
     }
 
     async loadCart() {
+        this.checkAuth();
+        if (this.userRole === 'seller') {
+            this.items = [];
+            this.updateCartUI();
+            return;
+        }
+
         if (!this.isLoggedIn) {
             this.loadLocalCart();
             return;
@@ -61,9 +70,15 @@ class CartManager {
     }
 
     async addToCart(productId, quantity = 1) {
+        this.checkAuth();
         if (!this.isLoggedIn) {
             this.showNotification('Please login to add items to cart', 'info');
             authManager.showLoginModal();
+            return;
+        }
+
+        if (this.userRole === 'seller') {
+            this.showNotification('Tai khoan nguoi ban khong duoc them san pham vao gio hang', 'error');
             return;
         }
 
@@ -225,8 +240,14 @@ class CartManager {
     }
 
     async checkout() {
+        this.checkAuth();
         if (!this.isLoggedIn) {
             authManager.showLoginModal();
+            return;
+        }
+
+        if (this.userRole === 'seller') {
+            this.showNotification('Tai khoan nguoi ban khong duoc thanh toan theo luong nguoi mua', 'error');
             return;
         }
 

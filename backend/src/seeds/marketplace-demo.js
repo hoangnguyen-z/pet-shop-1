@@ -4,34 +4,13 @@ require('dotenv').config();
 const { User, Shop, Category, Product, Coupon, Promotion, Review, Banner } = require('../models');
 const { ROLES, SHOP_STATUS, COUPON_TYPES, COUPON_STATUS } = require('../config/constants');
 const { getDemoShopLocation } = require('./shop-location-pool');
+const { unsplashPhoto } = require('./storefront-media');
+const { localizeCategoryToVi, localizeProductToVi } = require('./product-localization');
 
 const image = (id) => {
-    const localImages = {
-        'photo-1587300003388-59208cc962cb': '/assets/photos/dog.jpg',
-        'photo-1548199973-03cce0bbc87b': '/assets/photos/dog.jpg',
-        'photo-1518717758536-85ae29035b6d': '/assets/photos/dog.jpg',
-        'photo-1507146426996-ef05306b995a': '/assets/photos/dog.jpg',
-        'photo-1574158622682-e40e69881006': '/assets/photos/cat.jpg',
-        'photo-1514888286974-6c03e2ca1dba': '/assets/photos/cat.jpg',
-        'photo-1552728089-57bdde30beb3': '/assets/photos/bird.jpg',
-        'photo-1444464666168-49d633b86797': '/assets/photos/bird.jpg',
-        'photo-1522069169874-c58ec4b76be5': '/assets/photos/fish.jpg',
-        'photo-1585110396000-c9ffd4e4b308': '/assets/photos/rabbit.jpg',
-        'photo-1425082661705-1834bfd09dca': '/assets/photos/hamster.jpg',
-        'photo-1548767797-d8c844163c4c': '/assets/photos/hamster.jpg',
-        'photo-1533371356817-02152aef1506': '/assets/photos/reptile.jpg',
-        'photo-1598300042247-d088f8ab3a91': '/assets/photos/reptile.jpg',
-        'photo-1516734212186-a967f81ad0d7': '/assets/photos/grooming.jpg',
-        'photo-1628009368231-7bb7cfcb0def': '/assets/photos/dog.jpg',
-        'photo-1601758125946-6ec2ef64daf8': '/assets/photos/rabbit.jpg',
-        'photo-1601758124510-52d02ddb7cbd': '/assets/photos/food.jpg',
-        'photo-1601758177266-bc599de87707': '/assets/photos/dog.jpg',
-        'photo-1450778869180-41d0601e046e': '/assets/photos/dog.jpg'
-    };
-    if (!id) return '/assets/photos/dog.jpg';
-    if (localImages[id]) return localImages[id];
     if (String(id).startsWith('http') || String(id).startsWith('/')) return id;
-    return '/assets/photos/dog.jpg';
+    if (!id) return unsplashPhoto('photo-1548199973-03cce0bbc87b');
+    return unsplashPhoto(id);
 };
 
 const shopPlans = [
@@ -325,12 +304,13 @@ async function ensureReviewBuyer() {
 }
 
 async function ensureCategory(name, slug, order) {
+    const localizedCategory = localizeCategoryToVi({ name });
     return Category.findOneAndUpdate(
         { slug },
         {
-            name,
+            name: localizedCategory.name,
             slug,
-            description: `${name} products and supplies`,
+            description: localizedCategory.description,
             icon: slug,
             order,
             isActive: true
@@ -345,17 +325,29 @@ function productPayload(plan, productName, category, shop, seller, index) {
     const price = Number((base + (index % 3) * 2.5).toFixed(2));
     const originalPrice = Number((price * (1.12 + (index % 4) * 0.04)).toFixed(2));
     const sku = `${plan.key.toUpperCase().replace(/[^A-Z0-9]/g, '')}-${String(index + 1).padStart(3, '0')}`;
+    const attributes = [
+        { name: 'Pet Type', value: plan.petType },
+        { name: 'Product Type', value: productName },
+        { name: 'Brand', value: brand }
+    ];
+    const localizedProduct = localizeProductToVi({
+        name: `${brand} ${productName}`,
+        brand,
+        categoryName: plan.category,
+        petType: plan.petType,
+        attributes
+    });
 
     return {
-        name: `${brand} ${productName}`,
+        name: localizedProduct.name,
         slug: `${plan.key}-${productName}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
         sku,
         shop: shop._id,
         seller: seller._id,
         category: category._id,
         brand,
-        shortDescription: `${productName} for ${plan.category.toLowerCase()} care.`,
-        description: `${brand} ${productName} is a demo marketplace product for testing search, filters, cart, checkout, seller order flow, stock, promotions, and coupons.`,
+        shortDescription: localizedProduct.shortDescription,
+        description: localizedProduct.description,
         price,
         originalPrice,
         stock: 25 + index * 3,
@@ -365,11 +357,7 @@ function productPayload(plan, productName, category, shop, seller, index) {
         ],
         thumbnail: image(plan.image),
         tags: [plan.petType, plan.category.toLowerCase(), productName.toLowerCase()],
-        attributes: [
-            { name: 'Pet Type', value: plan.petType },
-            { name: 'Product Type', value: productName },
-            { name: 'Brand', value: brand }
-        ],
+        attributes: localizedProduct.attributes,
         rating: Number((4 + (index % 10) / 10).toFixed(1)),
         reviewCount: 5 + index * 2,
         soldCount: index * 4,

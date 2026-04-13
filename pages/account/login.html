@@ -195,6 +195,20 @@
 
                 if (currentRole === 'seller' && payload.shop) {
                     localStorage.setItem('shop', JSON.stringify(payload.shop));
+                } else {
+                    localStorage.removeItem('shop');
+                }
+
+                if (currentRole === 'seller' && payload.application) {
+                    localStorage.setItem('sellerApplication', JSON.stringify(payload.application));
+                } else {
+                    localStorage.removeItem('sellerApplication');
+                }
+
+                if (currentRole === 'seller' && payload.sellerAccess) {
+                    localStorage.setItem('sellerAccess', JSON.stringify(payload.sellerAccess));
+                } else {
+                    localStorage.removeItem('sellerAccess');
                 }
 
                 window.location.href = currentRole === 'seller'

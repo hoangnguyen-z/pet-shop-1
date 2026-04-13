@@ -9,6 +9,20 @@ const Coupon = require('../../models/Coupon');
 const Promotion = require('../../models/Promotion');
 const Settlement = require('../../models/Settlement');
 const AuditLog = require('../../models/admin/AuditLog');
+const SellerApplication = require('../../models/SellerApplication');
+const SellerDocument = require('../../models/SellerDocument');
+const SellerTermsAcceptance = require('../../models/SellerTermsAcceptance');
+const ViolationRecord = require('../../models/ViolationRecord');
+const AdminReviewLog = require('../../models/AdminReviewLog');
+const ShopStatusHistory = require('../../models/ShopStatusHistory');
+const ShopVerificationLevel = require('../../models/ShopVerificationLevel');
+const CareServiceApplication = require('../../models/CareServiceApplication');
+const CareServiceDocument = require('../../models/CareServiceDocument');
+const CareServiceTermsAcceptance = require('../../models/CareServiceTermsAcceptance');
+const CareServiceAdminReviewLog = require('../../models/CareServiceAdminReviewLog');
+const CareServiceOffering = require('../../models/CareServiceOffering');
+const CareServiceBooking = require('../../models/CareServiceBooking');
+const CareServiceReview = require('../../models/CareServiceReview');
 const { authenticateAdmin } = require('../../middleware/adminAuth');
 const { checkPermission } = require('../../middleware/permissionGuard');
 const { sendSuccess, sendCreated } = require('../../middleware/responseHandler');
@@ -104,7 +118,12 @@ const deleteUser = asyncHandler(async (req, res) => {
         : [];
 
     if (user.role === 'seller') {
+        const applicationIds = await SellerApplication.find({ user: user._id }).distinct('_id');
+        const careApplicationIds = await CareServiceApplication.find({ shop: { $in: shopIds } }).distinct('_id');
+        const careOfferingIds = await CareServiceOffering.find({ shop: { $in: shopIds } }).distinct('_id');
+
         await Review.deleteMany({ $or: [{ product: { $in: productIds } }, { shop: { $in: shopIds } }] });
+        await CareServiceReview.deleteMany({ $or: [{ shop: { $in: shopIds } }, { service: { $in: careOfferingIds } }] });
         await InventoryLog.deleteMany({
             $or: [
                 { createdBy: user._id },
@@ -137,9 +156,30 @@ const deleteUser = asyncHandler(async (req, res) => {
         }
 
         await Product.deleteMany({ $or: [{ seller: user._id }, { shop: { $in: shopIds } }] });
+        await SellerDocument.deleteMany({ $or: [{ user: user._id }, { application: { $in: applicationIds } }] });
+        await SellerTermsAcceptance.deleteMany({ $or: [{ user: user._id }, { application: { $in: applicationIds } }] });
+        await AdminReviewLog.deleteMany({ application: { $in: applicationIds } });
+        await CareServiceDocument.deleteMany({ $or: [{ user: user._id }, { application: { $in: careApplicationIds } }, { shop: { $in: shopIds } }] });
+        await CareServiceTermsAcceptance.deleteMany({ $or: [{ user: user._id }, { application: { $in: careApplicationIds } }, { shop: { $in: shopIds } }] });
+        await CareServiceAdminReviewLog.deleteMany({ application: { $in: careApplicationIds } });
+        await CareServiceBooking.deleteMany({ $or: [{ shop: { $in: shopIds } }, { service: { $in: careOfferingIds } }] });
+        await CareServiceOffering.deleteMany({ shop: { $in: shopIds } });
+        await CareServiceApplication.deleteMany({ shop: { $in: shopIds } });
+        await ViolationRecord.deleteMany({
+            $or: [
+                { seller: user._id },
+                { application: { $in: applicationIds } },
+                { shop: { $in: shopIds } }
+            ]
+        });
+        await ShopStatusHistory.deleteMany({ shop: { $in: shopIds } });
+        await ShopVerificationLevel.deleteMany({ shop: { $in: shopIds } });
+        await SellerApplication.deleteMany({ user: user._id });
         await Shop.deleteMany({ owner: user._id });
     } else {
         await Review.deleteMany({ user: user._id });
+        await CareServiceReview.deleteMany({ buyer: user._id });
+        await CareServiceBooking.deleteMany({ buyer: user._id });
     }
 
     await User.findByIdAndDelete(req.params.id);

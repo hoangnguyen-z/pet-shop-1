@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/pages/seller/seller-portal.css">
+    <link rel="stylesheet" href="/pages/seller/seller-portal.css?v=20260413-care-service-submit-fix">
 </head>
 <body class="seller-dashboard-body seller-settings-body">
     <div class="seller-sidebar-backdrop" id="sellerSidebarBackdrop"></div>
@@ -98,6 +98,10 @@
                         <button class="seller-settings-tab" type="button" data-settings-tab="shop">
                             <span class="material-symbols-outlined">store</span>
                             <span>Thông tin shop</span>
+                        </button>
+                        <button class="seller-settings-tab" type="button" data-settings-tab="care">
+                            <span class="material-symbols-outlined">pets</span>
+                            <span>Dịch vụ chăm sóc</span>
                         </button>
                         <button class="seller-settings-tab" type="button" data-settings-tab="password">
                             <span class="material-symbols-outlined">lock</span>
@@ -348,6 +352,282 @@
                                 </form>
                             </div>
                         </section>
+
+                        <section class="seller-settings-panel" data-settings-panel="care">
+                            <div class="seller-settings-inner">
+                                <div class="seller-care-overview-card">
+                                    <div>
+                                        <h3>Đăng ký bổ sung dịch vụ chăm sóc thú cưng</h3>
+                                        <p id="careServiceStatusDescription">Shop chỉ được bật tab dịch vụ chăm sóc sau khi Admin phê duyệt hồ sơ bổ sung.</p>
+                                    </div>
+                                    <span class="seller-status-pill" id="careServiceStatusBadge">Chưa tạo hồ sơ</span>
+                                </div>
+
+                                <div class="seller-care-admin-note" id="careServiceAdminNoteBox" hidden>
+                                    <strong>Ghi chú từ Admin</strong>
+                                    <p id="careServiceAdminNoteText"></p>
+                                </div>
+
+                                <form id="careServiceApplicationForm" class="seller-settings-form">
+                                    <div class="seller-settings-form-grid">
+                                        <label class="seller-settings-field">
+                                            <span>Tên khu dịch vụ / cơ sở</span>
+                                            <input id="careFacilityName" type="text" placeholder="Ví dụ: Paws Grooming Studio">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Nhãn mong muốn</span>
+                                            <select id="careRequestedLabel">
+                                                <option value="standard">Dịch vụ thường</option>
+                                                <option value="premium_care_partner">Premium Care Partner</option>
+                                            </select>
+                                        </label>
+                                    </div>
+
+                                    <label class="seller-settings-field">
+                                        <span>Mô tả dịch vụ</span>
+                                        <textarea id="careServiceDescription" rows="4" placeholder="Mô tả cơ sở, kinh nghiệm, quy trình chăm sóc và các cam kết với thú cưng."></textarea>
+                                    </label>
+
+                                    <div class="seller-settings-field">
+                                        <span>Loại dịch vụ chăm sóc cung cấp</span>
+                                        <div class="seller-care-type-grid" id="careServiceTypeGrid">
+                                            <label><input type="checkbox" value="bathing_drying"> Tắm, sấy</label>
+                                            <label><input type="checkbox" value="grooming_spa"> Grooming, spa</label>
+                                            <label><input type="checkbox" value="nail_ear_hygiene"> Vệ sinh tai, móng</label>
+                                            <label><input type="checkbox" value="pet_hotel"> Khách sạn thú cưng</label>
+                                            <label><input type="checkbox" value="pet_boarding"> Giữ thú cưng</label>
+                                            <label><input type="checkbox" value="basic_care"> Chăm sóc cơ bản</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="seller-settings-form-grid">
+                                        <label class="seller-settings-field">
+                                            <span>Hotline</span>
+                                            <input id="careHotline" type="tel" placeholder="Hotline dịch vụ">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Email liên hệ</span>
+                                            <input id="careContactEmail" type="email" placeholder="Email dành cho dịch vụ">
+                                        </label>
+                                    </div>
+
+                                    <div class="seller-settings-form-grid">
+                                        <label class="seller-settings-field">
+                                            <span>Giờ mở cửa</span>
+                                            <input id="careOpenHour" type="text" placeholder="08:00">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Giờ đóng cửa</span>
+                                            <input id="careCloseHour" type="text" placeholder="20:00">
+                                        </label>
+                                    </div>
+
+                                    <label class="seller-settings-field">
+                                        <span>Ghi chú giờ hoạt động</span>
+                                        <input id="careOperatingNotes" type="text" placeholder="Ví dụ: Nhận lịch cuối tuần, hỗ trợ ngoài giờ khi có đặt trước">
+                                    </label>
+
+                                    <label class="seller-settings-checkbox">
+                                        <input id="careSupportsHomeService" type="checkbox">
+                                        <span>Có nhận chăm sóc tại nhà</span>
+                                    </label>
+
+                                    <div class="seller-settings-form-grid seller-settings-form-grid-address">
+                                        <label class="seller-settings-field">
+                                            <span>Địa chỉ cơ sở</span>
+                                            <input id="careStreet" type="text" placeholder="Số nhà, đường">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Phường/Xã</span>
+                                            <input id="careWard" type="text" placeholder="Phường / Xã">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Quận/Huyện</span>
+                                            <input id="careDistrict" type="text" placeholder="Quận / Huyện">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Tỉnh/Thành phố</span>
+                                            <input id="careCity" type="text" placeholder="Tỉnh / Thành phố">
+                                        </label>
+                                    </div>
+
+                                    <div class="seller-care-media-card">
+                                        <div class="seller-settings-map-heading">
+                                            <div>
+                                                <strong>Ảnh cơ sở / khu vực chăm sóc</strong>
+                                                <p>Tải ảnh trực tiếp từ máy để tăng độ tin cậy khi Admin xét duyệt.</p>
+                                            </div>
+                                            <button class="seller-secondary-button seller-inline-button" id="careFacilityImagesUploadButton" type="button">
+                                                <span class="material-symbols-outlined">upload</span>
+                                                <span>Chọn ảnh từ máy</span>
+                                            </button>
+                                        </div>
+                                        <input id="careFacilityImagesInput" type="file" accept="image/*" hidden multiple>
+                                        <div class="seller-care-image-grid" id="careFacilityImagesList">
+                                            <p class="seller-empty-copy">Chưa có ảnh cơ sở nào được tải lên.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="seller-settings-form-grid">
+                                        <label class="seller-settings-field">
+                                            <span>Số đăng ký kinh doanh / hộ kinh doanh</span>
+                                            <input id="careBusinessRegistrationNumber" type="text" placeholder="Mã số giấy phép / số hộ kinh doanh">
+                                        </label>
+                                        <label class="seller-settings-field">
+                                            <span>Chủ cơ sở / đại diện phụ trách</span>
+                                            <input id="careBusinessOwnerName" type="text" placeholder="Người đại diện chịu trách nhiệm">
+                                        </label>
+                                    </div>
+
+                                    <label class="seller-settings-field">
+                                        <span>Cam kết chất lượng dịch vụ</span>
+                                        <textarea id="careQualityCommitment" rows="3" placeholder="Mô tả cam kết về quy trình chăm sóc, sản phẩm sử dụng, vệ sinh và an toàn."></textarea>
+                                    </label>
+
+                                    <label class="seller-settings-field">
+                                        <span>Cam kết trách nhiệm với thú cưng tiếp nhận</span>
+                                        <textarea id="careResponsibilityCommitment" rows="3" placeholder="Nêu rõ trách nhiệm với thú cưng trong suốt thời gian tiếp nhận chăm sóc."></textarea>
+                                    </label>
+
+                                    <label class="seller-settings-field">
+                                        <span>Thông tin hoặc tài liệu bổ sung</span>
+                                        <textarea id="careSupportingNotes" rows="3" placeholder="Chứng chỉ grooming, mô tả nguồn gốc vật tư, quy định nội bộ..."></textarea>
+                                    </label>
+
+                                    <div class="seller-care-doc-card">
+                                        <div class="seller-settings-map-heading">
+                                            <div>
+                                                <strong>Hồ sơ và giấy tờ bổ sung</strong>
+                                                <p>Admin sẽ dựa trên phần này để xét duyệt quyền bật dịch vụ chăm sóc.</p>
+                                            </div>
+                                        </div>
+                                        <div class="seller-care-doc-toolbar">
+                                            <select id="careDocumentTypeSelect">
+                                                <option value="business_registration">Đăng ký kinh doanh / hộ kinh doanh</option>
+                                                <option value="quality_commitment">Cam kết chất lượng</option>
+                                                <option value="responsibility_commitment">Cam kết trách nhiệm</option>
+                                                <option value="training_certificate">Chứng chỉ / đào tạo grooming</option>
+                                                <option value="facility_image">Ảnh cơ sở</option>
+                                                <option value="other">Tài liệu khác</option>
+                                            </select>
+                                            <button class="seller-secondary-button seller-inline-button" id="careDocumentUploadButton" type="button">
+                                                <span class="material-symbols-outlined">upload_file</span>
+                                                <span>Tải giấy tờ</span>
+                                            </button>
+                                            <input id="careDocumentInput" type="file" accept=".pdf,image/*" hidden multiple>
+                                        </div>
+                                        <div class="seller-care-document-list" id="careDocumentList">
+                                            <p class="seller-empty-copy">Chưa có giấy tờ nào được tải lên.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="seller-care-terms-card">
+                                        <strong>Điều khoản bắt buộc trước khi gửi hồ sơ</strong>
+                                        <ul>
+                                            <li>Chỉ cung cấp dịch vụ đúng phạm vi đã đăng ký.</li>
+                                            <li>Không giả mạo giấy tờ, không quảng cáo sai sự thật.</li>
+                                            <li>Không ngược đãi hoặc gây hại cho thú cưng.</li>
+                                            <li>Không dùng hóa chất, sản phẩm không rõ nguồn gốc.</li>
+                                            <li>Không tự ý thực hiện dịch vụ thú y chuyên môn.</li>
+                                            <li>Vi phạm nghiêm trọng có thể bị khóa dịch vụ, khóa shop hoặc xóa vĩnh viễn.</li>
+                                        </ul>
+                                        <label class="seller-settings-checkbox">
+                                            <input id="careTermsAccepted" type="checkbox">
+                                            <span>Tôi đã đọc, hiểu và đồng ý với điều khoản dịch vụ chăm sóc trên sàn.</span>
+                                        </label>
+                                        <label class="seller-settings-checkbox">
+                                            <input id="careLegalResponsibilityConfirmed" type="checkbox">
+                                            <span>Tôi cam kết chịu trách nhiệm trước pháp luật và trước khách hàng về dịch vụ cung cấp.</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="seller-settings-submit-row seller-care-submit-row">
+                                        <button class="seller-secondary-button" type="button" id="careServiceSaveDraftButton">Lưu bản nháp</button>
+                                        <button class="seller-primary-button" type="submit" id="careServiceSubmitButton">Gửi hồ sơ dịch vụ</button>
+                                    </div>
+                                </form>
+
+                                <section class="seller-care-managed-card" id="careOfferingManager">
+                                    <div class="seller-settings-map-heading">
+                                        <div>
+                                            <strong>Đăng dịch vụ chăm sóc</strong>
+                                            <p>Chỉ hoạt động sau khi hồ sơ dịch vụ được Admin phê duyệt.</p>
+                                        </div>
+                                        <span class="seller-muted-pill" id="careOfferingsState">Đang khóa</span>
+                                    </div>
+
+                                    <form id="careOfferingForm" class="seller-settings-form seller-care-offering-form">
+                                        <input id="careOfferingId" type="hidden">
+                                        <div class="seller-settings-form-grid">
+                                            <label class="seller-settings-field">
+                                                <span>Tên dịch vụ</span>
+                                                <input id="careOfferingName" type="text" placeholder="Ví dụ: Tắm sấy chó dưới 10kg">
+                                            </label>
+                                            <label class="seller-settings-field">
+                                                <span>Loại dịch vụ</span>
+                                                <select id="careOfferingType">
+                                                    <option value="bathing_drying">Tắm, sấy</option>
+                                                    <option value="grooming_spa">Grooming, spa</option>
+                                                    <option value="nail_ear_hygiene">Vệ sinh tai, móng</option>
+                                                    <option value="pet_hotel">Khách sạn thú cưng</option>
+                                                    <option value="pet_boarding">Giữ thú cưng</option>
+                                                    <option value="basic_care">Chăm sóc cơ bản</option>
+                                                </select>
+                                            </label>
+                                        </div>
+                                        <div class="seller-settings-form-grid">
+                                            <label class="seller-settings-field">
+                                                <span>Giá</span>
+                                                <input id="careOfferingPrice" type="number" min="0" step="0.01" placeholder="150000">
+                                            </label>
+                                            <label class="seller-settings-field">
+                                                <span>Thời lượng (phút)</span>
+                                                <input id="careOfferingDuration" type="number" min="15" step="15" placeholder="60">
+                                            </label>
+                                        </div>
+                                        <label class="seller-settings-field">
+                                            <span>Mô tả dịch vụ</span>
+                                            <textarea id="careOfferingDescription" rows="3" placeholder="Điểm nổi bật, đối tượng thú cưng phù hợp, lưu ý khi đặt lịch..."></textarea>
+                                        </label>
+                                        <div class="seller-settings-form-grid">
+                                            <label class="seller-settings-field">
+                                                <span>Ảnh dịch vụ</span>
+                                                <input id="careOfferingImage" type="url" placeholder="https://...">
+                                            </label>
+                                            <div class="seller-settings-field seller-settings-field-inline-actions">
+                                                <span>Ảnh từ máy</span>
+                                                <button class="seller-secondary-button seller-inline-button" id="careOfferingImageUploadButton" type="button">Chọn ảnh dịch vụ</button>
+                                                <input id="careOfferingImageInput" type="file" accept="image/*" hidden>
+                                            </div>
+                                        </div>
+                                        <label class="seller-settings-checkbox">
+                                            <input id="careOfferingHomeService" type="checkbox">
+                                            <span>Dịch vụ này có hỗ trợ tại nhà</span>
+                                        </label>
+                                        <div class="seller-settings-submit-row seller-care-submit-row">
+                                            <button class="seller-secondary-button" type="button" id="careOfferingResetButton">Làm mới form</button>
+                                            <button class="seller-primary-button" type="submit" id="careOfferingSaveButton">Lưu dịch vụ</button>
+                                        </div>
+                                    </form>
+
+                                    <div class="seller-care-offering-list" id="careOfferingList">
+                                        <p class="seller-empty-copy">Chưa có dịch vụ chăm sóc nào được đăng.</p>
+                                    </div>
+                                </section>
+
+                                <section class="seller-care-managed-card" id="careBookingManager">
+                                    <div class="seller-settings-map-heading">
+                                        <div>
+                                            <strong>Lịch hẹn dịch vụ</strong>
+                                            <p>Theo dõi yêu cầu đặt lịch từ khách sau khi dịch vụ được bật.</p>
+                                        </div>
+                                    </div>
+                                    <div class="seller-care-booking-list" id="careBookingList">
+                                        <p class="seller-empty-copy">Chưa có lịch hẹn dịch vụ nào.</p>
+                                    </div>
+                                </section>
+                            </div>
+                        </section>
                     </div>
                 </section>
 
@@ -378,10 +658,11 @@
         </div>
     </div>
 
-    <script src="/js/config.js"></script>
-    <script src="/js/api/client.js"></script>
-    <script src="/js/utils.js"></script>
-    <script src="/js/components/auth.js"></script>
-    <script src="/pages/seller/settings.js"></script>
+    <script src="/js/config.js?v=20260413-care-service-submit-fix"></script>
+    <script src="/js/api/client.js?v=20260413-care-service-submit-fix"></script>
+    <script src="/js/utils.js?v=20260413-care-service-submit-fix"></script>
+    <script src="/js/components/auth.js?v=20260413-care-service-submit-fix"></script>
+    <script src="/js/components/auth-seller-onboarding.js?v=20260413-care-service-submit-fix"></script>
+    <script src="/pages/seller/settings.js?v=20260413-care-service-submit-fix"></script>
 </body>
 </html>

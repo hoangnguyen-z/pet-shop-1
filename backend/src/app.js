@@ -45,7 +45,15 @@ app.use(hpp());
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100
+    max: 500,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler(req, res) {
+        res.status(429).json({
+            success: false,
+            message: 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.'
+        });
+    }
 });
 app.use('/api', limiter);
 

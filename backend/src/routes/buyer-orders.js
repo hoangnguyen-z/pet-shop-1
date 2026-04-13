@@ -24,12 +24,25 @@ router.post('/:id/payment-callback', asyncHandler(async (req, res) => {
 
     const status = String(req.body.status || '').toLowerCase();
     const transactionId = req.body.transaction_id || req.body.transactionId || '';
-    if (!['paid', 'failed', 'pending', 'unpaid'].includes(status)) {
+    if (!['paid', 'failed', 'pending', 'processing', 'unpaid', 'expired', 'cancelled'].includes(status)) {
         throw ApiError.badRequest('Invalid payment callback status');
     }
 
+    const nextOrderStatus = status === PAYMENT_STATUS.PAID
+        ? ORDER_STATUS.PAID
+        : order.orderStatus === ORDER_STATUS.WAITING_PAYMENT
+            ? ORDER_STATUS.WAITING_PAYMENT
+            : order.orderStatus;
+
     syncOrderState(order, {
+        orderStatus: nextOrderStatus,
         paymentStatus: status
+    });
+    order.items = (order.items || []).map((item) => {
+        if (nextOrderStatus) {
+            item.shopStatus = nextOrderStatus;
+        }
+        return item;
     });
     if (transactionId) order.payment.transactionId = transactionId;
     if (status === PAYMENT_STATUS.PAID) order.payment.paidAt = new Date();
@@ -51,6 +64,12 @@ router.post('/:id/payment-callback', asyncHandler(async (req, res) => {
 }));
 
 router.use(authenticate);
+router.use((req, res, next) => {
+    if (req.user.role !== 'buyer') {
+        return next(ApiError.forbidden('Chi tai khoan nguoi mua moi duoc dat hang va quan ly don mua'));
+    }
+    next();
+});
 
 router.post('/quote', asyncHandler(async (req, res) => {
     const context = await quoteOrder({
@@ -197,7 +216,7 @@ router.put('/:id/cancel', asyncHandler(async (req, res) => {
         throw ApiError.notFound('Order not found');
     }
 
-    if (![ORDER_STATUS.PENDING, ORDER_STATUS.CONFIRMED].includes(order.status)) {
+    if (![ORDER_STATUS.WAITING_PAYMENT, ORDER_STATUS.PENDING, ORDER_STATUS.CONFIRMED].includes(order.status)) {
         throw ApiError.badRequest('Order cannot be cancelled in the current status');
     }
 
@@ -215,7 +234,16 @@ router.put('/:id/cancel', asyncHandler(async (req, res) => {
 
     syncOrderState(order, {
         orderStatus: ORDER_STATUS.CANCELLED,
-        shippingStatus: deriveShippingStatus(ORDER_STATUS.CANCELLED)
+        shippingStatus: deriveShippingStatus(ORDER_STATUS.CANCELLED),
+        paymentStatus: order.paymentStatus === PAYMENT_STATUS.PAID
+            ? PAYMENT_STATUS.REFUNDED
+            : order.paymentMethod === 'online'
+                ? PAYMENT_STATUS.CANCELLED
+                : order.paymentStatus
+    });
+    order.items = (order.items || []).map((item) => {
+        item.shopStatus = ORDER_STATUS.CANCELLED;
+        return item;
     });
     order.notes = reason || order.notes;
     order.statusHistory.push({

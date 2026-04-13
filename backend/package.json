@@ -11,7 +11,10 @@
     "seed:demo": "node src/seeds/demo.js",
     "seed:marketplace": "node src/seeds/marketplace-demo.js",
     "seed:admin-access": "node src/seeds/admin-access.js",
-    "seed:shop-locations": "node src/seeds/shop-locations.js"
+    "seed:shop-locations": "node src/seeds/shop-locations.js",
+    "seed:storefront-media": "node src/seeds/storefront-refresh.js",
+    "seed:products-vi": "node src/seeds/localize-products-vi.js",
+    "seed:petmall-care-services": "node src/seeds/petmall-care-services.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

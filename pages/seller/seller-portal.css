@@ -2784,6 +2784,157 @@ body.seller-sidebar-open .seller-sidebar-backdrop {
     transform: translateY(0);
 }
 
+.seller-settings-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #3f3f46;
+}
+
+.seller-settings-checkbox input {
+    width: 18px;
+    height: 18px;
+}
+
+.seller-care-overview-card,
+.seller-care-media-card,
+.seller-care-doc-card,
+.seller-care-terms-card,
+.seller-care-managed-card,
+.seller-care-admin-note {
+    border: 1px solid rgba(148, 67, 0, 0.1);
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+}
+
+.seller-care-overview-card,
+.seller-care-doc-toolbar,
+.seller-care-item-actions,
+.seller-care-submit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.seller-care-admin-note strong,
+.seller-care-media-card strong,
+.seller-care-doc-card strong,
+.seller-care-managed-card strong {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.seller-care-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.seller-care-type-grid label {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 12px;
+    min-height: 72px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #faf7f4;
+    border: 1px solid rgba(148, 67, 0, 0.1);
+    line-height: 1.45;
+}
+
+.seller-care-type-grid label input {
+    margin: 4px 0 0;
+    width: 18px;
+    height: 18px;
+}
+
+.seller-care-image-grid,
+.seller-care-document-list,
+.seller-care-offering-list,
+.seller-care-booking-list {
+    display: grid;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.seller-care-image-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.seller-care-image-item,
+.seller-care-document-item,
+.seller-care-offering-item,
+.seller-care-booking-item {
+    border: 1px solid rgba(148, 67, 0, 0.08);
+    background: #fffaf6;
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.seller-care-image-item img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.seller-care-document-item,
+.seller-care-offering-item,
+.seller-care-booking-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+}
+
+.seller-care-offering-copy,
+.seller-care-booking-copy {
+    display: grid;
+    gap: 6px;
+}
+
+.seller-care-item-actions {
+    justify-content: flex-end;
+}
+
+.seller-care-doc-toolbar select {
+    min-width: 260px;
+    min-height: 44px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 67, 0, 0.15);
+    background: #fff;
+    padding: 0 14px;
+}
+
+.seller-care-terms-card ul {
+    margin: 12px 0 16px;
+    padding-left: 18px;
+    color: #57534e;
+    display: grid;
+    gap: 8px;
+}
+
+.seller-empty-copy {
+    color: #71717a;
+    margin: 0;
+}
+
+@media (max-width: 767px) {
+    .seller-care-document-item,
+    .seller-care-offering-item,
+    .seller-care-booking-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
 .seller-settings-toast-inner {
     display: flex;
     align-items: center;
@@ -2796,6 +2947,11 @@ body.seller-sidebar-open .seller-sidebar-backdrop {
     box-shadow: 0 20px 40px rgba(47, 18, 5, 0.26);
 }
 
+.seller-settings-toast[data-variant="error"] .seller-settings-toast-inner {
+    background: #5c170d;
+    box-shadow: 0 20px 40px rgba(92, 23, 13, 0.24);
+}
+
 .seller-settings-toast-icon {
     width: 40px;
     height: 40px;
@@ -2804,6 +2960,10 @@ body.seller-sidebar-open .seller-sidebar-backdrop {
     justify-content: center;
     border-radius: 50%;
     background: var(--seller-primary);
+}
+
+.seller-settings-toast[data-variant="error"] .seller-settings-toast-icon {
+    background: #d9482b;
 }
 
 .seller-settings-toast-inner strong {
@@ -3565,5 +3725,93 @@ body.seller-sidebar-open .seller-sidebar-backdrop {
 
     .seller-orders-drawer-item .seller-orders-status-badge {
         grid-column: 2;
+    }
+}
+
+.seller-wallet-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.seller-wallet-card {
+    background: #fff;
+    border: 1px solid rgba(150, 67, 0, 0.08);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 14px 32px rgba(45, 47, 44, 0.05);
+}
+
+.seller-wallet-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+}
+
+.seller-wallet-head p {
+    margin: 0 0 4px;
+    color: #5a5c58;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.seller-wallet-head h3 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.1;
+    color: #2d2f2c;
+}
+
+.seller-wallet-card small {
+    color: #6c6f6a;
+    display: block;
+    line-height: 1.5;
+}
+
+.seller-wallet-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-top: -8px;
+}
+
+.seller-wallet-toolbar p {
+    margin: 0;
+    color: #5a5c58;
+    line-height: 1.6;
+}
+
+.seller-orders-table td,
+.seller-orders-table th {
+    vertical-align: top;
+}
+
+.seller-orders-status-stack {
+    display: grid;
+    gap: 6px;
+}
+
+.seller-orders-drawer-metrics article {
+    min-width: 0;
+}
+
+@media (max-width: 1200px) {
+    .seller-wallet-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .seller-wallet-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .seller-wallet-toolbar {
+        display: grid;
+        gap: 12px;
     }
 }

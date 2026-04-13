@@ -1,19 +1,36 @@
 const express = require('express');
 const mongoose = require('mongoose');
+
 const router = express.Router();
-const { Order, Product, Notification } = require('../models');
-const { authenticate, authorize } = require('../middleware/auth');
-const { pagination, getPaginationMeta } = require('../middleware/pagination');
+
+const { Order, Product, Notification, Settlement } = require('../models');
+const { authenticate, requireApprovedSeller } = require('../middleware/auth');
+const { getPaginationMeta } = require('../middleware/pagination');
 const { sendSuccess } = require('../middleware/responseHandler');
 const ApiError = require('../utils/ApiError');
-const { ORDER_STATUS } = require('../config/constants');
+const { ORDER_STATUS, PAYMENT_METHODS, PAYMENT_STATUS } = require('../config/constants');
 const { syncOrderState, deriveShippingStatus, writeOrderLog } = require('../services/orderService');
+const { enrichSellerOrder } = require('../services/sellerFinanceService');
 
 router.use(authenticate);
+router.use(requireApprovedSeller);
+
+async function loadSettlementsForOrders(sellerId, orders) {
+    if (!orders.length) {
+        return [];
+    }
+
+    return Settlement.find({
+        seller: sellerId,
+        orders: { $in: orders.map((order) => order._id) }
+    }).select('_id orders status completedAt createdAt amount fee netAmount');
+}
 
 router.get('/', async (req, res, next) => {
     try {
-        const { page = 1, limit = 20, status, search } = req.query;
+        const page = Number(req.query.page || 1);
+        const limit = Number(req.query.limit || 20);
+        const { status, search } = req.query;
         const skip = (page - 1) * limit;
 
         const filter = {
@@ -37,21 +54,25 @@ router.get('/', async (req, res, next) => {
                 .populate('buyer', 'name email phone')
                 .sort({ createdAt: -1 })
                 .skip(skip)
-                .limit(parseInt(limit)),
+                .limit(limit),
             Order.countDocuments(filter)
         ]);
 
-        const ordersWithSellerItems = orders.map(order => {
-            const sellerItems = order.items.filter(
-                item => item.seller.toString() === req.user.id.toString()
-            );
-            return {
+        const settlements = await loadSettlementsForOrders(req.user.id, orders);
+        const sellerOrders = orders.map((order) => {
+            const sellerItems = order.items.filter((item) => String(item.seller) === String(req.user.id));
+            return enrichSellerOrder({
                 ...order.toObject(),
                 items: sellerItems
-            };
+            }, req.user.id, { settlements });
         });
 
-        sendSuccess(res, 'Lấy danh sách đơn hàng thành công', ordersWithSellerItems, getPaginationMeta(total, { page, limit }));
+        sendSuccess(
+            res,
+            'Lấy danh sách đơn hàng thành công',
+            sellerOrders,
+            getPaginationMeta(total, { page, limit })
+        );
     } catch (error) {
         next(error);
     }
@@ -75,6 +96,8 @@ router.get('/stats', async (req, res, next) => {
         ]);
 
         const result = {
+            waiting_payment: { count: 0, revenue: 0 },
+            paid: { count: 0, revenue: 0 },
             pending: { count: 0, revenue: 0 },
             confirmed: { count: 0, revenue: 0 },
             preparing: { count: 0, revenue: 0 },
@@ -84,13 +107,16 @@ router.get('/stats', async (req, res, next) => {
             cancelled: { count: 0, revenue: 0 }
         };
 
-        stats.forEach(s => {
-            if (result[s._id]) {
-                result[s._id] = { count: s.count, revenue: s.revenue };
+        stats.forEach((entry) => {
+            if (result[entry._id]) {
+                result[entry._id] = {
+                    count: entry.count,
+                    revenue: entry.revenue
+                };
             }
         });
 
-        sendSuccess(res, 'Lấy thống kê thành công', result);
+        sendSuccess(res, 'Lấy thống kê đơn hàng thành công', result);
     } catch (error) {
         next(error);
     }
@@ -107,14 +133,16 @@ router.get('/:id', async (req, res, next) => {
             throw ApiError.notFound('Đơn hàng không tồn tại');
         }
 
-        const sellerItems = order.items.filter(
-            item => item.seller.toString() === req.user.id.toString()
-        );
+        const sellerItems = order.items.filter((item) => String(item.seller) === String(req.user.id));
+        const settlements = await Settlement.find({
+            seller: req.user.id,
+            orders: order._id
+        }).select('_id orders status completedAt createdAt amount fee netAmount');
 
-        sendSuccess(res, 'Lấy thông tin đơn hàng thành công', {
+        sendSuccess(res, 'Lấy thông tin đơn hàng thành công', enrichSellerOrder({
             ...order.toObject(),
             items: sellerItems
-        });
+        }, req.user.id, { settlements }));
     } catch (error) {
         next(error);
     }
@@ -125,6 +153,8 @@ router.put('/:id/status', async (req, res, next) => {
         const { status, reason, carrier, trackingNumber, estimatedDelivery } = req.body;
 
         const validTransitions = {
+            [ORDER_STATUS.WAITING_PAYMENT]: [],
+            [ORDER_STATUS.PAID]: [ORDER_STATUS.CONFIRMED, ORDER_STATUS.CANCELLED],
             [ORDER_STATUS.PENDING]: [ORDER_STATUS.CONFIRMED, ORDER_STATUS.CANCELLED],
             [ORDER_STATUS.CONFIRMED]: [ORDER_STATUS.PREPARING, ORDER_STATUS.CANCELLED],
             [ORDER_STATUS.PREPARING]: [ORDER_STATUS.SHIPPING, ORDER_STATUS.CANCELLED],
@@ -141,12 +171,10 @@ router.put('/:id/status', async (req, res, next) => {
             throw ApiError.notFound('Đơn hàng không tồn tại');
         }
 
-        const item = order.items.find(
-            i => i.seller.toString() === req.user.id.toString()
-        );
+        const item = order.items.find((entry) => String(entry.seller) === String(req.user.id));
 
         if (!item) {
-            throw ApiError.notFound('Sản phẩm không thuộc đơn hàng của bạn');
+            throw ApiError.notFound('Không tìm thấy dòng hàng của shop trong đơn này');
         }
 
         if (!validTransitions[item.shopStatus]?.includes(status)) {
@@ -155,14 +183,15 @@ router.put('/:id/status', async (req, res, next) => {
 
         const previousStatus = item.shopStatus;
         item.shopStatus = status;
+
         if (reason) {
             item.statusNote = reason;
         }
 
         if (carrier || trackingNumber || estimatedDelivery) {
-            const trackingData = order.tracking?.toObject?.() || order.tracking || {};
+            const currentTracking = order.tracking?.toObject?.() || order.tracking || {};
             order.tracking = {
-                ...trackingData,
+                ...currentTracking,
                 carrier: carrier || order.tracking?.carrier,
                 trackingNumber: trackingNumber || order.tracking?.trackingNumber,
                 estimatedDelivery: estimatedDelivery ? new Date(estimatedDelivery) : order.tracking?.estimatedDelivery,
@@ -170,7 +199,7 @@ router.put('/:id/status', async (req, res, next) => {
                     ...(order.tracking?.updates || []),
                     {
                         status,
-                        description: reason || `Seller updated order to ${status}`,
+                        description: reason || `Người bán cập nhật đơn sang ${status}`,
                         timestamp: new Date()
                     }
                 ]
@@ -179,15 +208,41 @@ router.put('/:id/status', async (req, res, next) => {
 
         if (status === ORDER_STATUS.CANCELLED && previousStatus !== ORDER_STATUS.CANCELLED) {
             await Product.findByIdAndUpdate(item.product, {
-                $inc: { stock: item.quantity, soldCount: -item.quantity }
+                $inc: {
+                    stock: item.quantity,
+                    soldCount: -item.quantity
+                }
             });
         }
 
-        const allSameStatus = order.items.every(i => i.shopStatus === status);
+        const allSameStatus = order.items.every((entry) => entry.shopStatus === status);
         if (allSameStatus) {
             syncOrderState(order, {
                 orderStatus: status,
                 shippingStatus: deriveShippingStatus(status)
+            });
+        }
+
+        if (
+            status === ORDER_STATUS.COMPLETED
+            && order.paymentMethod === PAYMENT_METHODS.COD
+            && [PAYMENT_STATUS.UNPAID, PAYMENT_STATUS.PENDING, PAYMENT_STATUS.PROCESSING].includes(order.paymentStatus)
+        ) {
+            syncOrderState(order, {
+                paymentMethod: PAYMENT_METHODS.COD,
+                paymentStatus: PAYMENT_STATUS.PAID
+            });
+            order.payment.paidAt = order.payment.paidAt || new Date();
+        }
+
+        if (
+            status === ORDER_STATUS.CANCELLED
+            && order.paymentMethod === PAYMENT_METHODS.ONLINE
+            && order.paymentStatus === PAYMENT_STATUS.PAID
+        ) {
+            syncOrderState(order, {
+                paymentMethod: PAYMENT_METHODS.ONLINE,
+                paymentStatus: PAYMENT_STATUS.REFUNDED
             });
         }
 
@@ -198,6 +253,7 @@ router.put('/:id/status', async (req, res, next) => {
         });
 
         await order.save();
+
         await writeOrderLog({
             orderId: order._id,
             event: status === ORDER_STATUS.CANCELLED ? 'cancelled' : 'status_changed',

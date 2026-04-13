@@ -34,14 +34,70 @@
                         id: 'roleInput',
                         query: 'role',
                         options: [
-                            { value: '', label: 'T\u1ea5t c\u1ea3 vai tr\u00f2' },
-                            { value: 'buyer', label: 'Ng\u01b0\u1eddi mua' },
-                            { value: 'seller', label: 'Ng\u01b0\u1eddi b\u00e1n' }
+                            { value: '', label: 'Tất cả vai trò' },
+                            { value: 'buyer', label: 'Người mua' },
+                            { value: 'seller', label: 'Người bán' }
                         ]
                     }
                 ],
                 allowCreate: false,
                 actions: userActions
+            }),
+        section('sellerApplications', 'Người dùng', 'Hồ sơ mở shop', '/admin/seller-applications', 'applications',
+            cols('representativeName:Người đại diện', 'representativeEmail:Email', 'representativePhone:Số điện thoại', 'proposedShopName:Tên shop', 'applicationType:Loại shop:badge', 'status:Trạng thái:badge', 'documentCount:Giấy tờ', 'updatedAt:Cập nhật:date'),
+            {
+                statuses: ['draft', 'submitted', 'pending_review', 'need_more_information', 'approved', 'rejected', 'suspended', 'permanently_banned'],
+                filters: [
+                    {
+                        id: 'applicationTypeInput',
+                        query: 'applicationType',
+                        options: [
+                            { value: '', label: 'Tất cả loại shop' },
+                            { value: 'standard', label: 'Shop thường' },
+                            { value: 'petmall', label: 'PetMall / thương hiệu' }
+                        ]
+                    }
+                ],
+                allowCreate: false,
+                actions: sellerApplicationActions
+            }),
+        section('careServiceApplications', 'Người dùng', 'Hồ sơ dịch vụ chăm sóc', '/admin/care-services/applications', 'applications',
+            cols('facilityName:Tên cơ sở', 'shop.name:Shop', 'contactEmail:Email', 'hotline:Hotline', 'requestedLabel:Nhãn yêu cầu:badge', 'status:Trạng thái:badge', 'documentCount:Hồ sơ', 'updatedAt:Cập nhật:date'),
+            {
+                statuses: ['draft', 'submitted', 'pending_review', 'need_more_information', 'approved', 'rejected', 'suspended', 'permanently_banned'],
+                filters: [
+                    {
+                        id: 'careLabelInput',
+                        query: 'label',
+                        options: [
+                            { value: '', label: 'Tất cả nhãn dịch vụ' },
+                            { value: 'standard', label: 'Dịch vụ thường' },
+                            { value: 'premium_care_partner', label: 'Premium Care Partner' }
+                        ]
+                    }
+                ],
+                allowCreate: false,
+                actions: careServiceApplicationActions
+            }),
+        section('sellerViolations', 'Người dùng', 'Vi phạm shop', '/admin/seller-applications/violations', 'violations',
+            cols('shop.name:Shop', 'seller.email:Người bán', 'violationType:Loại vi phạm', 'severity:Mức độ:badge', 'actionTaken:Xử lý:badge', 'status:Trạng thái:badge', 'createdAt:Ghi nhận:date'),
+            {
+                statuses: ['open', 'resolved', 'escalated'],
+                filters: [
+                    {
+                        id: 'severityInput',
+                        query: 'severity',
+                        options: [
+                            { value: '', label: 'Tất cả mức độ' },
+                            { value: 'notice', label: 'Nhắc nhở' },
+                            { value: 'warning', label: 'Cảnh cáo' },
+                            { value: 'serious', label: 'Nghiêm trọng' },
+                            { value: 'critical', label: 'Rất nghiêm trọng' }
+                        ]
+                    }
+                ],
+                allowCreate: false,
+                actions: sellerViolationActions
             }),
         section('shops', 'Người dùng', 'Cửa hàng', '/admin/shops', 'shops',
             cols('name:Cửa hàng', 'owner.email:Chủ shop', 'status:Trạng thái:badge', 'isVerified:Xác minh:bool', 'rating:Điểm đánh giá', 'productCount:Sản phẩm'),
@@ -102,7 +158,7 @@
             { statuses: ['pending', 'reviewing', 'valid', 'invalid', 'resolved'], actions: statusActions('/admin/content/reports') }),
         section('settlements', 'Vận hành', 'Đối soát người bán', '/admin/content/settlements', 'settlements',
             cols('shop.name:Cửa hàng', 'seller.email:Người bán', 'amount:Số tiền:money', 'fee:Phí sàn:money', 'netAmount:Thực nhận:money', 'status:Trạng thái:badge'),
-            { statuses: ['pending', 'processing', 'completed', 'cancelled'], actions: statusActions('/admin/content/settlements') }),
+            { statuses: ['pending', 'processing', 'completed', 'cancelled'], actions: settlementActions('/admin/content/settlements') }),
         section('settings', 'Hệ thống', 'Cấu hình hệ thống', '/admin/content/settings', 'settings',
             cols('key:Khóa', 'group:Nhóm', 'type:Loại', 'value:Giá trị:json', 'isPublic:Công khai:bool'),
             { create: { key: '', value: '', type: 'string', group: 'general', label: '', description: '', isPublic: false }, edit: item => pick(item, ['key', 'value', 'type', 'group', 'label', 'description', 'isPublic']), actions: settingActions }),
@@ -186,13 +242,11 @@
             debug: 'Gỡ lỗi'
         };
         const normalized = String(value ?? '').toLowerCase();
-        if (normalized === 'buyer') return 'Người mua';
-        if (normalized === 'seller') return 'Người bán';
         return map[normalized] || String(value ?? '');
     }
 
     function money(value) {
-        return `$${Number(value || 0).toFixed(2)}`;
+        return `${Number(value || 0).toLocaleString('vi-VN')} ₫`;
     }
 
     function format(value, type) {
@@ -396,13 +450,9 @@
         const container = document.getElementById('adminContent');
         const existingSearch = document.getElementById('searchInput')?.value || '';
         const existingStatus = document.getElementById('statusInput')?.value || '';
-        const existingFilters = Object.fromEntries((section.filters || []).map(filter => [filter.query, document.getElementById(filter.id)?.value || '']));
         const params = new URLSearchParams({ limit: '50' });
         if (existingSearch) params.set('search', existingSearch);
         if (existingStatus) params.set(section.statusQuery || 'status', existingStatus);
-        (section.filters || []).forEach(filter => {
-            if (existingFilters[filter.query]) params.set(filter.query, existingFilters[filter.query]);
-        });
 
         container.innerHTML = '<div class="panel"><div class="empty">Đang tải dữ liệu...</div></div>';
         try {
@@ -416,9 +466,8 @@
                         <div class="toolbar">
                             <input id="searchInput" placeholder="Tìm kiếm..." value="${escapeHtml(existingSearch)}">
                             ${statusFilter(section, existingStatus)}
-                            ${extraFilters(section, existingFilters)}
                             <button class="secondary-btn" id="refreshBtn">Làm mới</button>
-                            ${canCreateSection(section) ? '<button class="primary-btn" id="createBtn">T\u1ea1o m\u1edbi</button>' : ''}
+                            ${section.readOnly ? '' : '<button class="primary-btn" id="createBtn">Tạo mới</button>'}
                         </div>
                     </div>
                     ${table(section, state.rows)}
@@ -436,19 +485,6 @@
         return `<select id="statusInput"><option value="">Tất cả</option>${section.statuses.map(status => `<option value="${escapeHtml(status)}" ${status === value ? 'selected' : ''}>${escapeHtml(translateAdminLabel(status))}</option>`).join('')}</select>`;
     }
 
-    function extraFilters(section, values = {}) {
-        if (!section.filters?.length) return '';
-        return section.filters.map(filter => `
-            <select id="${escapeHtml(filter.id)}">
-                ${(filter.options || []).map(option => `<option value="${escapeHtml(option.value)}" ${String(values[filter.query] || '') === String(option.value) ? 'selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
-            </select>
-        `).join('');
-    }
-
-    function canCreateSection(section) {
-        return !section.readOnly && section.allowCreate !== false && section.create !== undefined;
-    }
-
     function unwrapRows(data, key) {
         if (Array.isArray(data)) return data;
         if (!data || typeof data !== 'object') return [];
@@ -462,16 +498,10 @@
     function wireToolbar(section) {
         document.getElementById('refreshBtn')?.addEventListener('click', () => loadSection(section.id));
         document.getElementById('statusInput')?.addEventListener('change', () => loadSection(section.id));
-        (section.filters || []).forEach(filter => {
-            document.getElementById(filter.id)?.addEventListener('change', () => loadSection(section.id));
-        });
         document.getElementById('searchInput')?.addEventListener('input', () => {
             window.clearTimeout(state.searchTimer);
             state.searchTimer = window.setTimeout(() => loadSection(section.id), 350);
         });
-        if (!canCreateSection(section)) {
-            document.getElementById('createBtn')?.remove();
-        }
         document.getElementById('createBtn')?.addEventListener('click', () => createRecord(section));
     }
 
@@ -526,7 +556,6 @@
     }
 
     function createRecord(section) {
-        if (!canCreateSection(section)) return;
         openJson(`Tạo mới ${section.title}`, section.create || {}, async payload => {
             await api(section.endpoint, { method: 'POST', body: payload });
             notify('Đã tạo mới');
@@ -614,24 +643,24 @@
     function adminActions(section, row) {
         return [
             details(row),
-            { label: 'Ch\u1ec9nh s\u1eeda', run: () => editRecord(section, row) },
+            { label: 'Chỉnh sửa', run: () => editRecord(section, row) },
             {
-                label: row.status === 'active' ? 'Kh\u00f3a' : 'M\u1edf kh\u00f3a',
+                label: row.status === 'active' ? 'Khóa' : 'Mở khóa',
                 kind: row.status === 'active' ? 'warn' : 'success',
                 run: async () => {
                     await api(`${section.endpoint}/${row._id}`, { method: 'PUT', body: { status: row.status === 'active' ? 'locked' : 'active' } });
-                    notify('\u0110\u00e3 c\u1eadp nh\u1eadt tr\u1ea1ng th\u00e1i admin');
+                    notify('Đã cập nhật trạng thái admin');
                     await loadSection(section.id);
                 }
             },
             {
-                label: '\u0110\u1eb7t l\u1ea1i m\u1eadt kh\u1ea9u',
+                label: 'Đặt lại mật khẩu',
                 kind: 'warn',
                 run: async () => {
-                    const newPassword = prompt('M\u1eadt kh\u1ea9u admin m\u1edbi', 'Admin1234');
+                    const newPassword = prompt('Mật khẩu admin mới', 'Admin1234');
                     if (!newPassword) return;
                     await api(`${section.endpoint}/${row._id}/reset-password`, { method: 'POST', body: { newPassword } });
-                    notify('\u0110\u00e3 \u0111\u1eb7t l\u1ea1i m\u1eadt kh\u1ea9u');
+                    notify('Đã đặt lại mật khẩu');
                 }
             }
         ];
@@ -650,32 +679,30 @@
         return [
             details(row),
             {
-                label: row.status === 'active' ? 'Kh\u00f3a t\u00e0i kho\u1ea3n' : 'K\u00edch ho\u1ea1t',
+                label: row.status === 'active' ? 'Khóa tài khoản' : 'Kích hoạt',
                 kind: row.status === 'active' ? 'warn' : 'success',
                 run: async () => {
                     await api(`${section.endpoint}/${row._id}/status`, { method: 'PUT', body: { status: row.status === 'active' ? 'banned' : 'active' } });
-                    notify('\u0110\u00e3 c\u1eadp nh\u1eadt tr\u1ea1ng th\u00e1i ng\u01b0\u1eddi d\u00f9ng');
+                    notify('Đã cập nhật trạng thái người dùng');
                     await loadSection(section.id);
                 }
             },
             {
-                label: row.role === 'seller' ? 'Chuy\u1ec3n th\u00e0nh ng\u01b0\u1eddi mua' : 'Chuy\u1ec3n th\u00e0nh ng\u01b0\u1eddi b\u00e1n',
+                label: row.role === 'seller' ? 'Chuyển thành người mua' : 'Chuyển thành người bán',
                 run: async () => {
                     await api(`${section.endpoint}/${row._id}/role`, { method: 'PUT', body: { role: row.role === 'seller' ? 'buyer' : 'seller' } });
-                    notify('\u0110\u00e3 c\u1eadp nh\u1eadt vai tr\u00f2 ng\u01b0\u1eddi d\u00f9ng');
+                    notify('Đã cập nhật vai trò người dùng');
                     await loadSection(section.id);
                 }
             },
             {
-                label: 'X\u00f3a t\u00e0i kho\u1ea3n',
+                label: 'Xóa tài khoản',
                 kind: 'danger',
                 run: async () => {
-                    const warning = row.role === 'seller'
-                        ? 'X\u00f3a t\u00e0i kho\u1ea3n ng\u01b0\u1eddi b\u00e1n n\u00e0y? H\u1ec7 th\u1ed1ng s\u1ebd x\u00f3a shop, s\u1ea3n ph\u1ea9m v\u00e0 d\u1eef li\u1ec7u v\u1eadn h\u00e0nh li\u00ean quan.'
-                        : 'X\u00f3a t\u00e0i kho\u1ea3n ng\u01b0\u1eddi mua n\u00e0y?';
-                    if (!confirm(warning)) return;
+                    const confirmed = confirm(`Bạn có chắc muốn xóa tài khoản ${row.email || row.name || ''}?`);
+                    if (!confirmed) return;
                     await api(`${section.endpoint}/${row._id}`, { method: 'DELETE' });
-                    notify('\u0110\u00e3 x\u00f3a t\u00e0i kho\u1ea3n ng\u01b0\u1eddi d\u00f9ng');
+                    notify('Đã xóa tài khoản người dùng');
                     await loadSection(section.id);
                 }
             }
@@ -830,12 +857,406 @@
         ];
     }
 
+    function settlementActions(endpoint) {
+        function openSettlementDetail(row) {
+            const detail = {
+                _id: row._id,
+                shop: row.shop ? {
+                    _id: row.shop._id,
+                    name: row.shop.name,
+                    slug: row.shop.slug
+                } : null,
+                seller: row.seller ? {
+                    _id: row.seller._id,
+                    name: row.seller.name,
+                    email: row.seller.email,
+                    phone: row.seller.phone
+                } : null,
+                amount: row.amount,
+                fee: row.fee,
+                netAmount: row.netAmount,
+                status: row.status,
+                transactionId: row.transactionId || '',
+                notes: row.notes || '',
+                completedAt: row.completedAt || null,
+                bankInfo: row.bankInfo || row.shop?.bankAccount || {},
+                orders: (row.orders || []).map((order) => ({
+                    _id: order._id,
+                    orderNumber: order.orderNumber,
+                    total: order.total,
+                    payment: order.payment,
+                    status: order.status
+                }))
+            };
+            openReadonlyJson('Chi tiet doi soat nguoi ban', detail);
+        }
+
+        async function updateSettlement(row, payload, successMessage) {
+            await api(`${endpoint}/${row._id}`, { method: 'PUT', body: payload });
+            notify(successMessage);
+            await loadSection(state.section);
+        }
+
+        return (section, row) => {
+            const actions = [
+                { label: 'Chi tiet', run: () => openSettlementDetail(row) }
+            ];
+
+            if (row.status === 'pending') {
+                actions.push({
+                    label: 'Tiep nhan doi soat',
+                    kind: 'success',
+                    run: async () => {
+                        const notes = prompt('Ghi chu tiep nhan doi soat', row.notes || 'Admin da tiep nhan va dang kiem tra thong tin chuyen tien.');
+                        await updateSettlement(row, {
+                            status: 'processing',
+                            notes: notes || row.notes || 'Admin da tiep nhan doi soat.'
+                        }, 'Da chuyen yeu cau sang trang thai dang xu ly');
+                    }
+                });
+            }
+
+            if (['pending', 'processing'].includes(row.status)) {
+                actions.push({
+                    label: 'Danh dau da chuyen tien',
+                    kind: 'success',
+                    run: async () => {
+                        const transactionId = prompt('Nhap ma giao dich chuyen tien', row.transactionId || '');
+                        if (!transactionId) return;
+                        const notes = prompt('Ghi chu doi soat / chuyen tien', row.notes || 'Da chuyen tien cho shop va hoan tat doi soat.');
+                        await updateSettlement(row, {
+                            status: 'completed',
+                            transactionId,
+                            notes: notes || 'Da hoan tat doi soat'
+                        }, 'Da danh dau chuyen tien thanh cong cho shop');
+                    }
+                });
+            }
+
+            if (row.status === 'completed') {
+                actions.push({
+                    label: 'Cap nhat ma giao dich',
+                    run: async () => {
+                        const transactionId = prompt('Cap nhat ma giao dich', row.transactionId || '');
+                        if (!transactionId) return;
+                        const notes = prompt('Ghi chu cap nhat', row.notes || '');
+                        await updateSettlement(row, {
+                            transactionId,
+                            notes: notes || row.notes || ''
+                        }, 'Da cap nhat thong tin chuyen tien');
+                    }
+                });
+            }
+
+            if (row.status !== 'completed' && row.status !== 'cancelled') {
+                actions.push({
+                    label: 'Huy doi soat',
+                    kind: 'danger',
+                    run: async () => {
+                        const notes = prompt('Ly do huy doi soat', row.notes || 'Tam huy dot doi soat nay.');
+                        if (!notes) return;
+                        await updateSettlement(row, {
+                            status: 'cancelled',
+                            notes
+                        }, 'Da huy yeu cau doi soat');
+                    }
+                });
+            }
+
+            return actions;
+        };
+    }
+
     function settingActions(section, row) {
         return [
             details(row),
             { label: 'Chỉnh sửa', run: () => editRecord(section, row) },
             { label: 'Xóa', kind: 'danger', run: deleteRecord(section, row) }
         ];
+    }
+
+    const extraAdminLabelMap = {
+        submitted: 'Đã gửi',
+        pending_review: 'Chờ Admin xét duyệt',
+        need_more_information: 'Cần bổ sung',
+        suspended: 'Tạm khóa',
+        permanently_banned: 'Cấm vĩnh viễn',
+        standard: 'Shop thường',
+        petmall: 'PetMall',
+        verified_seller: 'Verified Seller',
+        official_brand: 'Official Brand',
+        premium_care_partner: 'Premium Care Partner',
+        bathing_drying: 'Tắm, sấy',
+        grooming_spa: 'Grooming, spa',
+        nail_ear_hygiene: 'Vệ sinh tai, móng',
+        pet_hotel: 'Khách sạn thú cưng',
+        pet_boarding: 'Giữ thú cưng',
+        basic_care: 'Chăm sóc cơ bản',
+        notice: 'Nhắc nhở',
+        warning: 'Cảnh cáo',
+        serious: 'Nghiêm trọng',
+        critical: 'Rất nghiêm trọng',
+        open: 'Đang mở',
+        escalated: 'Đã chuyển xử lý',
+        reminder: 'Nhắc nhở',
+        hide_products: 'Ẩn sản phẩm',
+        suspend_shop: 'Tạm khóa shop',
+        lock_seller: 'Khóa người bán',
+        permanently_ban: 'Cấm vĩnh viễn',
+        report_authorities: 'Báo cơ quan chức năng'
+    };
+
+    const baseTranslateAdminLabel = translateAdminLabel;
+    translateAdminLabel = function(value) {
+        const normalized = String(value ?? '').toLowerCase();
+        if (extraAdminLabelMap[normalized]) {
+            return extraAdminLabelMap[normalized];
+        }
+        return baseTranslateAdminLabel(value);
+    };
+
+    const baseUnwrapRows = unwrapRows;
+    unwrapRows = function(data, key) {
+        if (Array.isArray(data?.applications)) return data.applications;
+        if (Array.isArray(data?.violations)) return data.violations;
+        return baseUnwrapRows(data, key);
+    };
+
+    function openReadonlyJson(title, payload) {
+        const modalRoot = document.getElementById('modalRoot');
+        modalRoot.innerHTML = `
+            <div class="modal-backdrop">
+                <div class="modal">
+                    <h2>${escapeHtml(title)}</h2>
+                    <p class="muted">Xem thông tin chi tiết.</p>
+                    <div class="field"><textarea id="jsonInput" readonly>${escapeHtml(JSON.stringify(payload, null, 2))}</textarea></div>
+                    <div class="modal-actions">
+                        <button class="primary-btn" id="closeReadonlyModal">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('closeReadonlyModal').addEventListener('click', closeModal);
+        document.querySelector('.modal-backdrop').addEventListener('click', event => {
+            if (event.target.classList.contains('modal-backdrop')) closeModal();
+        });
+    }
+
+    details = function(row) {
+        return { label: 'Chi tiết', run: () => openReadonlyJson('Chi tiết bản ghi', row) };
+    };
+
+    function sellerApplicationActions(section, row) {
+        const actions = [
+            {
+                label: 'Chi tiết',
+                run: async () => {
+                    const detail = await api(`/admin/seller-applications/${row._id}`);
+                    openReadonlyJson('Chi tiết hồ sơ mở shop', detail);
+                }
+            }
+        ];
+
+        if (['submitted', 'need_more_information'].includes(row.status)) {
+            actions.push({
+                label: 'Tiếp nhận',
+                kind: 'warn',
+                run: async () => {
+                    openJson('Tiếp nhận hồ sơ', { note: row.adminNote || '' }, async payload => {
+                        await api(`/admin/seller-applications/${row._id}/start-review`, { method: 'POST', body: payload });
+                        notify('Đã chuyển hồ sơ sang trạng thái đang xem xét');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+        }
+
+        if (['submitted', 'pending_review', 'need_more_information'].includes(row.status)) {
+            actions.push({
+                label: 'Yêu cầu bổ sung',
+                kind: 'warn',
+                run: async () => {
+                    openJson('Yêu cầu bổ sung hồ sơ', { note: row.adminNote || '' }, async payload => {
+                        await api(`/admin/seller-applications/${row._id}/request-more-info`, { method: 'POST', body: payload });
+                        notify('Đã gửi yêu cầu bổ sung');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+            actions.push({
+                label: 'Từ chối',
+                kind: 'danger',
+                run: async () => {
+                    openJson('Từ chối hồ sơ', { note: row.adminNote || '' }, async payload => {
+                        await api(`/admin/seller-applications/${row._id}/reject`, { method: 'POST', body: payload });
+                        notify('Đã từ chối hồ sơ mở shop');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+        }
+
+        if (['submitted', 'pending_review', 'need_more_information', 'rejected'].includes(row.status)) {
+            actions.push({
+                label: 'Phê duyệt',
+                kind: 'success',
+                run: async () => {
+                    const defaultLabels = row.applicationType === 'petmall'
+                        ? ['petmall']
+                        : ['verified_seller'];
+                    openJson('Phê duyệt hồ sơ', { note: '', labels: defaultLabels }, async payload => {
+                        await api(`/admin/seller-applications/${row._id}/approve`, { method: 'POST', body: payload });
+                        notify('Đã phê duyệt hồ sơ mở shop');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+        }
+
+        if (['approved', 'suspended'].includes(row.status)) {
+            actions.push({
+                label: row.status === 'approved' ? 'Tạm khóa' : 'Cấm vĩnh viễn',
+                kind: 'danger',
+                run: async () => {
+                    const endpoint = row.status === 'approved' ? 'suspend' : 'ban';
+                    const title = row.status === 'approved' ? 'Tạm khóa seller/shop' : 'Cấm vĩnh viễn seller/shop';
+                    openJson(title, { note: row.adminNote || '' }, async payload => {
+                        await api(`/admin/seller-applications/${row._id}/${endpoint}`, { method: 'POST', body: payload });
+                        notify('Đã cập nhật biện pháp xử lý');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+        }
+
+        if (['approved', 'suspended', 'permanently_banned'].includes(row.status)) {
+            actions.push({
+                label: 'Ghi nhận vi phạm',
+                kind: 'warn',
+                run: async () => {
+                    openJson('Tạo bản ghi vi phạm', {
+                        violationType: '',
+                        severity: 'warning',
+                        description: '',
+                        actionTaken: 'warning',
+                        note: ''
+                    }, async payload => {
+                        await api(`/admin/seller-applications/${row._id}/violations`, { method: 'POST', body: payload });
+                        notify('Đã ghi nhận vi phạm cho shop');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+        }
+
+        return actions;
+    }
+
+    function sellerViolationActions(section, row) {
+        return [
+            details(row),
+            {
+                label: 'Cập nhật trạng thái',
+                run: async () => {
+                    openJson('Cập nhật vi phạm', {
+                        status: row.status || 'open',
+                        note: row.note || ''
+                    }, async payload => {
+                        await api(`/admin/seller-applications/violations/${row._id}/status`, { method: 'PUT', body: payload });
+                        notify('Đã cập nhật trạng thái vi phạm');
+                        await loadSection(section.id);
+                    });
+                }
+            }
+        ];
+    }
+
+    function careServiceApplicationActions(section, row) {
+        const actions = [
+            {
+                label: 'Chi tiết',
+                run: async () => {
+                    const detail = await api(`/admin/care-services/applications/${row._id}`);
+                    openReadonlyJson('Chi tiết hồ sơ dịch vụ chăm sóc', detail);
+                }
+            }
+        ];
+
+        if (['submitted', 'need_more_information'].includes(row.status)) {
+            actions.push({
+                label: 'Tiếp nhận',
+                kind: 'warn',
+                run: async () => {
+                    openJson('Tiếp nhận hồ sơ dịch vụ chăm sóc', { note: row.adminNote || '' }, async payload => {
+                        await api(`/admin/care-services/applications/${row._id}/start-review`, { method: 'POST', body: payload });
+                        notify('Đã chuyển hồ sơ sang trạng thái đang xem xét');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+        }
+
+        if (['submitted', 'pending_review', 'need_more_information'].includes(row.status)) {
+            actions.push({
+                label: 'Yêu cầu bổ sung',
+                kind: 'warn',
+                run: async () => {
+                    openJson('Yêu cầu bổ sung hồ sơ dịch vụ', { note: row.adminNote || '' }, async payload => {
+                        await api(`/admin/care-services/applications/${row._id}/request-more-info`, { method: 'POST', body: payload });
+                        notify('Đã gửi yêu cầu bổ sung hồ sơ');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+            actions.push({
+                label: 'Từ chối',
+                kind: 'danger',
+                run: async () => {
+                    openJson('Từ chối hồ sơ dịch vụ', { note: row.adminNote || '' }, async payload => {
+                        await api(`/admin/care-services/applications/${row._id}/reject`, { method: 'POST', body: payload });
+                        notify('Đã từ chối hồ sơ dịch vụ chăm sóc');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+        }
+
+        if (['submitted', 'pending_review', 'need_more_information', 'rejected'].includes(row.status)) {
+            actions.push({
+                label: 'Phê duyệt',
+                kind: 'success',
+                run: async () => {
+                    openJson('Phê duyệt hồ sơ dịch vụ chăm sóc', {
+                        note: '',
+                        label: row.requestedLabel === 'premium_care_partner' ? 'premium_care_partner' : 'standard'
+                    }, async payload => {
+                        await api(`/admin/care-services/applications/${row._id}/approve`, { method: 'POST', body: payload });
+                        notify('Đã phê duyệt hồ sơ dịch vụ chăm sóc');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+        }
+
+        if (['approved', 'suspended'].includes(row.status)) {
+            actions.push({
+                label: row.status === 'approved' ? 'Tạm khóa dịch vụ' : 'Cấm vĩnh viễn',
+                kind: 'danger',
+                run: async () => {
+                    const endpoint = row.status === 'approved' ? 'suspend' : 'ban';
+                    const title = row.status === 'approved'
+                        ? 'Tạm khóa dịch vụ chăm sóc'
+                        : 'Cấm vĩnh viễn dịch vụ chăm sóc';
+                    openJson(title, { note: row.adminNote || '' }, async payload => {
+                        await api(`/admin/care-services/applications/${row._id}/${endpoint}`, { method: 'POST', body: payload });
+                        notify('Đã cập nhật biện pháp xử lý dịch vụ');
+                        await loadSection(section.id);
+                    });
+                }
+            });
+        }
+
+        return actions;
     }
 
     async function bootstrap() {

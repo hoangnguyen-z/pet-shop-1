@@ -122,10 +122,18 @@ const orderSchema = new mongoose.Schema({
         default: PAYMENT_STATUS.UNPAID
     },
     payment: {
+        paymentId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PaymentTransaction'
+        },
         method: {
             type: String,
             enum: Object.values(PAYMENT_METHODS),
             default: PAYMENT_METHODS.COD
+        },
+        channel: {
+            type: String,
+            default: ''
         },
         status: {
             type: String,
@@ -133,6 +141,10 @@ const orderSchema = new mongoose.Schema({
             default: PAYMENT_STATUS.PENDING
         },
         transactionId: String,
+        redirectUrl: String,
+        qrCodeUrl: String,
+        paymentContent: String,
+        expiredAt: Date,
         paidAt: Date
     },
     status: {
