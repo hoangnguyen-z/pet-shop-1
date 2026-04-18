@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ÄÆ¡n hĂ ng cá»§a tĂ´i - Pet Marketplace</title>
+    <title>Đơn hàng của tôi - Pet Marketplace</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -30,7 +30,7 @@
     <div class="top-bar">
         <div class="container">
             <div class="top-bar-content">
-                <span><i class="fas fa-truck"></i> Miá»…n phĂ­ váº­n chuyá»ƒn cho Ä‘Æ¡n tá»« 900.000 ₫</span>
+                <span><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn từ 900.000 ₫</span>
             </div>
         </div>
     </div>
@@ -45,12 +45,12 @@
                 <div class="header-actions">
                     <a href="/pages/account/profile.html" class="header-action">
                         <i class="fas fa-user"></i>
-                        <span>TĂ i khoáº£n</span>
+                        <span>Tài khoản</span>
                     </a>
                     <a href="/pages/shop/cart.html" class="header-action cart-icon">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count">0</span>
-                        <span>Giá» hĂ ng</span>
+                        <span>Giỏ hàng</span>
                     </a>
                 </div>
             </div>
@@ -60,18 +60,18 @@
     <div class="orders-page">
         <div class="container">
             <div class="orders-header">
-                <h1>ÄÆ¡n hĂ ng cá»§a tĂ´i</h1>
+                <h1>Đơn hàng của tôi</h1>
                 <a href="/pages/shop/shop.html" class="btn btn-primary">
-                    <i class="fas fa-shopping-bag"></i> Tiáº¿p tá»¥c mua sáº¯m
+                    <i class="fas fa-shopping-bag"></i> Tiếp tục mua sắm
                 </a>
             </div>
 
             <div class="orders-tabs">
-                <button class="orders-tab active" data-status="all">Táº¥t cáº£</button>
-                <button class="orders-tab" data-status="pending">Chá» xá»­ lĂ½</button>
-                <button class="orders-tab" data-status="confirmed">ÄĂ£ xĂ¡c nháº­n</button>
-                <button class="orders-tab" data-status="shipping">Äang giao</button>
-                <button class="orders-tab" data-status="completed">HoĂ n táº¥t</button>
+                <button class="orders-tab active" data-status="all">Tất cả</button>
+                <button class="orders-tab" data-status="pending">Chờ xử lý</button>
+                <button class="orders-tab" data-status="confirmed">Đã xác nhận</button>
+                <button class="orders-tab" data-status="shipping">Đang giao</button>
+                <button class="orders-tab" data-status="completed">Hoàn tất</button>
             </div>
 
             <div id="ordersList">
@@ -109,9 +109,9 @@
                     container.innerHTML = `
                         <div class="empty-orders">
                             <i class="fas fa-shopping-bag"></i>
-                            <h3>ChÆ°a cĂ³ Ä‘Æ¡n hĂ ng nĂ o</h3>
-                            <p>HĂ£y báº¯t Ä‘áº§u mua sáº¯m Ä‘á»ƒ xem Ä‘Æ¡n hĂ ng cá»§a báº¡n táº¡i Ä‘Ă¢y</p>
-                            <a href="/pages/shop/shop.html" class="btn btn-primary">Mua sáº¯m ngay</a>
+                            <h3>Chưa có đơn hàng nào</h3>
+                            <p>Hãy bắt đầu mua sắm để xem đơn hàng của bạn tại đây</p>
+                            <a href="/pages/shop/shop.html" class="btn btn-primary">Mua sắm ngay</a>
                         </div>
                     `;
                     return;
@@ -121,7 +121,7 @@
                     <div class="order-card">
                         <div class="order-header">
                             <div>
-                                <span class="order-id">ÄÆ¡n #${order.orderNumber || order._id}</span>
+                                <span class="order-id">Đơn #${order.orderNumber || order._id}</span>
                                 <span class="order-date">${new Date(order.createdAt).toLocaleString()}</span>
                             </div>
                             <span class="status-badge" style="background: ${getStatusColor(order.status)}; color: white;">
@@ -134,19 +134,19 @@
                                     <img src="${item.image || 'https://via.placeholder.com/60'}" alt="${item.name}">
                                     <div>
                                         <h4>${item.name}</h4>
-                                        <p>Sá»‘ lÆ°á»£ng: ${item.quantity} Ă— ${window.utils.formatPrice(item.price || 0)}</p>
+                                        <p>Số lượng: ${item.quantity} x ${window.utils.formatPrice(item.price || 0)}</p>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                         <div class="order-footer">
-                            <span style="font-size: 18px; font-weight: 600;">Tá»•ng: ${window.utils.formatPrice(order.total || 0)}</span>
-                            ${order.status === 'pending' ? `<button class="btn btn-secondary btn-small" onclick="cancelOrder('${order._id}')">Há»§y Ä‘Æ¡n</button>` : ''}
+                            <span style="font-size: 18px; font-weight: 600;">Tổng: ${window.utils.formatPrice(order.total || 0)}</span>
+                            ${order.status === 'pending' ? `<button class="btn btn-secondary btn-small" onclick="cancelOrder('${order._id}')">Hủy đơn</button>` : ''}
                         </div>
                     </div>
                 `).join('');
             } catch (error) {
-                container.innerHTML = '<p class="text-center">KhĂ´ng thá»ƒ táº£i Ä‘Æ¡n hĂ ng</p>';
+                container.innerHTML = '<p class="text-center">Không thể tải danh sách đơn hàng. Vui lòng thử lại!</p>';
             }
         }
 
@@ -175,10 +175,10 @@
         }
 
         async function cancelOrder(orderId) {
-            if (!confirm('Báº¡n cĂ³ cháº¯c muá»‘n há»§y Ä‘Æ¡n hĂ ng nĂ y khĂ´ng?')) return;
+            if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) return;
             try {
                 await api.cancelOrder(orderId, 'Customer requested');
-                authManager.showNotification('ÄÆ¡n hĂ ng Ä‘Ă£ Ä‘Æ°á»£c há»§y', 'success');
+                authManager.showNotification('Đơn hàng đã được hủy thành công', 'success');
                 loadOrders();
             } catch (error) {
                 authManager.showNotification(error.message, 'error');

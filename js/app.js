@@ -771,14 +771,14 @@ function appGenerateStars(rating) {
 
 function loadSampleProducts() {
     const sampleProducts = [
-        { _id: '1', name: 'Premium dog kibble', price: 42.99, originalPrice: 54.99, rating: 4.5, reviewCount: 2456, images: [displayImage('food')] },
-        { _id: '2', name: 'Odor control cat litter', price: 18.49, originalPrice: 23.99, rating: 4.8, reviewCount: 1892, images: [displayImage('litter')] },
-        { _id: '3', name: 'Nutritious dog treats', price: 15.99, originalPrice: 21.99, rating: 4, reviewCount: 3221, images: [displayImage('food')] },
-        { _id: '4', name: 'Premium wooden bird cage', price: 62.99, rating: 4.5, reviewCount: 567, images: [displayImage('habitat')] },
-        { _id: '5', name: 'Mini aquarium with filter', price: 88.49, rating: 5, reviewCount: 1402, images: [displayImage('aquarium')] },
-        { _id: '6', name: 'Soft bed for rabbits and hamsters', price: 24.99, rating: 4.5, reviewCount: 892, images: [displayImage('bed')] },
-        { _id: '7', name: 'Rubber chew toy for dogs', price: 16.99, rating: 5, reviewCount: 5678, images: [displayImage('toy')] },
-        { _id: '8', name: 'Fashion harness and collar for cats', price: 19.99, originalPrice: 24.99, rating: 4.2, reviewCount: 1234, images: [displayImage('fashion')] }
+        { _id: '1', name: 'Hạt cao cấp cho chó', price: 42.99, originalPrice: 54.99, rating: 4.5, reviewCount: 2456, images: [displayImage('food')] },
+        { _id: '2', name: 'Cát vệ sinh khử mùi cho mèo', price: 18.49, originalPrice: 23.99, rating: 4.8, reviewCount: 1892, images: [displayImage('litter')] },
+        { _id: '3', name: 'Bánh thưởng dinh dưỡng cho chó', price: 15.99, originalPrice: 21.99, rating: 4, reviewCount: 3221, images: [displayImage('food')] },
+        { _id: '4', name: 'Lồng nuôi chim gỗ cao cấp', price: 62.99, rating: 4.5, reviewCount: 567, images: [displayImage('habitat')] },
+        { _id: '5', name: 'Bể cá mini kèm lọc', price: 88.49, rating: 5, reviewCount: 1402, images: [displayImage('aquarium')] },
+        { _id: '6', name: 'Đệm ngủ êm cho thỏ và hamster', price: 24.99, rating: 4.5, reviewCount: 892, images: [displayImage('bed')] },
+        { _id: '7', name: 'Đồ chơi gặm nhai cao su cho chó', price: 16.99, rating: 5, reviewCount: 5678, images: [displayImage('toy')] },
+        { _id: '8', name: 'Yếm và vòng cổ thời trang cho mèo', price: 19.99, originalPrice: 24.99, rating: 4.2, reviewCount: 1234, images: [displayImage('fashion')] }
     ];
     renderProducts(sampleProducts);
 }
@@ -1909,7 +1909,7 @@ async function renderPageView(slug = 'privacy-policy') {
             setSpaContent(fallback.title, fallback.content);
             return;
         }
-        setSpaContent('Content unavailable', '<p>This page has not been published yet.</p>');
+        setSpaContent('Nội dung không khả dụng', '<p>Bài viết này hiện không khả dụng.</p>');
     }
 }
 

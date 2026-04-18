@@ -326,7 +326,7 @@ img {
     padding: 25px;
     display: none;
     z-index: 100;
-    min-width: 700px;
+    min-width: 950px;
     border-top: 3px solid var(--primary);
 }
 
@@ -337,11 +337,13 @@ img {
 .mega-menu-inner {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 20px;
+    gap: 25px;
+    align-items: start;
 }
 
 .mega-menu-column {
-    text-align: center;
+    text-align: left;
+    min-width: 120px;
 }
 
 .mega-menu-icon {
@@ -361,10 +363,12 @@ img {
     margin-bottom: 12px;
     padding-bottom: 8px;
     border-bottom: 2px solid var(--accent);
+    white-space: nowrap;
 }
 
 .mega-menu-column ul li {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    line-height: 1.4;
 }
 
 .mega-menu-column ul li a {
@@ -375,6 +379,8 @@ img {
 
 .mega-menu-column ul li a:hover {
     color: var(--primary);
+    padding-left: 5px;
+    transition:0.2s;
 }
 
 /* Mobile Navigation */
