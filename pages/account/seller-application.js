@@ -1,97 +1,97 @@
 (function() {
     const statusMeta = {
         none: {
-            badge: 'Chua tao',
-            description: 'Hoan tat ho so, tai giay to va gui cho Admin xet duyet. Chi khi duoc phe duyet, tai khoan moi co the vao Seller Center va van hanh shop.',
-            progressApplication: 'Chua gui ho so.',
-            progressReview: 'Chua tiep nhan.',
-            progressCenter: 'Chua co quyen truy cap.',
+            badge: 'Chưa tạo',
+            description: 'Hoàn tất hồ sơ, tải giấy tờ và gửi cho Admin xét duyệt. Chỉ khi được phê duyệt, tài khoản mới có thể vào Seller Center và vận hành shop..',
+            progressApplication: 'Chưa gửi hồ sơ.',
+            progressReview: 'Chưa tiếp nhận.',
+            progressCenter: 'Chưa có quyền truy cập.',
             badgeClass: 'inline-flex rounded-full bg-surfaceMuted px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary'
         },
         draft: {
-            badge: 'Ban nhap',
-            description: 'Ho so dang o trang thai ban nhap. Ban co the cap nhat thong tin, tai giay to va gui cho Admin bat cu luc nao.',
-            progressApplication: 'Dang luu ban nhap.',
-            progressReview: 'Admin chua tiep nhan.',
-            progressCenter: 'Chua co quyen truy cap.',
+            badge: 'Bản nháp',
+            description: 'Hồ sơ đang ở trạng thái bản nháp. Bạn có thể cập nhật thông tin, tải giấy tờ và gửi cho Admin bất cứ lúc nào.',
+            progressApplication: 'Đang lưu bản nháp.',
+            progressReview: 'Admin chưa tiếp nhận.',
+            progressCenter: 'Chưa có quyền truy cập.',
             badgeClass: 'inline-flex rounded-full bg-surfaceMuted px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary'
         },
         submitted: {
-            badge: 'Da gui',
-            description: 'Ho so da duoc gui. Admin se tiep nhan, kiem tra giay to va cap nhat ket qua xet duyet.',
-            progressApplication: 'Da gui ho so thanh cong.',
-            progressReview: 'Dang cho Admin tiep nhan.',
-            progressCenter: 'Dang khoa cho den khi duoc duyet.',
+            badge: 'Đã gửi',
+            description: 'Hồ sơ đã được gửi. Admin sẽ tiếp nhận, kiểm tra giấy tờ và cập nhật kết quả xét duyệt.',
+            progressApplication: 'Đã gửi hồ sơ thành công.',
+            progressReview: 'Đang chờ Admin tiếp nhận.',
+            progressCenter: 'Đang khóa cho đến khi được duyệt.',
             badgeClass: 'inline-flex rounded-full bg-amber-100 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-amber-700'
         },
         pending_review: {
-            badge: 'Dang xet duyet',
-            description: 'Admin dang xem xet ho so, doi chieu giay to va danh gia dieu kien mo shop.',
-            progressApplication: 'Ho so da duoc tiep nhan.',
-            progressReview: 'Admin dang xem xet.',
-            progressCenter: 'Dang khoa cho den khi duoc duyet.',
+            badge: 'Đang xét duyệt',
+            description: 'Admin đang xem xét hồ sơ, đối chiếu giấy tờ và đánh giá điều kiện mở shop.',
+            progressApplication: 'Hồ sơ đã được tiếp nhận.',
+            progressReview: 'Admin đang xem xét.',
+            progressCenter: 'Đang khóa cho đến khi được duyệt.',
             badgeClass: 'inline-flex rounded-full bg-blue-100 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700'
         },
         need_more_information: {
-            badge: 'Can bo sung',
-            description: 'Admin da yeu cau bo sung thong tin hoac giay to. Ban cap nhat lai ho so roi gui lai de tiep tuc xet duyet.',
-            progressApplication: 'Can gui bo sung ho so.',
-            progressReview: 'Admin dang cho bo sung.',
-            progressCenter: 'Chua co quyen truy cap.',
+            badge: 'Cần bổ sung',
+            description: 'Admin đã yêu cầu bổ sung thông tin hoặc giấy tờ. Bạn cập nhật lại hồ sơ rồi gửi lại để tiếp tục xét duyệt.',
+            progressApplication: 'Cần gửi bổ sung hồ sơ.',
+            progressReview: 'Admin đang chờ bổ sung.',
+            progressCenter: 'Chưa có quyền truy cập.',
             badgeClass: 'inline-flex rounded-full bg-orange-100 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-orange-700'
         },
         approved: {
-            badge: 'Da duyet',
-            description: 'Ho so da duoc phe duyet. Ban da co quyen vao Seller Center va van hanh shop tren san.',
-            progressApplication: 'Ho so da hoan tat.',
-            progressReview: 'Admin da phe duyet.',
-            progressCenter: 'Da mo quyen Seller Center.',
+            badge: 'Đã duyệt',
+            description: 'Hồ sơ đã được duyệt. Bạn đã có quyền vào Seller Center và vận hành shop trên sàn.',
+            progressApplication: 'Hồ sơ đã hoàn tất.',
+            progressReview: 'Admin đã duyệt.',
+            progressCenter: 'Đã mở quyền Seller Center.',
             badgeClass: 'inline-flex rounded-full bg-green-100 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-green-700'
         },
         rejected: {
-            badge: 'Bi tu choi',
-            description: 'Ho so da bi tu choi. Ban xem ghi chu tu Admin, cap nhat thong tin neu can va gui lai tu dau.',
-            progressApplication: 'Ho so can chinh sua de gui lai.',
-            progressReview: 'Admin da tu choi ho so hien tai.',
-            progressCenter: 'Chua co quyen truy cap.',
+            badge: 'Bị từ chối',
+            description: 'Hồ sơ đã bị từ chối. Bạn xem ghi chú từ Admin, cập nhật thông tin nếu cần và gửi lại từ đầu.',
+            progressApplication: 'Hồ sơ cần chỉnh sửa để gửi lại.',
+            progressReview: 'Admin đã từ chối hồ sơ hiện tại.',
+            progressCenter: 'Chưa có quyền truy cập.',
             badgeClass: 'inline-flex rounded-full bg-red-100 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-red-700'
         },
         suspended: {
-            badge: 'Tam khoa',
-            description: 'Shop hoac tai khoan dang bi tam khoa. Ban can lam viec voi Admin de biet ly do va huong xu ly tiep theo.',
-            progressApplication: 'Ho so da bi tam khoa.',
-            progressReview: 'Admin da ap dung bien phap tam khoa.',
-            progressCenter: 'Seller Center dang bi khoa.',
+            badge: 'Tạm khóa',
+            description: 'Shop hoặc tài khoản đang bị tạm khóa. Bạn cần làm việc với Admin để biết lý do và hướng xử lý tiếp theo.',
+            progressApplication: 'Hồ sơ đã bị tạm khóa.',
+            progressReview: 'Admin đã áp dụng biện pháp tạm khóa.',
+            progressCenter: 'Seller Center đang bị khóa.',
             badgeClass: 'inline-flex rounded-full bg-red-100 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-red-700'
         },
         permanently_banned: {
-            badge: 'Cam vinh vien',
-            description: 'Tai khoan hoac shop da bi cam vinh vien do vi pham nghiem trong. He thong se luu lich su de phuc vu doi chieu khi can.',
-            progressApplication: 'Ho so da bi cam vinh vien.',
-            progressReview: 'Admin da ket luan vi pham nghiem trong.',
-            progressCenter: 'Khong con quyen truy cap Seller Center.',
+            badge: 'Cấm vĩnh viễn',
+            description: 'Tài khoản hoặc shop đã bị cấm vĩnh viễn do vi phạm nghiêm trọng. Hệ thống sẽ lưu lịch sử để phục vụ đối chiếu khi cần.',
+            progressApplication: 'Hồ sơ đã bị cấm vĩnh viễn.',
+            progressReview: 'Admin đã kết luận vi phạm nghiêm trọng.',
+            progressCenter: 'Không còn quyền truy cập Seller Center.',
             badgeClass: 'inline-flex rounded-full bg-red-200 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-red-800'
         }
     };
 
     const documentTypeLabels = {
-        identity_document: 'Giay to dinh danh',
-        business_license: 'Giay phep kinh doanh',
-        tax_code: 'Ma so thue',
-        brand_authorization: 'Uy quyen thuong hieu',
-        source_of_goods: 'Nguon goc hang hoa',
-        quality_commitment: 'Cam ket chat luong',
-        operating_license: 'Giay phep hoat dong',
-        other: 'Tai lieu khac'
+        identity_document: 'Giấy tờ định danh',
+        business_license: 'Giấy phép kinh doanh',
+        tax_code: 'Mã số thuế',
+        brand_authorization: 'Ủy quyền thương hiệu',
+        source_of_goods: 'Nguồn gốc hàng hóa',
+        quality_commitment: 'Cam kết chất lượng',
+        operating_license: 'Giấy phép hoạt động',
+        other: 'Tài liệu khác'
     };
 
     const applicationTypeLabels = {
-        standard: 'Shop thuong',
-        petmall: 'PetMall / Thuong hieu'
+        standard: 'Shop thường',
+        petmall: 'PetMall / Thương hiệu'
     };
 
     const verificationLabels = {
-        standard: 'Shop thuong',
+        standard: 'Shop thường',
         verified_seller: 'Verified Seller',
         official_brand: 'Official Brand',
         petmall: 'PetMall'
@@ -279,21 +279,21 @@
 
     function renderDocuments() {
         if (!state.documents.length) {
-            documentsList.innerHTML = '<p class="text-sm text-textSoft">Chua co giay to nao duoc tai len.</p>';
-            documentSummaryList.innerHTML = '<p class="text-sm text-textSoft">Chua co giay to nao.</p>';
+            documentsList.innerHTML = '<p class="text-sm text-textSoft">Chưa có giấy tờ nào được tải lên.</p>';
+            documentSummaryList.innerHTML = '<p class="text-sm text-textSoft">Chưa có giấy tờ nào.</p>';
             return;
         }
 
         documentsList.innerHTML = state.documents.map((document, index) => `
             <div class="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 md:flex-row md:items-center md:justify-between">
                 <div class="min-w-0">
-                    <p class="text-sm font-semibold">${documentTypeLabels[document.type] || 'Tai lieu'}</p>
-                    <p class="mt-1 break-all text-sm text-textSoft">${document.title || document.fileName || document.originalName || 'Tai lieu da tai'}</p>
-                    <p class="mt-1 text-xs text-textSoft">${document.mimeType || 'Khong ro dinh dang'} • ${Math.max(1, Math.round((document.size || 0) / 1024))} KB</p>
+                    <p class="text-sm font-semibold">${documentTypeLabels[document.type] || 'Tài liệu'}</p>
+                    <p class="mt-1 break-all text-sm text-textSoft">${document.title || document.fileName || document.originalName || 'Tài liệu đã tải'}</p>
+                    <p class="mt-1 text-xs text-textSoft">${document.mimeType || 'Không rõ định dạng'} • ${Math.max(1, Math.round((document.size || 0) / 1024))} KB</p>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <a class="inline-flex min-h-10 items-center justify-center rounded-full border border-line bg-white px-4 text-xs font-bold text-textMain transition hover:border-primary/30 hover:text-primary" href="${document.fileUrl}" target="_blank" rel="noopener noreferrer">Xem tep</a>
-                    <button class="inline-flex min-h-10 items-center justify-center rounded-full border border-red-200 bg-white px-4 text-xs font-bold text-danger transition hover:bg-red-50" data-remove-document="${index}" type="button">Xoa</button>
+                    <a class="inline-flex min-h-10 items-center justify-center rounded-full border border-line bg-white px-4 text-xs font-bold text-textMain transition hover:border-primary/30 hover:text-primary" href="${document.fileUrl}" target="_blank" rel="noopener noreferrer">Xem tập tin</a>
+                    <button class="inline-flex min-h-10 items-center justify-center rounded-full border border-red-200 bg-white px-4 text-xs font-bold text-danger transition hover:bg-red-50" data-remove-document="${index}" type="button">Xóa</button>
                 </div>
             </div>
         `).join('');
@@ -335,11 +335,11 @@
         document.getElementById('progressApplicationText').textContent = meta.progressApplication;
         document.getElementById('progressReviewText').textContent = meta.progressReview;
         document.getElementById('progressCenterText').textContent = meta.progressCenter;
-        document.getElementById('applicationTypePreview').textContent = applicationTypeLabels[state.application?.applicationType || 'standard'] || 'Shop thuong';
+        document.getElementById('applicationTypePreview').textContent = applicationTypeLabels[state.application?.applicationType || 'standard'] || 'Shop thường';
         document.getElementById('applicationLabelPreview').textContent = labels.length
             ? labels.map(label => verificationLabels[label] || label).join(', ')
-            : 'Shop thuong';
-        document.getElementById('applicationVerificationPreview').textContent = verificationLabels[state.sellerAccess?.verificationLevel || state.application?.verificationLevel || 'standard'] || 'Chua cap';
+            : 'Shop thường';
+        document.getElementById('applicationVerificationPreview').textContent = verificationLabels[state.sellerAccess?.verificationLevel || state.application?.verificationLevel || 'standard'] || 'Chưa cấp';
 
         const adminNote = state.application?.adminNote || '';
         document.getElementById('adminNoteBox').hidden = !adminNote;
@@ -347,7 +347,7 @@
 
         saveDraftButton.hidden = !editable;
         submitApplicationButton.hidden = !editable;
-        submitApplicationButton.textContent = ['need_more_information', 'rejected'].includes(status) ? 'Gui lai ho so' : 'Gui ho so';
+        submitApplicationButton.textContent = ['need_more_information', 'rejected'].includes(status) ? 'Gửi lại hồ sơ' : 'Gửi hồ sơ';
 
         Array.from(form.elements).forEach(element => {
             if (element.id === 'termsAccepted' || element.id === 'legalResponsibilityConfirmed') {
@@ -395,7 +395,7 @@
             renderDocuments();
             updateStatusUI();
         } catch (error) {
-            showAlert(error.message || 'Khong the tai ho so mo shop. Vui long dang nhap lai.');
+            showAlert(error.message || 'Không thể tải hồ sơ mở shop. Vui lòng đăng nhập lại.');
             if (error.status === 401 || error.status === 403) {
                 window.setTimeout(() => {
                     window.location.href = '/pages/account/login.html';
@@ -417,9 +417,9 @@
             fillForm();
             renderDocuments();
             updateStatusUI();
-            showToast(response.message || 'Da luu nhap ho so mo shop.');
+            showToast(response.message || 'Đã lưu nhập hồ sơ mở shop.');
         } catch (error) {
-            showAlert(error.message || 'Khong the luu nhap ho so.');
+            showAlert(error.message || 'Không thể lưu nhập hồ sơ.');
         } finally {
             saveDraftButton.disabled = false;
         }
@@ -443,9 +443,9 @@
             fillForm();
             renderDocuments();
             updateStatusUI();
-            showToast(response.message || 'Da gui ho so mo shop thanh cong.');
+            showToast(response.message || 'Đã gửi hồ sơ mở shop thành công.');
         } catch (error) {
-            showAlert(error.message || 'Khong the gui ho so mo shop.');
+            showAlert(error.message || 'Không thể gửi hồ sơ mở shop.');
         } finally {
             submitApplicationButton.disabled = false;
         }
@@ -475,9 +475,9 @@
             }
 
             renderDocuments();
-            showToast('Da tai tai lieu len thanh cong.');
+            showToast('Đã tải tài liệu lên thành công.');
         } catch (error) {
-            showAlert(error.message || 'Tai tai lieu len that bai.');
+            showAlert(error.message || 'Tải tài liệu lên thất bại.');
         } finally {
             document.getElementById('pickDocumentButton').disabled = false;
             documentFileInput.value = '';

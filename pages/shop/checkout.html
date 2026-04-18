@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thanh toĂ¡n - Pet Marketplace</title>
+    <title>Thanh toán - Pet Marketplace</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -50,7 +50,7 @@
     <div class="top-bar">
         <div class="container">
             <div class="top-bar-content">
-                <span><i class="fas fa-lock"></i> Thanh toĂ¡n an toĂ n</span>
+                <span><i class="fas fa-lock"></i> Thanh toán an toàn</span>
             </div>
         </div>
     </div>
@@ -68,24 +68,24 @@
 
     <div class="checkout-page">
         <div class="container">
-            <h1>Thanh toĂ¡n</h1>
+            <h1>Thanh toán</h1>
             <div class="checkout-grid">
                 <div class="checkout-forms">
                     <div class="checkout-section">
-                        <h3><i class="fas fa-map-marker-alt"></i> Äá»‹a chá»‰ giao hĂ ng</h3>
+                        <h3><i class="fas fa-map-marker-alt"></i> Địa chỉ giao hàng</h3>
                         <form id="shippingForm">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>TĂªn</label>
+                                    <label>Tên</label>
                                     <input type="text" name="firstName" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>Há»</label>
+                                    <label>Họ</label>
                                     <input type="text" name="lastName" required>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Sá»‘ Ä‘iá»‡n thoáº¡i</label>
+                                <label>Số điện thoại</label>
                                 <input type="tel" name="phone" required>
                             </div>
                             <div class="form-group">
@@ -93,26 +93,26 @@
                                 <input type="email" name="email" required>
                             </div>
                             <div class="form-group">
-                                <label>Äá»‹a chá»‰ Ä‘Æ°á»ng</label>
+                                <label>Địa chỉ đường</label>
                                 <input type="text" name="street" required>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>ThĂ nh phá»‘</label>
+                                    <label>Thành phố</label>
                                     <input type="text" name="city" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>Tá»‰nh / Bang</label>
+                                    <label>Tỉnh / Bang</label>
                                     <input type="text" name="state" required>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>MĂ£ bÆ°u chĂ­nh</label>
+                                    <label>Mã bưu chính</label>
                                     <input type="text" name="zipCode" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>Quá»‘c gia</label>
+                                    <label>Quốc gia</label>
                                     <select name="country">
                                         <option value="US">United States</option>
                                         <option value="VN">Vietnam</option>
@@ -123,58 +123,58 @@
                     </div>
 
                     <div class="checkout-section">
-                        <h3><i class="fas fa-credit-card"></i> PhÆ°Æ¡ng thá»©c thanh toĂ¡n</h3>
+                        <h3><i class="fas fa-credit-card"></i> Phương thức thanh toán</h3>
                         <div class="payment-method selected" onclick="selectPayment(this)">
                             <input type="radio" name="payment" value="cod" checked>
                             <label>
-                                <i class="fas fa-money-bill-wave"></i> Thanh toĂ¡n khi nháº­n hĂ ng
+                                <i class="fas fa-money-bill-wave"></i> Thanh toán khi nhận hàng
                             </label>
-                            <span class="payment-desc">Thanh toĂ¡n khi nháº­n Ä‘Æ¡n hĂ ng</span>
+                            <span class="payment-desc">Thanh toán khi nhận đơn hàng</span>
                         </div>
                         <div class="payment-method" onclick="selectPayment(this)">
                             <input type="radio" name="payment" value="vnpay">
                             <label>
                                 <i class="fas fa-university"></i> VNPay
                             </label>
-                            <span class="payment-desc">Thanh toĂ¡n an toĂ n vá»›i VNPay</span>
+                            <span class="payment-desc">Thanh toán an toàn với VNPay</span>
                         </div>
                         <div class="payment-method" onclick="selectPayment(this)">
                             <input type="radio" name="payment" value="momo">
                             <label>
                                 <i class="fas fa-wallet"></i> MoMo
                             </label>
-                            <span class="payment-desc">Thanh toĂ¡n báº±ng vĂ­ MoMo</span>
+                            <span class="payment-desc">Thanh toán bằng ví MoMo</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="order-summary">
-                    <h3>TĂ³m táº¯t Ä‘Æ¡n hĂ ng</h3>
+                    <h3>Tóm tắt đơn hàng</h3>
                     <div class="order-items" id="orderItems"></div>
                     <div class="order-totals">
                         <div class="order-total-row">
-                            <span>Táº¡m tĂ­nh</span>
+                            <span>Tạm tính</span>
                             <span id="orderSubtotal">0 â‚«</span>
                         </div>
                         <div class="order-total-row">
-                            <span>PhĂ­ váº­n chuyá»ƒn</span>
+                            <span>Phí vận chuyển</span>
                             <span id="orderShipping">0 â‚«</span>
                         </div>
                         <div class="order-total-row">
-                            <span>Thuáº¿</span>
+                            <span>Thuế</span>
                             <span id="orderTax">0 â‚«</span>
                         </div>
                         <div class="order-total-row final">
-                            <span>Tá»•ng cá»™ng</span>
+                            <span>Tổng cộng</span>
                             <span id="orderTotal">0 â‚«</span>
                         </div>
                     </div>
                     <button class="btn btn-primary place-order-btn" onclick="placeOrder()">
-                        <i class="fas fa-lock"></i> Äáº·t hĂ ng
+                        <i class="fas fa-lock"></i> Đặt hàng
                     </button>
                     <div class="secure-badge">
                         <i class="fas fa-shield-alt"></i>
-                        <span>MĂ£ hĂ³a SSL 256-bit an toĂ n</span>
+                        <span>Mã hóa SSL 256-bit an toàn</span>
                     </div>
                 </div>
             </div>
@@ -209,7 +209,7 @@
                         <img src="${image}" alt="${name}">
                         <div class="order-item-info">
                             <h4>${name}</h4>
-                            <p>Số lượng: ${quantity} × ${window.utils.formatPrice(price)}</p>
+                            <p>Số lượng: ${quantity} x ${window.utils.formatPrice(price)}</p>
                         </div>
                     </div>
                 `;
@@ -266,7 +266,7 @@
 
             const items = cartManager.getItems();
             if (items.length === 0) {
-                authManager.showNotification('Giá» hĂ ng cá»§a báº¡n Ä‘ang trá»‘ng', 'error');
+                authManager.showNotification('Giỏ hàng của bạn đang trống', 'error');
                 return;
             }
 
@@ -295,13 +295,13 @@
             try {
                 const response = await api.buyerApi.createOrder(orderData);
                 cartManager.clearCart();
-                authManager.showNotification('Äáº·t hĂ ng thĂ nh cĂ´ng!', 'success');
+                authManager.showNotification('Đặt hàng thành công!', 'success');
                 
                 setTimeout(() => {
                     window.location.href = '/pages/account/orders.html';
                 }, 1500);
             } catch (error) {
-                authManager.showNotification(error.message || 'KhĂ´ng thá»ƒ Ä‘áº·t hĂ ng', 'error');
+                authManager.showNotification(error.message || 'Không thể đặt hàng', 'error');
             }
         }
     </script>

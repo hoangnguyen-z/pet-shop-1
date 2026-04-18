@@ -888,7 +888,7 @@
                     status: order.status
                 }))
             };
-            openReadonlyJson('Chi tiet doi soat nguoi ban', detail);
+            openReadonlyJson('Chi tiết đối soát người bán.', detail);
         }
 
         async function updateSettlement(row, payload, successMessage) {
@@ -899,66 +899,66 @@
 
         return (section, row) => {
             const actions = [
-                { label: 'Chi tiet', run: () => openSettlementDetail(row) }
+                { label: 'Chi tiết', run: () => openSettlementDetail(row) }
             ];
 
             if (row.status === 'pending') {
                 actions.push({
-                    label: 'Tiep nhan doi soat',
+                    label: 'Tiếp nhận đối soát',
                     kind: 'success',
                     run: async () => {
-                        const notes = prompt('Ghi chu tiep nhan doi soat', row.notes || 'Admin da tiep nhan va dang kiem tra thong tin chuyen tien.');
+                        const notes = prompt('Ghi chú tiếp nhận đối soát', row.notes || 'Admin đã tiếp nhận và đang kiểm tra thông tin chuyển tiền.');
                         await updateSettlement(row, {
                             status: 'processing',
-                            notes: notes || row.notes || 'Admin da tiep nhan doi soat.'
-                        }, 'Da chuyen yeu cau sang trang thai dang xu ly');
+                            notes: notes || row.notes || 'Admin đã tiếp nhận đối soát.'
+                        }, 'Đã chuyển yêu cầu sang trạng thái đang xử lý');
                     }
                 });
             }
 
             if (['pending', 'processing'].includes(row.status)) {
                 actions.push({
-                    label: 'Danh dau da chuyen tien',
+                    label: 'Dánh dấu đã chuyển tiền',
                     kind: 'success',
                     run: async () => {
-                        const transactionId = prompt('Nhap ma giao dich chuyen tien', row.transactionId || '');
+                        const transactionId = prompt('Nhập mã giao dịch chuyển tiền', row.transactionId || '');
                         if (!transactionId) return;
-                        const notes = prompt('Ghi chu doi soat / chuyen tien', row.notes || 'Da chuyen tien cho shop va hoan tat doi soat.');
+                        const notes = prompt('Ghi chú đối soát / chuyển tiền', row.notes || 'Đã chuyển tiền cho shop và hoàn tất đối soát.');
                         await updateSettlement(row, {
                             status: 'completed',
                             transactionId,
-                            notes: notes || 'Da hoan tat doi soat'
-                        }, 'Da danh dau chuyen tien thanh cong cho shop');
+                            notes: notes || 'Đã hoàn tất đối soát.'
+                        }, 'Đã đánh dấu chuyển tiền thành công cho shop');
                     }
                 });
             }
 
             if (row.status === 'completed') {
                 actions.push({
-                    label: 'Cap nhat ma giao dich',
+                    label: 'Cập nhật mã giao dịch',
                     run: async () => {
-                        const transactionId = prompt('Cap nhat ma giao dich', row.transactionId || '');
+                        const transactionId = prompt('Cập nhật mã giao dịch', row.transactionId || '');
                         if (!transactionId) return;
-                        const notes = prompt('Ghi chu cap nhat', row.notes || '');
+                        const notes = prompt('Ghi chú cập nhật', row.notes || '');
                         await updateSettlement(row, {
                             transactionId,
                             notes: notes || row.notes || ''
-                        }, 'Da cap nhat thong tin chuyen tien');
+                        }, 'Đã cập nhật thông tin chuyển tiền');
                     }
                 });
             }
 
             if (row.status !== 'completed' && row.status !== 'cancelled') {
                 actions.push({
-                    label: 'Huy doi soat',
+                    label: 'Hủy đối soát',
                     kind: 'danger',
                     run: async () => {
-                        const notes = prompt('Ly do huy doi soat', row.notes || 'Tam huy dot doi soat nay.');
+                        const notes = prompt('Lý do hủy đối soát', row.notes || 'Admin đã hủy đợt đối soát này.');
                         if (!notes) return;
                         await updateSettlement(row, {
                             status: 'cancelled',
                             notes
-                        }, 'Da huy yeu cau doi soat');
+                        }, 'Đã hủy yêu cầu đối soát');
                     }
                 });
             }
