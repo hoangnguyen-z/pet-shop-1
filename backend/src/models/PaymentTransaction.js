@@ -90,6 +90,17 @@ const paymentTransactionSchema = new mongoose.Schema({
     verificationVerifiedAt: {
         type: Date
     },
+    verificationEmail: {
+        type: String,
+        default: ''
+    },
+    verificationEmailMasked: {
+        type: String,
+        default: ''
+    },
+    verificationSentAt: {
+        type: Date
+    },
     callbackToken: {
         type: String,
         required: true,

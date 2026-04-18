@@ -10,6 +10,28 @@
         this.init();
     }
 
+    safeReadStorageJson(key) {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+
+        try {
+            return JSON.parse(raw);
+        } catch (error) {
+            console.warn(`Ignoring invalid JSON in localStorage key "${key}"`, error);
+            localStorage.removeItem(key);
+            return null;
+        }
+    }
+
+    findAccountActionContainer() {
+        const existing = document.querySelector('.account-action');
+        if (existing) return existing;
+
+        return Array.from(document.querySelectorAll('.header-action')).find((node) => {
+            return node.querySelector('.fa-user, .fa-user-circle');
+        }) || null;
+    }
+
     init() {
         this.checkAuthStatus();
         this.setupEventListeners();
@@ -24,13 +46,22 @@
         const role = localStorage.getItem('role');
 
         if (token && userData) {
-            this.user = JSON.parse(userData);
+            this.user = this.safeReadStorageJson('user');
+            if (!this.user) {
+                this.api.logout();
+                this.shop = null;
+                this.sellerApplication = null;
+                this.sellerAccess = null;
+                this.isAuthenticated = false;
+                this.updateUI();
+                return;
+            }
             if (role && !this.user.role) {
                 this.user.role = role;
             }
-            this.shop = shopData ? JSON.parse(shopData) : null;
-            this.sellerApplication = sellerApplicationData ? JSON.parse(sellerApplicationData) : null;
-            this.sellerAccess = sellerAccessData ? JSON.parse(sellerAccessData) : null;
+            this.shop = shopData ? this.safeReadStorageJson('shop') : null;
+            this.sellerApplication = sellerApplicationData ? this.safeReadStorageJson('sellerApplication') : null;
+            this.sellerAccess = sellerAccessData ? this.safeReadStorageJson('sellerAccess') : null;
             this.isAuthenticated = true;
         } else {
             this.user = null;
@@ -200,8 +231,7 @@
     }
 
     updateUI() {
-        let userAction = document.querySelector('.account-action')
-            || document.querySelector('.header-action:has(.fa-user), .header-action:has(.fa-user-circle)');
+        let userAction = this.findAccountActionContainer();
 
         if (userAction && userAction.tagName.toLowerCase() === 'a') {
             const replacement = document.createElement('div');
@@ -224,9 +254,9 @@
                     <div class="user-dropdown" id="userDropdown">
                         <a href="#account"><i class="fas fa-user"></i> Tài khoản của tôi</a>
                         <a href="#notifications"><i class="fas fa-bell"></i> Thông báo</a>
-                        ${this.user?.role === 'seller' ? '<a href="/pages/seller/dashboard.html"><i class="fas fa-store"></i> Kênh người bán</a>' : ''}
-                        ${this.user?.role === 'admin' ? '<a href="/pages/admin/dashboard.html"><i class="fas fa-cog"></i> Trang quản trị</a>' : ''}
-                        ${this.user?.role === 'buyer' && !this.shop ? '<a href="#" data-action="become-seller"><i class="fas fa-store"></i> Mở shop bán hàng</a>' : ''}
+                        ${this.user?.role === 'seller' ? '<a href="/pages/seller/dashboard.html"><i class="fas fa-store"></i> Seller Center</a>' : ''}
+                        ${this.user?.role === 'admin' ? '<a href="/pages/admin/dashboard.html"><i class="fas fa-cog"></i> Admin Center</a>' : ''}
+                        ${this.user?.role === 'buyer' && !this.shop ? '<a href="#" data-action="become-seller"><i class="fas fa-store"></i> Open a seller shop</a>' : ''}
                         <div class="dropdown-divider"></div>
                         <a href="#" data-action="logout"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
                     </div>
@@ -235,7 +265,7 @@
                 userAction.innerHTML = `
                     <button class="user-menu-trigger" type="button" data-action="login">
                         <i class="far fa-user"></i>
-                        <span>Đăng nhập</span>
+                        <span>Sign in</span>
                     </button>
                 `;
             }
@@ -258,17 +288,17 @@
         const isRegister = mode === 'register';
         const roleTabs = isRegister
             ? [
-                ['buyer', 'NgÆ°á»i mua'],
-                ['seller', 'NgÆ°á»i bĂ¡n']
+                ['buyer', 'Buyer'],
+                ['seller', 'Seller']
             ]
             : [
-                ['buyer', 'NgÆ°á»i mua'],
-                ['seller', 'NgÆ°á»i bĂ¡n'],
+                ['buyer', 'Buyer'],
+                ['seller', 'Seller'],
                 ['admin', 'Admin']
             ];
         const modal = this.createModal('authModal', `
             <div class="auth-shell">
-                <button class="modal-close auth-close" type="button" aria-label="ÄĂ³ng">&times;</button>
+                <button class="modal-close auth-close" type="button" aria-label="Close">&times;</button>
                 <section class="auth-visual" aria-hidden="true">
                     <div class="auth-blob auth-blob-one"></div>
                     <div class="auth-blob auth-blob-two"></div>
@@ -277,8 +307,8 @@
                         <span>Paws &amp; Palette</span>
                     </div>
                     <div class="auth-visual-copy">
-                        <h3>${isRegister ? 'Báº¯t Ä‘áº§u hĂ nh trĂ¬nh chÄƒm pet.' : 'ChĂ o má»«ng trá»Ÿ láº¡i vá»›i ngĂ´i nhĂ  cá»§a thĂº cÆ°ng.'}</h3>
-                        <p>${isRegister ? 'Táº¡o tĂ i khoáº£n Ä‘á»ƒ mua sáº¯m, theo dĂµi Ä‘Æ¡n hĂ ng hoáº·c má»Ÿ gian hĂ ng pet cá»§a riĂªng báº¡n.' : 'NÆ¡i phong cĂ¡ch sá»‘ng cá»§a báº¡n vĂ  niá»m vui cá»§a thĂº cÆ°ng hĂ²a lĂ m má»™t.'}</p>
+                        <h3>${isRegister ? 'Start your pet care journey.' : 'Welcome back to your pet-loving space.'}</h3>
+                        <p>${isRegister ? 'Create an account to shop, track orders, or open your own pet store.' : 'A place where your lifestyle and your pet’s happiness come together.'}</p>
                     </div>
                     <div class="auth-image-stack">
                         <div class="auth-image-card auth-image-main"><img src="/assets/images/pet-dog.svg" alt=""></div>
@@ -291,10 +321,10 @@
                         <span>Paws &amp; Palette</span>
                     </div>
                     <div class="auth-heading">
-                        <h3>${isRegister ? 'ÄÄƒng kĂ½' : 'ÄÄƒng nháº­p'}</h3>
-                        <p>${isRegister ? 'Táº¡o tĂ i khoáº£n Ä‘á»ƒ báº¯t Ä‘áº§u mua sáº¯m hoáº·c bĂ¡n sáº£n pháº©m pet.' : 'ChĂ o má»«ng báº¡n quay láº¡i khĂ´ng gian yĂªu thÆ°Æ¡ng.'}</p>
+                        <h3>${isRegister ? 'Sign up' : 'Sign in'}</h3>
+                        <p>${isRegister ? 'Create an account to start shopping or selling pet products.' : 'Welcome back to your favorite pet marketplace.'}</p>
                     </div>
-                    <div class="auth-role-tabs" role="tablist" aria-label="Loáº¡i tĂ i khoáº£n">
+                    <div class="auth-role-tabs" role="tablist" aria-label="Account type">
                         ${roleTabs.map(([value, label], index) => `
                             <button class="auth-role-tab ${index === 0 ? 'active' : ''}" type="button" data-auth-role="${value}">${label}</button>
                         `).join('')}
@@ -304,9 +334,9 @@
                         <input id="authRole" type="hidden" name="role" value="buyer">
                         ${isRegister ? `
                             <div class="auth-field">
-                                <label for="authName">Há» vĂ  tĂªn</label>
+                                <label for="authName">Full name</label>
                                 <div class="auth-input-wrap">
-                                    <input id="authName" type="text" name="name" required maxlength="100" autocomplete="name" placeholder="Nguyá»…n VÄƒn A">
+                                    <input id="authName" type="text" name="name" required maxlength="100" autocomplete="name" placeholder="Alex Johnson">
                                     <span class="auth-input-icon">ID</span>
                                 </div>
                             </div>
@@ -320,26 +350,26 @@
                         </div>
                         ${isRegister ? `
                             <div class="auth-field">
-                                <label for="authPhone">Sá»‘ Ä‘iá»‡n thoáº¡i</label>
+                                <label for="authPhone">Phone number</label>
                                 <div class="auth-input-wrap">
-                                    <input id="authPhone" type="tel" name="phone" required pattern="[0-9]{10,11}" inputmode="numeric" autocomplete="tel" placeholder="10-11 chá»¯ sá»‘">
+                                    <input id="authPhone" type="tel" name="phone" required pattern="[0-9]{10,11}" inputmode="numeric" autocomplete="tel" placeholder="10-11 digits">
                                     <span class="auth-input-icon">Tel</span>
                                 </div>
                             </div>
                         ` : ''}
                         <div class="auth-field">
-                            <label for="authPassword">Máº­t kháº©u</label>
+                            <label for="authPassword">Password</label>
                             <div class="auth-input-wrap">
-                                <input id="authPassword" type="password" name="password" required minlength="6" autocomplete="${isRegister ? 'new-password' : 'current-password'}" placeholder="${isRegister ? 'VĂ­ dá»¥: Petshop1' : 'Nháº­p máº­t kháº©u'}">
-                                <button class="auth-password-toggle" type="button" data-auth-toggle-password>Hiá»‡n</button>
+                                <input id="authPassword" type="password" name="password" required minlength="6" autocomplete="${isRegister ? 'new-password' : 'current-password'}" placeholder="${isRegister ? 'Example: Petshop1' : 'Enter your password'}">
+                                <button class="auth-password-toggle" type="button" data-auth-toggle-password>Show</button>
                             </div>
-                            ${isRegister ? '<small class="auth-help">Máº­t kháº©u cáº§n cĂ³ chá»¯ hoa, chá»¯ thÆ°á»ng vĂ  sá»‘.</small>' : ''}
+                            ${isRegister ? '<small class="auth-help">Use at least one uppercase letter, one lowercase letter, and one number.</small>' : ''}
                         </div>
                         ${isRegister ? `
                             <div class="auth-field auth-seller-field" id="authSellerShopName" style="display:none;">
-                                <label for="authShopName">TĂªn shop</label>
+                                <label for="authShopName">Shop name</label>
                                 <div class="auth-input-wrap">
-                                    <input id="authShopName" type="text" name="shopName" maxlength="200" placeholder="TĂªn gian hĂ ng cá»§a báº¡n">
+                                    <input id="authShopName" type="text" name="shopName" maxlength="200" placeholder="Your shop name">
                                     <span class="auth-input-icon">Shop</span>
                                 </div>
                             </div>
@@ -347,23 +377,23 @@
                             <div class="auth-actions-row">
                                 <label class="auth-remember">
                                     <input type="checkbox" name="remember">
-                                    <span>Ghi nhá»› Ä‘Äƒng nháº­p</span>
+                                    <span>Remember me</span>
                                 </label>
-                                <a href="#" data-action="forgot-password">QuĂªn máº­t kháº©u?</a>
+                                <a href="#" data-action="forgot-password">Forgot password?</a>
                             </div>
                         `}
                         <button type="submit" class="auth-submit">
-                            ${isRegister ? 'Táº¡o tĂ i khoáº£n' : 'ÄÄƒng nháº­p'}
+                            ${isRegister ? 'Create account' : 'Sign in'}
                         </button>
                     </form>
-                    <div class="auth-divider"><span>hoáº·c</span></div>
+                    <div class="auth-divider"><span>or</span></div>
                     <div class="auth-switch-card">
                         <p>
-                            ${isRegister ? 'ÄĂ£ cĂ³ tĂ i khoáº£n?' : 'ChÆ°a cĂ³ tĂ i khoáº£n?'}
-                            <a href="#" data-auth-switch="${isRegister ? 'login' : 'register'}">${isRegister ? 'ÄÄƒng nháº­p' : 'ÄÄƒng kĂ½ ngay'}</a>
+                            ${isRegister ? 'Already have an account?' : 'New here?'}
+                            <a href="#" data-auth-switch="${isRegister ? 'login' : 'register'}">${isRegister ? 'Sign in' : 'Create one'}</a>
                         </p>
                     </div>
-                    <p class="auth-terms">Báº±ng cĂ¡ch tiáº¿p tá»¥c, báº¡n Ä‘á»“ng Ă½ vá»›i Ä‘iá»u khoáº£n dá»‹ch vá»¥ vĂ  chĂ­nh sĂ¡ch quyá»n riĂªng tÆ° cá»§a sĂ n.</p>
+                    <p class="auth-terms">By continuing, you agree to the marketplace terms of service and privacy policy.</p>
                 </section>
             </div>
         `);
@@ -387,7 +417,7 @@
 
         const setLoading = (loading) => {
             submitButton.disabled = loading;
-            submitButton.textContent = loading ? 'Äang xá»­ lĂ½...' : (isRegister ? 'Táº¡o tĂ i khoáº£n' : 'ÄÄƒng nháº­p');
+            submitButton.textContent = loading ? 'Đang xử lý...' : (isRegister ? 'Tạo tài khoản' : 'Đăng nhập');
         };
 
         const updateRole = (role) => {
@@ -410,7 +440,7 @@
             const passwordInput = modal.querySelector('#authPassword');
             const isHidden = passwordInput.type === 'password';
             passwordInput.type = isHidden ? 'text' : 'password';
-            event.currentTarget.textContent = isHidden ? 'áº¨n' : 'Hiá»‡n';
+            event.currentTarget.textContent = isHidden ? 'Ẩn' : 'Hiện';
         });
 
         modal.querySelectorAll('[data-auth-switch]').forEach(link => {
@@ -446,10 +476,10 @@
                         shopName: formData.get('shopName')?.trim(),
                         shopPhone: formData.get('phone')?.trim()
                     }, role);
-                    this.showNotification('ÄÄƒng kĂ½ thĂ nh cĂ´ng!', 'success');
+                    this.showNotification('Đăng ký thành công!', 'success');
                 } else {
                     await this.login(formData.get('email')?.trim(), formData.get('password'), role);
-                    this.showNotification('ÄÄƒng nháº­p thĂ nh cĂ´ng!', 'success');
+                    this.showNotification('Đăng nhập thành công!', 'success');
                 }
 
                 modal.remove();
@@ -464,7 +494,7 @@
                     window.dispatchEvent(new Event('auth:changed'));
                 }
             } catch (error) {
-                setError(error.message || (isRegister ? 'ÄÄƒng kĂ½ tháº¥t báº¡i' : 'ÄÄƒng nháº­p tháº¥t báº¡i'));
+                setError(error.message || (isRegister ? 'Đăng ký thất bại' : 'Đăng nhập thất bại'));
             } finally {
                 setLoading(false);
             }
@@ -478,33 +508,33 @@
         document.getElementById('registerModal')?.remove();
         const modal = this.createModal('loginModal', `
             <div class="modal-header">
-                <h3>ÄÄƒng nháº­p</h3>
+                <h3>Đăng nhập</h3>
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="loginForm">
                     <div class="form-group">
                         <label>Email</label>
-                        <input type="email" name="email" required placeholder="Nháº­p email cá»§a báº¡n">
+                        <input type="email" name="email" required placeholder="Nhập email của bạn">
                     </div>
                     <div class="form-group">
-                        <label>Máº­t kháº©u</label>
-                        <input type="password" name="password" required placeholder="Nháº­p máº­t kháº©u">
+                        <label>Mật khẩu</label>
+                        <input type="password" name="password" required placeholder="Nhập mật khẩu">
                     </div>
                     <div class="form-group">
-                        <label>Loáº¡i tĂ i khoáº£n</label>
+                        <label>Loại tài khoản</label>
                         <select name="role" class="form-control">
-                            <option value="buyer">NgÆ°á»i mua</option>
-                            <option value="seller">NgÆ°á»i bĂ¡n</option>
+                            <option value="buyer">Người mua</option>
+                            <option value="seller">Người bán</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">ÄÄƒng nháº­p</button>
+                    <button type="submit" class="btn btn-primary btn-block">Đăng nhập</button>
                     <p class="text-center mt-2">
-                        <a href="#" data-action="forgot-password">QuĂªn máº­t kháº©u?</a>
+                        <a href="#" data-action="forgot-password">Quên mật khẩu?</a>
                     </p>
                     <p class="text-center mt-2">
-                        ChÆ°a cĂ³ tĂ i khoáº£n? <a href="#" data-dismiss="loginModal">ÄÄƒng kĂ½</a>
+                        Chưa có tài khoản? <a href="#" data-dismiss="loginModal">Đăng ký</a>
                     </p>
                 </form>
             </div>
@@ -521,7 +551,7 @@
             try {
                 await this.login(formData.get('email'), formData.get('password'), formData.get('role'));
                 modal.remove();
-                this.showNotification('ÄÄƒng nháº­p thĂ nh cĂ´ng!', 'success');
+                this.showNotification('Đăng nhập thành công!', 'success');
                 
                 if (this.user?.role === 'seller') {
                     setTimeout(() => window.location.href = '/pages/seller/dashboard.html', 500);
@@ -529,7 +559,7 @@
                     setTimeout(() => window.location.href = '/pages/admin/dashboard.html', 500);
                 }
             } catch (error) {
-                this.showNotification(error.message || 'ÄÄƒng nháº­p tháº¥t báº¡i', 'error');
+                this.showNotification(error.message || 'Đăng nhập thất bại', 'error');
             }
         });
 
@@ -544,41 +574,41 @@
 
         const modal = this.createModal('registerModal', `
             <div class="modal-header">
-                <h3>Táº¡o tĂ i khoáº£n</h3>
+                <h3>Tạo tài khoản</h3>
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="registerForm">
                     <div class="form-group">
-                        <label>Há» vĂ  tĂªn</label>
-                        <input type="text" name="name" required placeholder="Nháº­p há» vĂ  tĂªn">
+                        <label>Họ và tên</label>
+                        <input type="text" name="name" required placeholder="Nhập họ và tên">
                     </div>
                     <div class="form-group">
                         <label>Email</label>
                         <input type="email" name="email" required placeholder="Nháº­p email">
                     </div>
                     <div class="form-group">
-                        <label>Sá»‘ Ä‘iá»‡n thoáº¡i</label>
-                        <input type="tel" name="phone" required placeholder="10-11 chá»¯ sá»‘">
+                        <label>Số điện thoại</label>
+                        <input type="tel" name="phone" required placeholder="10-11 chữ số">
                     </div>
                     <div class="form-group">
-                        <label>Máº­t kháº©u</label>
-                        <input type="password" name="password" required minlength="6" placeholder="Ăt nháº¥t 1 chá»¯ hoa, 1 chá»¯ thÆ°á»ng, 1 sá»‘">
+                        <label>Mật khẩu</label>
+                        <input type="password" name="password" required minlength="6" placeholder="Ít nhất 1 chữ hoa, 1 chữ thường, 1 số">
                     </div>
                     <div class="form-group">
-                        <label>Loáº¡i tĂ i khoáº£n</label>
+                        <label>Loại tài khoản</label>
                         <select name="role" class="form-control" id="registerRole">
-                            <option value="buyer">NgÆ°á»i mua - Mua sáº¯m cho thĂº cÆ°ng</option>
-                            <option value="seller">NgÆ°á»i bĂ¡n - BĂ¡n sáº£n pháº©m thĂº cÆ°ng</option>
+                            <option value="buyer">Người mua - Mua sắm cho thú cưng</option>
+                            <option value="seller">Người bán - Bán sản phẩm thú cưng</option>
                         </select>
                     </div>
                     <div class="form-group" id="sellerShopNameGroup" style="display:none;">
-                        <label>TĂªn shop</label>
-                        <input type="text" name="shopName" placeholder="TĂªn cá»­a hĂ ng cá»§a báº¡n">
+                        <label>Tên shop</label>
+                        <input type="text" name="shopName" placeholder="Tên cửa hàng của bạn">
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Táº¡o tĂ i khoáº£n</button>
+                    <button type="submit" class="btn btn-primary btn-block">Tạo tài khoản</button>
                     <p class="text-center mt-2">
-                        ÄĂ£ cĂ³ tĂ i khoáº£n? <a href="#" data-dismiss="registerModal">ÄÄƒng nháº­p</a>
+                        Đã có tài khoản? <a href="#" data-dismiss="registerModal">Đăng nhập</a>
                     </p>
                 </form>
             </div>
@@ -605,18 +635,18 @@
                     email: formData.get('email'),
                     phone: formData.get('phone'),
                     password: formData.get('password'),
-                    shopName: formData.get('shopName') || `Cá»­a hĂ ng cá»§a ${formData.get('name')}`,
+                    shopName: formData.get('shopName') || `Cửa hàng của ${formData.get('name')}`,
                     shopPhone: formData.get('phone')
                 }, role);
 
                 modal.remove();
-                this.showNotification('ÄÄƒng kĂ½ thĂ nh cĂ´ng!', 'success');
+                this.showNotification('Đăng ký thành công!', 'success');
 
                 if (role === 'seller') {
                     setTimeout(() => window.location.href = '/pages/seller/dashboard.html', 500);
                 }
             } catch (error) {
-                this.showNotification(error.message || 'ÄÄƒng kĂ½ tháº¥t báº¡i', 'error');
+                this.showNotification(error.message || 'Đăng ký thất bại', 'error');
             }
         });
 
@@ -626,28 +656,28 @@
     showBecomeSellerModal() {
         const modal = this.createModal('becomeSellerModal', `
             <div class="modal-header">
-                <h3>Táº¡o shop cá»§a báº¡n</h3>
+                <h3>Tạo shop của bạn</h3>
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="becomeSellerForm">
                     <div class="form-group">
-                        <label>TĂªn shop</label>
-                        <input type="text" name="name" required placeholder="Nháº­p tĂªn shop">
+                        <label>Tên shop</label>
+                        <input type="text" name="name" required placeholder="Nhập tên shop">
                     </div>
                     <div class="form-group">
-                        <label>MĂ´ táº£</label>
-                        <textarea name="description" rows="3" placeholder="Giá»›i thiá»‡u ngáº¯n vá» cá»­a hĂ ng"></textarea>
+                        <label>Mô tả</label>
+                        <textarea name="description" rows="3" placeholder="Giới thiệu ngắn về cửa hàng"></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Sá»‘ Ä‘iá»‡n thoáº¡i</label>
-                        <input type="tel" name="phone" required placeholder="Sá»‘ Ä‘iá»‡n thoáº¡i cá»­a hĂ ng">
+                        <label>Số điện thoại</label>
+                        <input type="tel" name="phone" required placeholder="Số điện thoại cửa hàng">
                     </div>
                     <div class="form-group">
-                        <label>Äá»‹a chá»‰</label>
-                        <input type="text" name="street" required placeholder="Äá»‹a chá»‰ cá»­a hĂ ng">
+                        <label>Địa chỉ</label>
+                        <input type="text" name="street" required placeholder="Địa chỉ cửa hàng">
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Táº¡o shop</button>
+                    <button type="submit" class="btn btn-primary btn-block">Tạo shop</button>
                 </form>
             </div>
         `);
@@ -679,10 +709,10 @@
                 this.updateUI();
 
                 modal.remove();
-                this.showNotification('ÄĂ£ táº¡o shop, Ä‘ang chá» duyá»‡t.', 'success');
+                this.showNotification('Đã tạo shop, đang chờ duyệt.', 'success');
                 setTimeout(() => window.location.href = '/pages/seller/dashboard.html', 1000);
             } catch (error) {
-                this.showNotification(error.message || 'KhĂ´ng thá»ƒ táº¡o shop', 'error');
+                this.showNotification(error.message || 'Không thể tạo shop', 'error');
             }
         });
 
@@ -722,16 +752,16 @@
     showForgotPasswordModal() {
         const modal = this.createModal('forgotPasswordModal', `
             <div class="modal-header">
-                <h3>QuĂªn máº­t kháº©u</h3>
+                <h3>Quên mật khẩu</h3>
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="forgotPasswordForm">
                     <div class="form-group">
                         <label>Email</label>
-                        <input type="email" name="email" required placeholder="Nháº­p email cá»§a báº¡n">
+                        <input type="email" name="email" required placeholder="Nhập email của bạn">
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Gá»­i liĂªn káº¿t Ä‘áº·t láº¡i</button>
+                    <button type="submit" class="btn btn-primary btn-block">Gửi liên kết đặt lại</button>
                 </form>
             </div>
         `);
@@ -743,9 +773,9 @@
             try {
                 await this.api.forgotPassword(new FormData(e.currentTarget).get('email'));
                 modal.remove();
-                this.showNotification('Náº¿u email tá»“n táº¡i, há»‡ thá»‘ng Ä‘Ă£ táº¡o liĂªn káº¿t Ä‘áº·t láº¡i máº­t kháº©u.', 'success');
+                this.showNotification('Nếu email tồn tại, hệ thống đã tạo liên kết đặt lại mật khẩu.', 'success');
             } catch (error) {
-                this.showNotification(error.message || 'KhĂ´ng thá»ƒ yĂªu cáº§u Ä‘áº·t láº¡i máº­t kháº©u', 'error');
+                this.showNotification(error.message || 'Không thể yêu cầu đặt lại mật khẩu', 'error');
             }
         });
         this.setupModalClose(modal);
@@ -781,7 +811,7 @@
             return false;
         }
         if (this.user?.role !== role) {
-            this.showNotification('Báº¡n khĂ´ng cĂ³ quyá»n truy cáº­p trang nĂ y', 'error');
+            this.showNotification('Bạn không có quyền truy cập trang này', 'error');
             window.location.href = redirectTo;
             return false;
         }

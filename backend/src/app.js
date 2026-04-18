@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const os = require('os');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
@@ -15,6 +16,7 @@ const connectDB = require('./config/database');
 
 const app = express();
 const uploadRoot = path.join(__dirname, '..', 'uploads');
+const HOST = process.env.HOST || '0.0.0.0';
 const rawCorsOrigins = String(process.env.CORS_ORIGIN || '*')
     .split(',')
     .map(origin => origin.trim())
@@ -80,8 +82,27 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Pet Marketplace API running on port ${PORT}`);
+function getLanIpv4Addresses() {
+    const interfaces = os.networkInterfaces();
+    const addresses = [];
+
+    for (const entries of Object.values(interfaces)) {
+        for (const entry of entries || []) {
+            if (entry && entry.family === 'IPv4' && !entry.internal) {
+                addresses.push(entry.address);
+            }
+        }
+    }
+
+    return Array.from(new Set(addresses));
+}
+
+app.listen(PORT, HOST, () => {
+    console.log(`Pet Marketplace API running on ${HOST}:${PORT}`);
+    console.log(`Local API: http://localhost:${PORT}/api/health`);
+    getLanIpv4Addresses().forEach((address) => {
+        console.log(`LAN API: http://${address}:${PORT}/api/health`);
+    });
 });
 
 process.on('unhandledRejection', (err) => {

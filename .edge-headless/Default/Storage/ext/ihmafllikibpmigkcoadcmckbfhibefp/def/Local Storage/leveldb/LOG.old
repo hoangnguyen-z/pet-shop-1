@@ -1,0 +1,4 @@
+2026/04/18-15:29:15.339 4664 Creating DB D:\pet shop\.edge-headless\Default\Storage\ext\ihmafllikibpmigkcoadcmckbfhibefp\def\Local Storage\leveldb since it was missing.
+2026/04/18-15:29:15.363 4664 Reusing MANIFEST D:\pet shop\.edge-headless\Default\Storage\ext\ihmafllikibpmigkcoadcmckbfhibefp\def\Local Storage\leveldb/MANIFEST-000001
+2026/04/18-15:29:15.364 4664 Recovering log #3
+2026/04/18-15:29:15.367 4664 Reusing old log D:\pet shop\.edge-headless\Default\Storage\ext\ihmafllikibpmigkcoadcmckbfhibefp\def\Local Storage\leveldb/000003.log 

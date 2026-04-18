@@ -697,13 +697,13 @@
                                     <input type="radio" name="shippingMethod" value="standard" checked>
                                     <strong>Giao hàng tiêu chuẩn</strong>
                                     <span>Giao trong 3-5 ngày làm việc</span>
-                                    <em>Miễn phí từ $35, thấp hơn tính $5.00</em>
+                                    <em>Miễn phí từ 900.000 ₫, thấp hơn tính 125.000 ₫</em>
                                 </label>
                                 <label class="checkout-choice-card">
                                     <input type="radio" name="shippingMethod" value="express">
                                     <strong>Giao hàng nhanh</strong>
                                     <span>Giao trong 24-48 giờ</span>
-                                    <em>$12.50 hoặc $8.50 với đơn giá trị cao</em>
+                                    <em>312.500 ₫ hoặc 212.500 ₫ với đơn giá trị cao</em>
                                 </label>
                             </div>
                         </section>
@@ -1092,13 +1092,15 @@
                                 <div class="checkout-panel-heading compact">
                                     <div>
                                         <h4>Mã xác minh giao dịch</h4>
-                                        <p>Nhập mã xác minh được gửi cho giao dịch này để hoàn tất thanh toán.</p>
+                                        <p>Nhập mã xác minh được gửi tới ${escapeHtml(payment.verification_email_masked || 'email thanh toán của bạn')} để hoàn tất thanh toán.</p>
                                     </div>
                                 </div>
                                 <label class="checkout-field">
                                     <span>Mã xác minh</span>
                                     <input id="paymentVerificationCode" type="text" inputmode="numeric" maxlength="6" placeholder="Nhập 6 số xác minh">
                                 </label>
+                                <div class="payment-info-row"><span>Email nhận mã</span><strong>${escapeHtml(payment.verification_email_masked || 'Đang cập nhật')}</strong></div>
+                                <div class="payment-info-row"><span>Gửi lúc</span><strong>${escapeHtml(formatShortDateTime(payment.verification_sent_at))}</strong></div>
                             </div>
                         ` : ''}
 

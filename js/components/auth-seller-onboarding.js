@@ -2,6 +2,24 @@
     if (!window.authManager || !window.api) return;
 
     const manager = window.authManager;
+    const safeReadStorageJson = typeof manager.safeReadStorageJson === 'function'
+        ? (key) => manager.safeReadStorageJson(key)
+        : (key) => {
+            const raw = localStorage.getItem(key);
+            if (!raw) return null;
+            try {
+                return JSON.parse(raw);
+            } catch (error) {
+                console.warn(`Ignoring invalid JSON in localStorage key "${key}"`, error);
+                localStorage.removeItem(key);
+                return null;
+            }
+        };
+    const findAccountActionContainer = typeof manager.findAccountActionContainer === 'function'
+        ? () => manager.findAccountActionContainer()
+        : () => document.querySelector('.account-action')
+            || Array.from(document.querySelectorAll('.header-action')).find((node) => node.querySelector('.fa-user, .fa-user-circle'))
+            || null;
 
     manager.getSellerApplicationPageUrl = function() {
         return '/pages/account/seller-application.html';
@@ -32,13 +50,22 @@
         const role = localStorage.getItem('role');
 
         if (token && userData) {
-            this.user = JSON.parse(userData);
+            this.user = safeReadStorageJson('user');
+            if (!this.user) {
+                this.api.logout();
+                this.shop = null;
+                this.sellerApplication = null;
+                this.sellerAccess = null;
+                this.isAuthenticated = false;
+                this.updateUI();
+                return;
+            }
             if (role && !this.user.role) {
                 this.user.role = role;
             }
-            this.shop = shopData ? JSON.parse(shopData) : null;
-            this.sellerApplication = sellerApplicationData ? JSON.parse(sellerApplicationData) : null;
-            this.sellerAccess = sellerAccessData ? JSON.parse(sellerAccessData) : null;
+            this.shop = shopData ? safeReadStorageJson('shop') : null;
+            this.sellerApplication = sellerApplicationData ? safeReadStorageJson('sellerApplication') : null;
+            this.sellerAccess = sellerAccessData ? safeReadStorageJson('sellerAccess') : null;
             this.isAuthenticated = true;
         } else {
             this.user = null;
@@ -150,8 +177,7 @@
     };
 
     manager.updateUI = function() {
-        let userAction = document.querySelector('.account-action')
-            || document.querySelector('.header-action:has(.fa-user), .header-action:has(.fa-user-circle)');
+        let userAction = findAccountActionContainer();
 
         if (userAction && userAction.tagName.toLowerCase() === 'a') {
             const replacement = document.createElement('div');

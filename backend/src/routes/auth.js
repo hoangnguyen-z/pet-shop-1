@@ -11,6 +11,7 @@ const { authenticate } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { sendSuccess, sendCreated } = require('../middleware/responseHandler');
 const ApiError = require('../utils/ApiError');
+const { resolveFrontendBaseUrl } = require('../utils/frontendUrl');
 const {
     ROLES,
     SELLER_APPLICATION_STATUS,
@@ -407,7 +408,7 @@ router.post('/forgot-password', forgotPasswordValidation, validate, async (req, 
         user.resetPasswordExpires = Date.now() + 30 * 60 * 1000;
         await user.save();
 
-        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5500'}/#reset-password?token=${resetToken}&email=${email}`;
+        const resetUrl = `${resolveFrontendBaseUrl(req)}/#reset-password?token=${resetToken}&email=${email}`;
         console.log(`Password Reset Link: ${resetUrl}`);
 
         sendSuccess(res, 'Neu email ton tai, chung toi da tao lien ket dat lai mat khau');

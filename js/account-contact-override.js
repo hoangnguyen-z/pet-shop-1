@@ -807,14 +807,10 @@
     window.renderContactView = renderContactViewCleanOverride;
     window.renderNotificationsView = renderNotificationsViewOverride;
     window.renderResetPasswordView = renderResetPasswordViewOverride;
-    window.buildCatalogActionButtons = buildCatalogActionButtonsVi;
-    window.createProductCard = createProductCardVi;
     renderAddressRows = renderAddressRowsOverride;
     renderAccountView = renderAccountViewExpandedOverride;
     renderAccountViewOverride = renderAccountViewBase;
     renderContactView = renderContactViewCleanOverride;
     renderNotificationsView = renderNotificationsViewOverride;
     renderResetPasswordView = renderResetPasswordViewOverride;
-    buildCatalogActionButtons = buildCatalogActionButtonsVi;
-    createProductCard = createProductCardVi;
 })();

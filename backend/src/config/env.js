@@ -16,5 +16,14 @@ module.exports = {
     pagination: {
         defaultLimit: 20,
         maxLimit: 100
+    },
+    mail: {
+        host: process.env.MAIL_HOST || 'smtp.gmail.com',
+        port: Number(process.env.MAIL_PORT || 587),
+        secure: String(process.env.MAIL_SECURE || 'false').toLowerCase() === 'true',
+        user: process.env.MAIL_USER || '',
+        pass: process.env.MAIL_PASS || '',
+        from: process.env.MAIL_FROM || process.env.MAIL_USER || '',
+        verificationExpiryMinutes: Math.max(Number(process.env.PAYMENT_EXPIRY_MINUTES || 15), 5)
     }
 };

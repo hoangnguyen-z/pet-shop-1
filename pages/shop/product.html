@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi tiết sản phẩm - Pet Marketplace</title>
+    <title>Chi tiáº¿t sáº£n pháº©m - Pet Marketplace</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@
     <div class="top-bar">
         <div class="container">
             <div class="top-bar-content">
-                <span><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn từ $35</span>
+                <span><i class="fas fa-truck"></i> Miá»…n phĂ­ váº­n chuyá»ƒn cho Ä‘Æ¡n tá»« 900.000 ₫</span>
             </div>
         </div>
     </div>
@@ -56,7 +56,7 @@
                     <a href="/pages/shop/cart.html" class="header-action cart-icon">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count">0</span>
-                        <span>Giỏ hàng</span>
+                        <span>Giá» hĂ ng</span>
                     </a>
                 </div>
             </div>
@@ -73,8 +73,8 @@
 
     <script src="../../js/config.js"></script>
     <script src="../../js/api/client.js"></script>
-    <script src="../../js/utils.js"></script>
-    <script src="../../js/components/auth.js"></script>
+    <script src="../../js/utils.js?v=20260418-vnd-1"></script>
+    <script src="../../js/components/auth.js?v=20260418-vntext-1"></script>
     <script src="../../js/components/auth-seller-onboarding.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
@@ -114,31 +114,31 @@
                     <div class="product-info">
                         <h1>${product.name}</h1>
                         <div style="color: #666; margin-bottom: 10px;">
-                            ${generateStars(rating)} <span>(${reviews} đánh giá)</span>
+                            ${generateStars(rating)} <span>(${reviews} Ä‘Ă¡nh giĂ¡)</span>
                         </div>
                         <div class="product-price-detail">
-                            $${price.toFixed(2)}
-                            ${originalPrice ? `<span class="product-price-old">$${originalPrice.toFixed(2)}</span>` : ''}
+                            ${window.utils.formatPrice(price)}
+                            ${originalPrice ? `<span class="product-price-old">${window.utils.formatPrice(originalPrice)}</span>` : ''}
                             ${discount ? `<span class="product-badge badge-sale">-${discount}%</span>` : ''}
                         </div>
                         <p style="margin-bottom: 10px; color: #555;">${product.shortDescription || ''}</p>
-                        <p style="margin-bottom: 20px; color: #555;">${product.description || 'Chưa có mô tả chi tiết.'}</p>
+                        <p style="margin-bottom: 20px; color: #555;">${product.description || 'ChÆ°a cĂ³ mĂ´ táº£ chi tiáº¿t.'}</p>
                         <div class="product-meta">
-                            <div><strong>Tồn kho:</strong> ${product.stock > 0 ? `${product.stock} sản phẩm` : 'Hết hàng'}</div>
-                            <div><strong>Thương hiệu:</strong> ${product.brand || 'Chưa có'}</div>
-                            <div><strong>Danh mục:</strong> ${product.category?.name || 'Chưa có'}</div>
-                            <div><strong>Loại thú cưng:</strong> ${petTypes}</div>
+                            <div><strong>Tá»“n kho:</strong> ${product.stock > 0 ? `${product.stock} sáº£n pháº©m` : 'Háº¿t hĂ ng'}</div>
+                            <div><strong>ThÆ°Æ¡ng hiá»‡u:</strong> ${product.brand || 'ChÆ°a cĂ³'}</div>
+                            <div><strong>Danh má»¥c:</strong> ${product.category?.name || 'ChÆ°a cĂ³'}</div>
+                            <div><strong>Loáº¡i thĂº cÆ°ng:</strong> ${petTypes}</div>
                         </div>
                         ${product.shop ? `
                             <div class="shop-summary">
-                                <strong>Người bán:</strong>
+                                <strong>NgÆ°á»i bĂ¡n:</strong>
                                 <a href="/pages/shop/shop.html?shop=${product.shop._id}">${product.shop.name}</a>
                                 <p>${product.shop.description || ''}</p>
                                 <p>${generateStars(product.shop.rating || 0)} (${product.shop.reviewCount || 0})</p>
                             </div>
                         ` : ''}
                         <div class="quantity-selector">
-                            <label>Số lượng:</label>
+                            <label>Sá»‘ lÆ°á»£ng:</label>
                             <div class="quantity-input">
                                 <button onclick="updateQty(-1)">-</button>
                                 <input type="number" id="qtyInput" value="1" min="1" max="${product.stock || 1}">
@@ -146,28 +146,28 @@
                             </div>
                         </div>
                         <button class="btn btn-primary" onclick="addToCart('${product._id}')" style="padding: 15px 40px; font-size: 16px;">
-                            <i class="fas fa-shopping-cart"></i> Thêm vào giỏ
+                            <i class="fas fa-shopping-cart"></i> ThĂªm vĂ o giá»
                         </button>
                     </div>
                     <div class="reviews-section" style="grid-column: 1 / -1;">
-                        <h2>Đánh giá</h2>
-                        <div id="reviewsList">Đang tải đánh giá...</div>
+                        <h2>ÄĂ¡nh giĂ¡</h2>
+                        <div id="reviewsList">Äang táº£i Ä‘Ă¡nh giĂ¡...</div>
                     </div>
                     <div class="related-section" style="grid-column: 1 / -1;">
-                        <h2>Sản phẩm liên quan</h2>
+                        <h2>Sáº£n pháº©m liĂªn quan</h2>
                         <div class="related-grid">
                             ${(product.relatedProducts || []).map(item => `
                                 <a class="related-card" href="/pages/shop/product.html?id=${item._id}">
                                     <img src="${item.images?.[0] || item.thumbnail || 'https://via.placeholder.com/200'}" alt="${item.name}">
                                     <h4>${item.name}</h4>
-                                    <p>$${(item.price || 0).toFixed(2)}</p>
+                                    <p>${window.utils.formatPrice(item.price || 0)}</p>
                                 </a>
-                            `).join('') || '<p>Chưa có sản phẩm liên quan.</p>'}
+                            `).join('') || '<p>ChÆ°a cĂ³ sáº£n pháº©m liĂªn quan.</p>'}
                         </div>
                     </div>
                 `;
             } catch (error) {
-                container.innerHTML = '<p>Không thể tải sản phẩm</p>';
+                container.innerHTML = '<p>KhĂ´ng thá»ƒ táº£i sáº£n pháº©m</p>';
             }
         }
 
@@ -182,22 +182,22 @@
                 const stats = data.stats || {};
 
                 if (reviews.length === 0) {
-                    container.innerHTML = '<p>Chưa có đánh giá đã duyệt.</p>';
+                    container.innerHTML = '<p>ChÆ°a cĂ³ Ä‘Ă¡nh giĂ¡ Ä‘Ă£ duyá»‡t.</p>';
                     return;
                 }
 
                 container.innerHTML = `
-                    <p>${generateStars(stats.average || 0)} ${Number(stats.average || 0).toFixed(1)} / 5 từ ${stats.total || reviews.length} đánh giá</p>
+                    <p>${generateStars(stats.average || 0)} ${Number(stats.average || 0).toFixed(1)} / 5 tá»« ${stats.total || reviews.length} Ä‘Ă¡nh giĂ¡</p>
                     ${reviews.map(review => `
                         <div class="review-item">
-                            <strong>${review.user?.name || 'Người mua'}</strong>
+                            <strong>${review.user?.name || 'NgÆ°á»i mua'}</strong>
                             <span>${generateStars(review.rating || 0)}</span>
                             <p>${review.comment || review.content || ''}</p>
                         </div>
                     `).join('')}
                 `;
             } catch (error) {
-                container.innerHTML = '<p>Hiện chưa tải được đánh giá.</p>';
+                container.innerHTML = '<p>Hiá»‡n chÆ°a táº£i Ä‘Æ°á»£c Ä‘Ă¡nh giĂ¡.</p>';
             }
         }
 
@@ -220,7 +220,7 @@
             const qty = parseInt(document.getElementById('qtyInput').value) || 1;
             try {
                 await api.addToCart(productId, qty);
-                authManager.showNotification('Đã thêm vào giỏ hàng!', 'success');
+                authManager.showNotification('ÄĂ£ thĂªm vĂ o giá» hĂ ng!', 'success');
             } catch (error) {
                 authManager.showNotification(error.message, 'error');
             }
@@ -236,5 +236,7 @@
             return stars;
         }
     </script>
+    <script src="/js/text-normalizer.js?v=20260418-vntext-1"></script>
 </body>
 </html>
+

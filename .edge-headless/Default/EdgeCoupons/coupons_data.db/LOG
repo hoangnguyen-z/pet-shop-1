@@ -1,0 +1,5 @@
+2026/04/18-22:15:19.410 55b8 Reusing MANIFEST D:\pet shop\.edge-headless\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/04/18-22:15:19.411 55b8 Recovering log #27
+2026/04/18-22:15:19.411 55b8 Reusing old log D:\pet shop\.edge-headless\Default\EdgeCoupons/coupons_data.db/000027.log 
+2026/04/18-22:15:19.416 5a6c Level-0 table #31: started
+2026/04/18-22:15:19.422 5a6c Level-0 table #31: 682280 bytes OK

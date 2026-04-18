@@ -99,3 +99,22 @@ Quay lại terminal đang chạy và nhấn:
 Ctrl + C
 ```
 
+---
+
+## LAN / Phone Access
+
+Run one command:
+
+```powershell
+cd "D:\pet shop"
+node start-lan.js
+```
+
+The terminal will print:
+- `Desktop: http://localhost:5500/`
+- `Phone: http://<your-computer-lan-ip>:5500/`
+
+Requirements:
+- your computer and phone must use the same Wi-Fi
+- keep the terminal running while testing on the phone
+- if the phone cannot open the link, allow Node.js through Windows Firewall

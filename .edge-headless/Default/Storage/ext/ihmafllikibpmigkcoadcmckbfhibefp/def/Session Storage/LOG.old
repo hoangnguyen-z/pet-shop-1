@@ -1,0 +1,4 @@
+2026/04/18-15:29:16.279 4664 Creating DB D:\pet shop\.edge-headless\Default\Storage\ext\ihmafllikibpmigkcoadcmckbfhibefp\def\Session Storage since it was missing.
+2026/04/18-15:29:16.309 4664 Reusing MANIFEST D:\pet shop\.edge-headless\Default\Storage\ext\ihmafllikibpmigkcoadcmckbfhibefp\def\Session Storage/MANIFEST-000001
+2026/04/18-15:29:16.310 4664 Recovering log #3
+2026/04/18-15:29:16.313 4664 Reusing old log D:\pet shop\.edge-headless\Default\Storage\ext\ihmafllikibpmigkcoadcmckbfhibefp\def\Session Storage/000003.log 

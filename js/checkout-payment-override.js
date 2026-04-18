@@ -352,13 +352,13 @@
                                     <input type="radio" name="shippingMethod" value="standard" checked>
                                     <strong>Giao hàng tiêu chuẩn</strong>
                                     <span>Giao trong 3-5 ngày làm việc</span>
-                                    <em>Miễn phí từ $35, thấp hơn tính $5.00</em>
+                                    <em>Miễn phí từ 900.000 ₫, thấp hơn tính 125.000 ₫</em>
                                 </label>
                                 <label class="checkout-choice-card">
                                     <input type="radio" name="shippingMethod" value="express">
                                     <strong>Giao hàng nhanh</strong>
                                     <span>Giao trong 24-48 giờ</span>
-                                    <em>$12.50 hoặc $8.50 với đơn giá trị cao</em>
+                                    <em>312.500 ₫ hoặc 212.500 ₫ với đơn giá trị cao</em>
                                 </label>
                             </div>
                         </section>

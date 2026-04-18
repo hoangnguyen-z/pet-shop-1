@@ -839,6 +839,8 @@ img {
 
 .product-info {
     padding: 15px;
+    position: relative;
+    z-index: 3;
 }
 
 .product-brand {
@@ -921,6 +923,8 @@ img {
     grid-template-columns: 1fr;
     gap: 8px;
     margin-top: 14px;
+    position: relative;
+    z-index: 5;
 }
 
 .btn.btn-small {
@@ -931,6 +935,9 @@ img {
     line-height: 1.2;
     text-align: center;
     justify-content: center;
+    position: relative;
+    z-index: 6;
+    pointer-events: auto;
 }
 
 .product-detail-actions {

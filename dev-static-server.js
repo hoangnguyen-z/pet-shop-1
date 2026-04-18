@@ -1,10 +1,13 @@
 const http = require('http');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const root = __dirname;
 const port = process.env.PORT || 5500;
 const apiPort = process.env.API_PORT || 3000;
+const host = process.env.HOST || '0.0.0.0';
+const apiHost = process.env.API_HOST || '127.0.0.1';
 
 const mimeTypes = {
     '.html': 'text/html; charset=utf-8',
@@ -20,14 +23,20 @@ const mimeTypes = {
 };
 
 function proxyApiRequest(req, res) {
+    const forwardedHost = req.headers.host || `localhost:${port}`;
+    const forwardedProto = req.headers['x-forwarded-proto'] || 'http';
+
     const proxyRequest = http.request({
-        hostname: '127.0.0.1',
+        hostname: apiHost,
         port: apiPort,
         path: req.url,
         method: req.method,
         headers: {
             ...req.headers,
-            host: `127.0.0.1:${apiPort}`
+            host: `${apiHost}:${apiPort}`,
+            'x-forwarded-host': forwardedHost,
+            'x-forwarded-proto': forwardedProto,
+            'x-forwarded-port': String(port)
         }
     }, proxyResponse => {
         res.writeHead(proxyResponse.statusCode || 502, {
@@ -48,8 +57,24 @@ function proxyApiRequest(req, res) {
     req.pipe(proxyRequest);
 }
 
+function getLanIpv4Addresses() {
+    const interfaces = os.networkInterfaces();
+    const addresses = [];
+
+    for (const entries of Object.values(interfaces)) {
+        for (const entry of entries || []) {
+            if (entry && entry.family === 'IPv4' && !entry.internal) {
+                addresses.push(entry.address);
+            }
+        }
+    }
+
+    return Array.from(new Set(addresses));
+}
+
 http.createServer((req, res) => {
-    const parsedUrl = new URL(req.url, `http://localhost:${port}`);
+    const requestHost = req.headers.host || `localhost:${port}`;
+    const parsedUrl = new URL(req.url, `http://${requestHost}`);
     let urlPath = decodeURIComponent(parsedUrl.pathname);
     if (urlPath === '/api' || urlPath.startsWith('/api/')) {
         proxyApiRequest(req, res);
@@ -107,6 +132,10 @@ http.createServer((req, res) => {
             res.end(content);
         });
     });
-}).listen(port, () => {
-    console.log(`Frontend running at http://localhost:${port}`);
+}).listen(port, host, () => {
+    console.log(`Frontend running on ${host}:${port}`);
+    console.log(`Local access: http://localhost:${port}/`);
+    getLanIpv4Addresses().forEach((address) => {
+        console.log(`Phone access: http://${address}:${port}/`);
+    });
 });

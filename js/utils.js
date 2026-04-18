@@ -1,13 +1,22 @@
+const normalizeCurrencyAmount = (amount) => {
+    const numeric = Number(amount) || 0;
+    if (numeric > 0 && numeric < 1000) {
+        return numeric * 25000;
+    }
+    return numeric;
+};
+
 const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
-        currency: 'USD'
-    }).format(price || 0);
+        currency: 'VND',
+        maximumFractionDigits: 0
+    }).format(normalizeCurrencyAmount(price));
 };
 
 const formatDate = (date) => {
     if (!date) return '';
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString('vi-VN', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -16,7 +25,7 @@ const formatDate = (date) => {
 
 const formatDateTime = (date) => {
     if (!date) return '';
-    return new Date(date).toLocaleString('en-US', {
+    return new Date(date).toLocaleString('vi-VN', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -39,11 +48,13 @@ const debounce = (func, wait) => {
 
 const throttle = (func, limit) => {
     let inThrottle;
-    return function(...args) {
+    return function (...args) {
         if (!inThrottle) {
             func.apply(this, args);
             inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
+            setTimeout(() => {
+                inThrottle = false;
+            }, limit);
         }
     };
 };
@@ -79,7 +90,7 @@ const hideLoading = (element) => {
 const copyToClipboard = async (text) => {
     try {
         await navigator.clipboard.writeText(text);
-        authManager.showNotification('Đã sao chép vào clipboard!', 'success');
+        authManager.showNotification('?? sao ch?p v?o b? nh? t?m!', 'success');
     } catch (err) {
         console.error('Failed to copy:', err);
     }
@@ -127,36 +138,37 @@ const generateStars = (rating) => {
 
 const getOrderStatusClass = (status) => {
     const statusMap = {
-        'pending': 'status-pending',
-        'confirmed': 'status-confirmed',
-        'preparing': 'status-preparing',
-        'shipping': 'status-shipping',
-        'delivered': 'status-delivered',
-        'completed': 'status-completed',
-        'cancelled': 'status-cancelled',
-        'return_pending': 'status-return',
-        'returned': 'status-returned'
+        pending: 'Ch? x? l?',
+        confirmed: '?? x?c nh?n',
+        preparing: '?ang chu?n b?',
+        shipping: '?ang giao',
+        delivered: '?? giao',
+        completed: 'Ho?n t?t',
+        cancelled: '?? h?y',
+        return_pending: 'Ch? ho?n tr?',
+        returned: '?? ho?n tr?'
     };
     return statusMap[status] || '';
 };
 
 const getOrderStatusText = (status) => {
     const statusMap = {
-        'pending': 'Chờ xử lý',
-        'confirmed': 'Đã xác nhận',
-        'preparing': 'Đang chuẩn bị',
-        'shipping': 'Đang giao',
-        'delivered': 'Đã giao',
-        'completed': 'Hoàn tất',
-        'cancelled': 'Đã hủy',
-        'return_pending': 'Chờ hoàn trả',
-        'returned': 'Đã hoàn trả'
+        pending: 'Chờ xử lý',
+        confirmed: 'Đã xác nhận',
+        preparing: 'Đang chuẩn bị',
+        shipping: 'Đang giao',
+        delivered: 'Đã giao',
+        completed: 'Hoàn tất',
+        cancelled: 'Đã hủy',
+        return_pending: 'Chờ hoàn trả',
+        returned: 'Đã hoàn trả'
     };
     return statusMap[status] || status;
 };
 
 window.utils = {
     formatPrice,
+    normalizeCurrencyAmount,
     formatDate,
     formatDateTime,
     debounce,

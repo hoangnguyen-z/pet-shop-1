@@ -1,4 +1,4 @@
-﻿const LOCAL_IMAGE_BY_KEY = {
+const LOCAL_IMAGE_BY_KEY = {
     dog: '/assets/images/pet-dog.svg',
     cat: '/assets/images/pet-cat.svg',
     bird: '/assets/images/pet-bird.svg',
@@ -126,12 +126,16 @@ function productImage(product = {}) {
     return resolveImage(product.images?.[0] || product.thumbnail || product.image, inferProductImageKey(product));
 }
 
-const moneyFormatter = new Intl.NumberFormat('en-US', {
+const moneyFormatter = new Intl.NumberFormat('vi-VN', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'VND',
+    maximumFractionDigits: 0
 });
 
 function formatCurrency(amount = 0) {
+    if (window.utils?.formatPrice) {
+        return window.utils.formatPrice(amount);
+    }
     return moneyFormatter.format(Number(amount) || 0);
 }
 
@@ -182,6 +186,138 @@ function formatPaymentMethod(method = '') {
     if (normalized === 'bank_transfer') return 'Chuyển khoản ngân hàng';
     if (normalized === 'online') return 'Thanh toán trực tuyến';
     return formatReadableStatus(normalized || 'cod');
+}
+
+let paymentPollingTimer = null;
+let paymentCountdownTimer = null;
+
+function clearPaymentTimers() {
+    if (paymentPollingTimer) {
+        clearInterval(paymentPollingTimer);
+        paymentPollingTimer = null;
+    }
+    if (paymentCountdownTimer) {
+        clearInterval(paymentCountdownTimer);
+        paymentCountdownTimer = null;
+    }
+}
+
+function normalizeStatus(value = '') {
+    return String(value || '').trim().toLowerCase();
+}
+
+function formatPaymentChannel(channel = '') {
+    const normalized = normalizeStatus(channel);
+    if (normalized === 'qr') return 'Thanh toán bằng QR';
+    if (normalized === 'internet_banking') return 'Ngân hàng / Internet Banking';
+    if (normalized === 'linked_gateway') return 'Visa, Mastercard, ví điện tử';
+    return formatReadableStatus(normalized || 'qr');
+}
+
+function formatShortDateTime(value) {
+    if (!value) return 'Chưa có';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Chưa có';
+    return date.toLocaleString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function setInlineMessage(element, message = '', type = '') {
+    if (!element) return;
+    element.textContent = message;
+    element.className = `editorial-inline-message ${type}`.trim();
+}
+
+function normalizeCheckoutItems(items = []) {
+    return (Array.isArray(items) ? items : [])
+        .map((item) => ({
+            product: item?.product || null,
+            quantity: Math.max(Number(item?.quantity || 1), 1)
+        }))
+        .filter((item) => item.product?._id);
+}
+
+function readBuyNowCheckoutItems() {
+    try {
+        const raw = sessionStorage.getItem('buyNowCheckoutItems');
+        return raw ? normalizeCheckoutItems(JSON.parse(raw)) : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function clearBuyNowCheckoutItems() {
+    sessionStorage.removeItem('buyNowCheckoutItems');
+}
+
+function resolveCheckoutItems(cartItems = []) {
+    const buyNowItems = readBuyNowCheckoutItems();
+    if (buyNowItems.length) {
+        return {
+            items: buyNowItems,
+            source: 'buy-now'
+        };
+    }
+
+    return {
+        items: Array.isArray(cartItems) ? cartItems : [],
+        source: 'cart'
+    };
+}
+
+function getPaymentFlowConfig(paymentMethod = 'cod') {
+    const normalized = normalizeStatus(paymentMethod);
+    if (normalized === 'bank_transfer') {
+        return {
+            needsPayment: true,
+            paymentChannel: 'internet_banking',
+            createMessage: 'Đơn hàng đã được tạo. Tiếp tục hoàn tất chuyển khoản ngân hàng.',
+            hint: 'Đơn hàng sẽ được tạo ngay, sau đó bạn chuyển sang bước chuyển khoản ngân hàng và nhập mã xác minh được gửi qua email.'
+        };
+    }
+
+    if (normalized === 'online') {
+        return {
+            needsPayment: true,
+            paymentChannel: 'linked_gateway',
+            createMessage: 'Đơn hàng đã được tạo. Tiếp tục xác thực thanh toán trực tuyến.',
+            hint: 'Đơn hàng sẽ được tạo ngay, sau đó bạn chuyển sang bước thanh toán Visa, Mastercard hoặc ví điện tử và nhập mã xác minh được gửi qua email.'
+        };
+    }
+
+    return {
+        needsPayment: false,
+        paymentChannel: '',
+        createMessage: 'Đơn hàng sẽ được tạo ngay và thanh toán khi giao hàng.',
+        hint: 'Đơn hàng sẽ được tạo ngay và thanh toán khi giao hàng.'
+    };
+}
+
+function buildPaymentHash(paymentId, orderId, channel = '') {
+    const params = new URLSearchParams();
+    if (paymentId) params.set('paymentId', paymentId);
+    if (orderId) params.set('orderId', orderId);
+    if (channel) params.set('channel', channel);
+    return `payment${params.toString() ? `?${params.toString()}` : ''}`;
+}
+
+function buildPaymentResultHash(result, paymentId, orderId) {
+    const params = new URLSearchParams();
+    params.set('result', result === 'success' ? 'success' : 'failed');
+    if (paymentId) params.set('paymentId', paymentId);
+    if (orderId) params.set('orderId', orderId);
+    return `payment-result?${params.toString()}`;
+}
+
+function buildContinuePaymentHash(order = {}) {
+    const paymentId = order.payment?.paymentId || '';
+    if (!paymentId) return '';
+    return buildPaymentHash(paymentId, order._id || order.orderId || '', order.payment?.channel || '');
 }
 
 function formatAddressLine(address = {}) {
@@ -237,9 +373,23 @@ function getShippingStatusBadge(order = {}) {
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Pet Marketplace initializing...');
 
-    setupEventListeners();
-    initSinglePageViews();
-    await loadHomeData();
+    try {
+        setupEventListeners();
+    } catch (error) {
+        console.error('Failed to set up base event listeners:', error);
+    }
+
+    try {
+        initSinglePageViews();
+    } catch (error) {
+        console.error('Failed to initialize SPA views:', error);
+    }
+
+    try {
+        await loadHomeData();
+    } catch (error) {
+        console.error('Failed to load home data during bootstrap:', error);
+    }
 });
 
 async function loadHomeData() {
@@ -393,6 +543,42 @@ function renderProducts(products) {
     bindProductCards(container);
 }
 
+function triggerProductRoute(productId) {
+    const nextHash = `#product?id=${encodeURIComponent(productId)}`;
+    if (window.location.hash === nextHash) {
+        if (typeof handleHashRouteChange === 'function') {
+            handleHashRouteChange();
+        } else if (typeof window.renderHashView === 'function') {
+            window.renderHashView();
+        }
+        return;
+    }
+
+    window.location.hash = nextHash;
+}
+
+async function handleProductAction(action, productId) {
+    if (!productId) return false;
+
+    if (action === 'view') {
+        triggerProductRoute(productId);
+        return false;
+    }
+
+    if (action === 'buy-now') {
+        await buyNow(productId);
+        return false;
+    }
+
+    await addToCart(productId);
+    return false;
+}
+
+window.handleProductAction = handleProductAction;
+window.triggerProductRoute = triggerProductRoute;
+window.addToCart = addToCart;
+window.buyNow = buyNow;
+
 function createShopSpotlightCard(shop = {}) {
     const shopId = shop._id || '';
     const shopName = shop.name || 'Cửa hàng PetMall';
@@ -457,24 +643,87 @@ function isSellerBuyingBlocked() {
 function buildCatalogActionButtons(productId) {
     if (isSellerBuyingBlocked()) {
         return `
-            <a class="btn btn-secondary btn-small" href="#product?id=${productId}">Xem chi tiết</a>
-            <a class="btn btn-secondary btn-small" href="/pages/seller/dashboard.html">Về dashboard</a>
+            <a class="btn btn-secondary btn-small" href="#product?id=${productId}" onclick="return window.handleProductAction && window.handleProductAction('view', '${productId}')">View details</a>
+            <a class="btn btn-secondary btn-small" href="/pages/seller/dashboard.html">Seller dashboard</a>
         `;
     }
 
     return `
-        <a class="btn btn-secondary btn-small" href="#product?id=${productId}">Xem chi tiết</a>
-        <button class="btn btn-primary btn-small quick-add" type="button" data-product-action="quick-add" data-product-id="${productId}">Thêm giỏ</button>
-        <button class="btn btn-secondary btn-small" type="button" data-product-action="buy-now" data-product-id="${productId}">Mua ngay</button>
+        <a class="btn btn-secondary btn-small" href="#product?id=${productId}" onclick="return window.handleProductAction && window.handleProductAction('view', '${productId}')">View details</a>
+        <button class="btn btn-primary btn-small quick-add" type="button" data-product-action="quick-add" data-product-id="${productId}" onclick="event.preventDefault(); event.stopPropagation(); return window.handleProductAction && window.handleProductAction('quick-add', '${productId}')">Add to cart</button>
+        <button class="btn btn-secondary btn-small" type="button" data-product-action="buy-now" data-product-id="${productId}" onclick="event.preventDefault(); event.stopPropagation(); return window.handleProductAction && window.handleProductAction('buy-now', '${productId}')">Buy now</button>
     `;
 }
+
+const STATIC_PAGE_FALLBACKS = {
+    'about-us': {
+        title: 'About Us',
+        content: `
+            <article class="account-content">
+                <h2>About Pet Marketplace</h2>
+                <p>Pet Marketplace connects pet lovers with trusted stores, products, and care services in one place.</p>
+                <p>We focus on safe shopping, reliable support, and a smoother experience for buyers, sellers, and pet care providers.</p>
+            </article>
+        `
+    },
+    'terms-of-use': {
+        title: 'Terms of Use',
+        content: `
+            <article class="account-content">
+                <h2>Terms of Use</h2>
+                <p>By using this marketplace, you agree to provide accurate information, comply with applicable laws, and use the platform in good faith.</p>
+                <p>Accounts or shops that abuse the system, post misleading content, or violate marketplace policies may be restricted or removed.</p>
+            </article>
+        `
+    },
+    'privacy-policy': {
+        title: 'Privacy Policy',
+        content: `
+            <article class="account-content">
+                <h2>Privacy Policy</h2>
+                <p>We store account, order, and service-booking data to operate the platform and support transactions.</p>
+                <p>Your information is used for order processing, customer support, and service improvements. Sensitive data should never be shared outside official flows.</p>
+            </article>
+        `
+    },
+    'shipping-policy': {
+        title: 'Shipping Information',
+        content: `
+            <article class="account-content">
+                <h2>Shipping Information</h2>
+                <p>Shipping fees and delivery times depend on the product, seller, and destination. Final fees are shown during checkout.</p>
+                <p>Orders above the platform free-shipping threshold may qualify for reduced or free shipping based on active promotions.</p>
+            </article>
+        `
+    },
+    'return-policy': {
+        title: 'Returns & Refunds',
+        content: `
+            <article class="account-content">
+                <h2>Returns & Refunds</h2>
+                <p>Eligible products may be returned according to seller policy and marketplace rules. Refund timing depends on payment method and review outcome.</p>
+                <p>If an order has already shipped or contains hygiene-sensitive items, additional conditions may apply.</p>
+            </article>
+        `
+    },
+    'vet-services': {
+        title: 'Pet Care Services',
+        content: `
+            <article class="account-content">
+                <h2>Book Pet Care Services</h2>
+                <p>Browse approved PetMall stores offering grooming, boarding, spa, and veterinary-related care.</p>
+                <p><a class="btn btn-primary" href="#shop?mallOnly=true">Browse service-enabled stores</a></p>
+            </article>
+        `
+    }
+};
 
 function createProductCard(product) {
     const price = product.price || 0;
     const originalPrice = product.originalPrice || product.salePrice;
     const discount = originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
     const image = productImage(product);
-    const name = product.name || 'Sản phẩm';
+    const name = product.name || 'Product';
     const rating = product.rating || 4.5;
     const reviewCount = product.reviewCount || 0;
     const productId = product._id || product.id;
@@ -490,18 +739,18 @@ function createProductCard(product) {
                 </a>
             </div>
             <div class="product-info">
-                <span class="product-brand">${product.brand || 'Cửa hàng thú cưng'}</span>
+                <span class="product-brand">${product.brand || 'Pet Store'}</span>
                 <h4 class="product-name"><a href="#product?id=${productId}">${name}</a></h4>
-                ${shopId ? `<div class="product-shop-meta"><a class="product-shop-link" href="#shop-detail?id=${shopId}">${escapeHtml(shop.name || 'Cửa hàng')}</a>${renderShopLabelBadges(shop)}</div>` : ''}
+                ${shopId ? `<div class="product-shop-meta"><a class="product-shop-link" href="#shop-detail?id=${shopId}">${escapeHtml(shop.name || 'Store')}</a>${renderShopLabelBadges(shop)}</div>` : ''}
                 <div class="product-rating">
                     <div class="stars">${appGenerateStars(rating)}</div>
                     <span>(${reviewCount})</span>
                 </div>
                 <div class="product-price">
-                    <span class="price-current">$${price.toFixed(2)}</span>
-                    ${originalPrice > price ? `<span class="price-old">$${originalPrice.toFixed(2)}</span>` : ''}
+                    <span class="price-current">${window.utils.formatPrice(price)}</span>
+                    ${originalPrice > price ? `<span class="price-old">${window.utils.formatPrice(originalPrice)}</span>` : ''}
                 </div>
-                <div class="product-delivery"><i class="fas fa-truck"></i> Giao nhanh trong ngày</div>
+                <div class="product-delivery"><i class="fas fa-truck"></i> Fast delivery today</div>
                 <div class="product-card-actions">
                     ${buildCatalogActionButtons(productId)}
                 </div>
@@ -522,14 +771,14 @@ function appGenerateStars(rating) {
 
 function loadSampleProducts() {
     const sampleProducts = [
-        { _id: '1', name: 'Hạt cao cấp cho chó', price: 42.99, originalPrice: 54.99, rating: 4.5, reviewCount: 2456, images: [displayImage('food')] },
-        { _id: '2', name: 'Cát vệ sinh khử mùi cho mèo', price: 18.49, originalPrice: 23.99, rating: 4.8, reviewCount: 1892, images: [displayImage('litter')] },
-        { _id: '3', name: 'Bánh thưởng dinh dưỡng cho chó', price: 15.99, originalPrice: 21.99, rating: 4, reviewCount: 3221, images: [displayImage('food')] },
-        { _id: '4', name: 'Lồng nuôi chim gỗ cao cấp', price: 62.99, rating: 4.5, reviewCount: 567, images: [displayImage('habitat')] },
-        { _id: '5', name: 'Bể cá mini kèm lọc', price: 88.49, rating: 5, reviewCount: 1402, images: [displayImage('aquarium')] },
-        { _id: '6', name: 'Đệm ngủ êm cho thỏ và hamster', price: 24.99, rating: 4.5, reviewCount: 892, images: [displayImage('bed')] },
-        { _id: '7', name: 'Đồ chơi gặm nhai cao su cho chó', price: 16.99, rating: 5, reviewCount: 5678, images: [displayImage('toy')] },
-        { _id: '8', name: 'Yếm và vòng cổ thời trang cho mèo', price: 19.99, originalPrice: 24.99, rating: 4.2, reviewCount: 1234, images: [displayImage('fashion')] }
+        { _id: '1', name: 'Premium dog kibble', price: 42.99, originalPrice: 54.99, rating: 4.5, reviewCount: 2456, images: [displayImage('food')] },
+        { _id: '2', name: 'Odor control cat litter', price: 18.49, originalPrice: 23.99, rating: 4.8, reviewCount: 1892, images: [displayImage('litter')] },
+        { _id: '3', name: 'Nutritious dog treats', price: 15.99, originalPrice: 21.99, rating: 4, reviewCount: 3221, images: [displayImage('food')] },
+        { _id: '4', name: 'Premium wooden bird cage', price: 62.99, rating: 4.5, reviewCount: 567, images: [displayImage('habitat')] },
+        { _id: '5', name: 'Mini aquarium with filter', price: 88.49, rating: 5, reviewCount: 1402, images: [displayImage('aquarium')] },
+        { _id: '6', name: 'Soft bed for rabbits and hamsters', price: 24.99, rating: 4.5, reviewCount: 892, images: [displayImage('bed')] },
+        { _id: '7', name: 'Rubber chew toy for dogs', price: 16.99, rating: 5, reviewCount: 5678, images: [displayImage('toy')] },
+        { _id: '8', name: 'Fashion harness and collar for cats', price: 19.99, originalPrice: 24.99, rating: 4.2, reviewCount: 1234, images: [displayImage('fashion')] }
     ];
     renderProducts(sampleProducts);
 }
@@ -827,14 +1076,14 @@ function normalizeDemoLinks() {
         ['subscribe & save', '#shop?onSale=true'],
         ['shop now', '#shop'],
         ['explore food', '#shop?search=food'],
-        ['book now', '#page?slug=vet-services'],
+        ['book now', '#shop?mallOnly=true'],
         ['stores', '#shop'],
         ['track order', '#orders'],
         ['help', '#contact'],
         ['sign in', '#login'],
-        ['boarding', '#contact'],
-        ['training', '#contact'],
-        ['doggie day camp', '#contact'],
+        ['boarding', '#shop?mallOnly=true'],
+        ['training', '#shop?mallOnly=true'],
+        ['doggie day camp', '#shop?mallOnly=true'],
         ['help center', '#contact'],
         ['store locator', '#shop'],
         ['gift cards', '#shop?onSale=true'],
@@ -886,6 +1135,8 @@ function ensureSpaContainer() {
 }
 
 function interceptLegacyPageLinks(event) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
     const link = event.target.closest('a[href]');
     if (!link) return;
 
@@ -925,6 +1176,7 @@ function parseHashRoute() {
 
 async function renderHashView() {
     try {
+        clearPaymentTimers();
         const { route, params } = parseHashRoute();
         if (route === 'home') {
             showHomeView();
@@ -951,6 +1203,8 @@ async function renderHashView() {
         if (route === 'page') return await renderPageView(params.get('slug'));
         if (route === 'cart') return await renderCartView();
         if (route === 'checkout') return await renderCheckoutView();
+        if (route === 'payment') return await renderPaymentView(params.get('paymentId'), params.get('orderId'), params.get('channel'));
+        if (route === 'payment-result') return await renderPaymentResultView(params.get('result'), params.get('paymentId'), params.get('orderId'));
         if (route === 'account') return await renderAccountView();
         if (route === 'orders') return await renderOrdersView();
         if (route === 'service-bookings') return await renderCareServiceBookingsView();
@@ -966,20 +1220,25 @@ async function renderHashView() {
 }
 
 function showHomeView() {
-    document.getElementById('spaView').style.display = 'none';
+    const spaView = document.getElementById('spaView');
+    if (spaView) spaView.style.display = 'none';
     document.querySelectorAll('body > section').forEach(section => section.style.display = '');
 }
 
 function showSpaView() {
     document.querySelectorAll('body > section').forEach(section => section.style.display = 'none');
     const spaView = document.getElementById('spaView');
+    if (!spaView) return;
     spaView.style.display = 'block';
     spaView.innerHTML = '<div class="container" style="padding: 40px 0;"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div></div>';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function setSpaContent(title, content) {
-    document.getElementById('spaView').innerHTML = `
+    const spaView = document.getElementById('spaView');
+    if (!spaView) return;
+
+    spaView.innerHTML = `
         <div class="container" style="padding: 40px 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:24px;">
                 <h1>${title}</h1>
@@ -1472,7 +1731,7 @@ async function renderProductView(productId) {
                 <div class="product-gallery"><img src="${image}" alt="${product.name}"></div>
                 <div class="product-info">
                     <div>${appGenerateStars(product.rating || 0)} (${product.reviewCount || 0})</div>
-                    <div class="product-price-detail">$${price.toFixed(2)} ${originalPrice > price ? `<span class="product-price-old">$${originalPrice.toFixed(2)}</span>` : ''}</div>
+                    <div class="product-price-detail">${window.utils.formatPrice(price)} ${originalPrice > price ? `<span class="product-price-old">${window.utils.formatPrice(originalPrice)}</span>` : ''}</div>
                     <p>${product.shortDescription || ''}</p>
                     <p>${product.description || 'Chưa có mô tả chi tiết cho sản phẩm này.'}</p>
                     <p><strong>Thương hiệu:</strong> ${product.brand || 'Đang cập nhật'}</p>
@@ -1536,7 +1795,7 @@ async function renderProductView(productId) {
                 <div class="product-gallery"><img src="${sample.images[0]}" alt="${sample.name}"></div>
                 <div class="product-info">
                     <div>${appGenerateStars(sample.rating || 0)} (${sample.reviewCount || 0})</div>
-                    <div class="product-price-detail">$${sample.price.toFixed(2)} ${sample.originalPrice ? `<span class="product-price-old">$${sample.originalPrice.toFixed(2)}</span>` : ''}</div>
+                    <div class="product-price-detail">${window.utils.formatPrice(sample.price)} ${sample.originalPrice ? `<span class="product-price-old">${window.utils.formatPrice(sample.originalPrice)}</span>` : ''}</div>
                     <p>Đây là sản phẩm mẫu. Hãy đăng nhập để tiếp tục mua sắm với dữ liệu thật.</p>
                     <p><strong>Tồn kho:</strong> Có sẵn</p>
                     <button class="btn btn-primary" id="spaSampleAddToCart">Thêm vào giỏ</button>
@@ -1645,7 +1904,12 @@ async function renderPageView(slug = 'privacy-policy') {
         const page = response.data;
         setSpaContent(page.title, `<article>${page.content}</article>`);
     } catch (error) {
-        setSpaContent('Không tìm thấy nội dung', '<p>Nội dung này chưa được xuất bản.</p>');
+        const fallback = STATIC_PAGE_FALLBACKS[slug];
+        if (fallback) {
+            setSpaContent(fallback.title, fallback.content);
+            return;
+        }
+        setSpaContent('Content unavailable', '<p>This page has not been published yet.</p>');
     }
 }
 
@@ -1697,6 +1961,7 @@ function requireBuyerView() {
 
 async function renderCartView() {
     if (!requireBuyerView()) return;
+    clearBuyNowCheckoutItems();
     try {
         const response = await api.getCart();
         const items = response.data?.items || [];
@@ -1708,13 +1973,13 @@ async function renderCartView() {
                         <img src="${productImage(item.product)}" alt="${item.product?.name || 'Sản phẩm'}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
                         <div>
                             <h3><a href="#product?id=${item.product?._id}">${item.product?.name || 'Sản phẩm'}</a></h3>
-                            <p>$${(item.product?.price || 0).toFixed(2)}</p>
+                            <p>${window.utils.formatPrice(item.product?.price || 0)}</p>
                             <input class="cart-qty" data-product-id="${item.product?._id}" type="number" min="1" value="${item.quantity || 1}" style="width:80px;padding:8px;">
                         </div>
                         <button class="btn btn-secondary cart-remove" data-product-id="${item.product?._id}">Xóa</button>
                     </div>
                 `).join('') || '<p>Giỏ hàng của bạn đang trống.</p>'}
-                <h2 style="margin-top:20px;">Tạm tính: $${subtotal.toFixed(2)}</h2>
+                <h2 style="margin-top:20px;">Tạm tính: ${window.utils.formatPrice(subtotal)}</h2>
                 <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px;">
                     <button class="btn btn-primary" id="goCheckout" ${items.length ? '' : 'disabled'}>Thanh toán</button>
                     <button class="btn btn-secondary" id="clearCart" ${items.length ? '' : 'disabled'}>Xóa giỏ hàng</button>
@@ -1741,17 +2006,23 @@ async function renderCartView() {
             renderCartView();
             updateCartCount();
         });
-        document.getElementById('goCheckout')?.addEventListener('click', () => window.location.hash = 'checkout');
+        document.getElementById('goCheckout')?.addEventListener('click', () => {
+            clearBuyNowCheckoutItems();
+            window.location.hash = 'checkout';
+        });
     } catch (error) {
         setSpaContent('Giỏ hàng', `<p>${error.message || 'Không thể tải giỏ hàng.'}</p>`);
     }
 }
 
 async function renderCheckoutView() {
+    clearPaymentTimers();
     if (!requireBuyerView()) return;
 
     const [cartRes, profileRes] = await Promise.all([api.getCart(), api.getProfile()]);
-    const items = cartRes.data?.items || [];
+    const checkoutState = resolveCheckoutItems(cartRes.data?.items || []);
+    const items = checkoutState.items;
+    const checkoutSource = checkoutState.source;
     const user = profileRes.data?.user || {};
     const addresses = user.addresses || [];
     const defaultAddress = addresses.find(address => address.isDefault) || addresses[0] || {};
@@ -1855,13 +2126,13 @@ async function renderCheckoutView() {
                                 <input type="radio" name="shippingMethod" value="standard" checked>
                                 <strong>Giao hàng tiêu chuẩn</strong>
                                 <span>Giao trong 3-5 ngày làm việc</span>
-                                <em>Miễn phí từ $35, nếu thấp hơn tính $5.00</em>
+                                <em>Miễn phí từ 900.000 ₫, nếu thấp hơn tính 125.000 ₫</em>
                             </label>
                             <label class="checkout-choice-card">
                                 <input type="radio" name="shippingMethod" value="express">
                                 <strong>Giao hàng nhanh</strong>
                                 <span>Giao trong 24-48 giờ</span>
-                                <em>$12.50 hoặc $8.50 với đơn giá trị cao</em>
+                                <em>312.500 ₫ hoặc 212.500 ₫ với đơn giá trị cao</em>
                             </label>
                         </div>
                     </section>
@@ -1996,11 +2267,9 @@ async function renderCheckoutView() {
         });
 
         const paymentMethod = getSelectedValue('paymentMethod');
-        paymentMethodHint.textContent = paymentMethod === 'online'
-            ? 'Bạn sẽ được chuyển sang bước thanh toán trực tuyến sau khi tạo đơn.'
-            : paymentMethod === 'bank_transfer'
-                ? 'Đơn hàng sẽ được tạo ngay và trạng thái thanh toán chờ xác nhận chuyển khoản.'
-                : 'Đơn hàng sẽ được tạo ngay và thanh toán khi giao hàng.';
+        const paymentFlow = getPaymentFlowConfig(paymentMethod);
+        paymentMethodHint.textContent = paymentFlow.hint;
+        placeOrderButton.textContent = paymentFlow.needsPayment ? 'Tạo giao dịch thanh toán' : 'Đặt hàng';
     }
 
     function fillAddress(address = {}) {
@@ -2154,34 +2423,438 @@ async function renderCheckoutView() {
         setCheckoutMessage('');
         if (!form.reportValidity()) return;
         placeOrderButton.disabled = true;
-        placeOrderButton.textContent = 'Processing...';
+        placeOrderButton.textContent = 'Đang xử lý...';
+
+        const paymentMethod = getSelectedValue('paymentMethod');
+        const paymentFlow = getPaymentFlowConfig(paymentMethod);
+        let createdOrderId = '';
 
         try {
             await refreshQuote(true);
             const response = await api.createOrder(buildPayload(true));
-            updateCartCount();
-            authManager.showNotification('Order placed successfully.', 'success');
-
-            const orderId = response.data?.order_id || response.data?._id || response.data?.order?._id;
-            const redirectUrl = response.data?.redirect_url;
-            if (redirectUrl) {
-                window.location.href = redirectUrl;
-            } else if (orderId) {
-                window.location.hash = `order?id=${orderId}`;
-            } else {
-                window.location.hash = 'orders';
+            createdOrderId = response.data?.order_id || response.data?._id || response.data?.order?._id || '';
+            if (!createdOrderId) {
+                throw new Error('Không tạo được đơn hàng.');
             }
+
+            if (checkoutSource === 'buy-now') {
+                clearBuyNowCheckoutItems();
+            } else {
+                updateCartCount();
+            }
+
+            if (paymentFlow.needsPayment) {
+                const paymentResponse = await api.createPayment({
+                    order_id: createdOrderId,
+                    payment_channel: paymentFlow.paymentChannel
+                });
+                const paymentId = paymentResponse.data?._id || paymentResponse.data?.payment_id || '';
+                if (!paymentId) {
+                    throw new Error('Không tạo được giao dịch thanh toán.');
+                }
+
+                authManager.showNotification(paymentFlow.createMessage, 'success');
+                window.location.hash = buildPaymentHash(paymentId, createdOrderId, paymentFlow.paymentChannel);
+                return;
+            }
+
+            authManager.showNotification('Đặt hàng thành công!', 'success');
+            window.location.hash = `order?id=${createdOrderId}`;
         } catch (error) {
-            setCheckoutMessage(error.message || 'Không thể đặt hàng.', 'error');
-            authManager.showNotification(error.message || 'Không thể đặt hàng.', 'error');
+            const message = error.message || 'Không thể đặt hàng.';
+            setCheckoutMessage(message, 'error');
+            authManager.showNotification(
+                createdOrderId && paymentFlow.needsPayment
+                    ? `${message} Đơn hàng đã được tạo, bạn có thể thanh toán lại trong chi tiết đơn hàng.`
+                    : message,
+                'error'
+            );
+            if (createdOrderId && paymentFlow.needsPayment) {
+                window.location.hash = `order?id=${createdOrderId}`;
+            }
         } finally {
             placeOrderButton.disabled = false;
-            placeOrderButton.textContent = 'Đặt hàng';
+            toggleChoiceClasses();
         }
     });
 
     toggleChoiceClasses();
     await refreshQuote(false);
+}
+
+function buildPaymentStatusSummary(payment = {}) {
+    const paymentStatus = normalizeStatus(payment.payment_status);
+    const resultClass = paymentStatus === 'paid'
+        ? 'status-badge-success'
+        : ['failed', 'expired', 'cancelled'].includes(paymentStatus)
+            ? 'status-badge-danger'
+            : paymentStatus === 'processing'
+                ? 'status-badge-info'
+                : 'status-badge-warning';
+
+    return `
+        <div class="payment-status-strip">
+            <span class="status-badge ${resultClass}">${escapeHtml(formatReadableStatus(paymentStatus || 'pending'))}</span>
+            <span class="status-badge status-badge-neutral">${escapeHtml(formatPaymentChannel(payment.payment_channel || payment.payment_method || 'qr'))}</span>
+            <span class="payment-status-code">Mã giao dịch: ${escapeHtml(payment.transaction_code || '--')}</span>
+        </div>
+    `;
+}
+
+async function refreshPaymentView(paymentId, orderId) {
+    const [paymentResponse, orderResponse] = await Promise.all([
+        api.getPaymentStatus(paymentId),
+        orderId ? api.getOrder(orderId).catch(() => ({ data: null })) : Promise.resolve({ data: null })
+    ]);
+
+    return {
+        payment: paymentResponse.data || {},
+        order: orderResponse.data || null
+    };
+}
+
+function mountPaymentCountdown(expiredAt, onExpired) {
+    const countdownEl = document.getElementById('paymentCountdown');
+    if (!countdownEl) return;
+    if (!expiredAt) {
+        countdownEl.textContent = '--:--';
+        return;
+    }
+
+    const expiresAt = new Date(expiredAt).getTime();
+    if (!Number.isFinite(expiresAt)) {
+        countdownEl.textContent = '--:--';
+        return;
+    }
+
+    let expiredHandled = false;
+
+    function renderTick() {
+        const diff = expiresAt - Date.now();
+        if (diff <= 0) {
+            countdownEl.textContent = '00:00';
+            if (!expiredHandled) {
+                expiredHandled = true;
+                clearPaymentTimers();
+                Promise.resolve(typeof onExpired === 'function' ? onExpired() : null).catch((error) => {
+                    console.error('Payment expiry handling failed', error);
+                });
+            }
+            return;
+        }
+
+        const totalSeconds = Math.floor(diff / 1000);
+        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+        const seconds = String(totalSeconds % 60).padStart(2, '0');
+        countdownEl.textContent = `${minutes}:${seconds}`;
+    }
+
+    renderTick();
+    paymentCountdownTimer = setInterval(renderTick, 1000);
+}
+
+async function routeFromPaymentStatus(payment = {}, orderId) {
+    const status = normalizeStatus(payment.payment_status);
+    const targetOrderId = orderId || payment.order_id || '';
+    if (status === 'paid') {
+        window.location.hash = buildPaymentResultHash('success', payment._id || '', targetOrderId);
+        return true;
+    }
+    if (['failed', 'expired', 'cancelled'].includes(status)) {
+        window.location.hash = buildPaymentResultHash('failed', payment._id || '', targetOrderId);
+        return true;
+    }
+    return false;
+}
+
+async function renderPaymentView(paymentId, orderId, preferredChannel = '') {
+    clearPaymentTimers();
+    if (!requireBuyerView()) return;
+
+    if (!paymentId) {
+        setSpaContent('Thanh toán', '<div class="account-content"><p>Không tìm thấy giao dịch thanh toán.</p></div>');
+        return;
+    }
+
+    const { payment, order } = await refreshPaymentView(paymentId, orderId);
+    if (await routeFromPaymentStatus(payment, orderId)) return;
+
+    const activeChannel = normalizeStatus(payment.payment_channel || preferredChannel || 'qr');
+    const isQr = activeChannel === 'qr';
+    const isInternetBanking = activeChannel === 'internet_banking';
+    const requiresVerification = !!payment.verification_required && !isQr;
+    const channelTitle = isQr
+        ? 'Thanh toán bằng QR'
+        : isInternetBanking
+            ? 'Chuyển khoản ngân hàng'
+            : 'Thanh toán trực tuyến';
+    const channelDescription = isQr
+        ? 'Quét mã QR bằng ứng dụng ngân hàng hoặc ví điện tử để hoàn tất giao dịch.'
+        : isInternetBanking
+            ? 'Mở ứng dụng ngân hàng, chuyển khoản đúng số tiền và nội dung thanh toán, sau đó nhập mã xác minh được gửi về email.'
+            : 'Mở liên kết thanh toán Visa, Mastercard hoặc ví điện tử, hoàn tất giao dịch rồi nhập mã xác minh được gửi về email.';
+    const confirmLabel = requiresVerification
+        ? 'Xác nhận mã thanh toán'
+        : isQr
+            ? 'Tôi đã thanh toán xong'
+            : 'Xác nhận thanh toán';
+
+    setSpaContent('Thanh toán', `
+        <div class="payment-shell">
+            <section class="payment-grid">
+                <article class="payment-card payment-card-primary">
+                    <div class="payment-card-head">
+                        <div>
+                            <span class="editorial-kicker">Bước xác thực thanh toán</span>
+                            <h2>${escapeHtml(channelTitle)}</h2>
+                            <p>${escapeHtml(channelDescription)}</p>
+                        </div>
+                        <div class="payment-countdown">
+                            <span>Hiệu lực giao dịch</span>
+                            <strong id="paymentCountdown">--:--</strong>
+                        </div>
+                    </div>
+                    ${buildPaymentStatusSummary(payment)}
+                    <div class="payment-channel-tabs">
+                        <button type="button" class="btn btn-secondary payment-channel-switch ${isQr ? 'is-active' : ''}" data-channel="qr">QR</button>
+                        <button type="button" class="btn btn-secondary payment-channel-switch ${isInternetBanking ? 'is-active' : ''}" data-channel="internet_banking">Ngân hàng / Internet Banking</button>
+                        <button type="button" class="btn btn-secondary payment-channel-switch ${(!isQr && !isInternetBanking) ? 'is-active' : ''}" data-channel="linked_gateway">Visa, Mastercard, ví điện tử</button>
+                    </div>
+
+                    ${isQr ? `
+                        <div class="payment-qr-layout">
+                            <div class="payment-qr-box">
+                                <img src="${escapeHtml(payment.qr_image_url || '')}" alt="QR thanh toán">
+                            </div>
+                            <div class="payment-qr-info">
+                                <div class="payment-info-row"><span>Số tiền cần thanh toán</span><strong>${formatCurrency(payment.amount || 0)}</strong></div>
+                                <div class="payment-info-row"><span>Nội dung thanh toán</span><strong id="paymentContentValue">${escapeHtml(payment.payment_content || '')}</strong></div>
+                                <div class="payment-info-row"><span>Mã đơn hàng</span><strong>${escapeHtml(order?.orderNumber || payment.order_number || '--')}</strong></div>
+                                <div class="payment-info-row"><span>Kênh thanh toán</span><strong>${escapeHtml(formatPaymentChannel(activeChannel))}</strong></div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="payment-alt-layout">
+                            <div class="payment-alt-card">
+                                <h3>${escapeHtml(channelTitle)}</h3>
+                                <p>${escapeHtml(channelDescription)}</p>
+                                <div class="payment-info-row"><span>Số tiền cần thanh toán</span><strong>${formatCurrency(payment.amount || 0)}</strong></div>
+                                <div class="payment-info-row"><span>Nội dung thanh toán</span><strong id="paymentContentValue">${escapeHtml(payment.payment_content || '')}</strong></div>
+                                <div class="payment-info-row"><span>Trạng thái hiện tại</span><strong>${escapeHtml(formatReadableStatus(payment.payment_status || 'pending'))}</strong></div>
+                                <div class="payment-info-row"><span>Email nhận mã</span><strong>${escapeHtml(payment.verification_email_masked || 'Đang cập nhật')}</strong></div>
+                                ${payment.payment_url ? `
+                                    <div class="payment-info-row">
+                                        <span>Liên kết thanh toán</span>
+                                        <strong><a href="${escapeHtml(payment.payment_url)}" target="_blank" rel="noopener">Mở liên kết</a></strong>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `}
+
+                    ${requiresVerification ? `
+                        <div class="checkout-extra-panel">
+                            <div class="checkout-panel-heading compact">
+                                <div>
+                                    <h4>Mã xác minh giao dịch</h4>
+                                    <p>Nhập mã 6 số được gửi tới ${escapeHtml(payment.verification_email_masked || 'email của bạn')} để hoàn tất thanh toán.</p>
+                                </div>
+                            </div>
+                            <label class="checkout-field">
+                                <span>Mã xác minh</span>
+                                <input id="paymentVerificationCode" type="text" inputmode="numeric" maxlength="6" placeholder="Nhập 6 số xác minh">
+                            </label>
+                            <div class="payment-info-row"><span>Gửi lúc</span><strong>${escapeHtml(formatShortDateTime(payment.verification_sent_at))}</strong></div>
+                        </div>
+                    ` : ''}
+
+                    <div class="payment-actions">
+                        <button type="button" class="btn btn-secondary" id="copyPaymentContent">Sao chép nội dung</button>
+                        <button type="button" class="btn btn-secondary" id="checkPaymentStatus">Kiểm tra lại thanh toán</button>
+                        <button type="button" class="btn btn-primary" id="confirmPaymentAction">${confirmLabel}</button>
+                        <button type="button" class="btn btn-secondary" id="cancelPaymentAction">Hủy giao dịch</button>
+                    </div>
+                    <div id="paymentMessage" class="editorial-inline-message"></div>
+                </article>
+
+                <aside class="payment-card">
+                    <h3>Thông tin đơn hàng</h3>
+                    <div class="payment-info-list">
+                        <div class="payment-info-row"><span>Mã đơn hàng</span><strong>${escapeHtml(order?.orderNumber || payment.order_number || '--')}</strong></div>
+                        <div class="payment-info-row"><span>Tổng thanh toán</span><strong>${formatCurrency(order?.finalAmount || payment.amount || 0)}</strong></div>
+                        <div class="payment-info-row"><span>Trạng thái đơn</span><strong>${escapeHtml(formatReadableStatus(order?.orderStatus || order?.status || 'waiting_payment'))}</strong></div>
+                        <div class="payment-info-row"><span>Trạng thái thanh toán</span><strong>${escapeHtml(formatReadableStatus(payment.payment_status || 'pending'))}</strong></div>
+                        <div class="payment-info-row"><span>Tạo lúc</span><strong>${escapeHtml(formatShortDateTime(payment.createdAt || order?.createdAt))}</strong></div>
+                        <div class="payment-info-row"><span>Hết hạn lúc</span><strong>${escapeHtml(formatShortDateTime(payment.expired_at))}</strong></div>
+                    </div>
+                    <div class="payment-sidebar-actions">
+                        <a class="btn btn-secondary" href="#order?id=${escapeHtml(orderId || payment.order_id || '')}">Xem đơn hàng</a>
+                        <a class="btn btn-secondary" href="#shop">Về trang mua sắm</a>
+                    </div>
+                </aside>
+            </section>
+        </div>
+    `);
+
+    const paymentMessage = document.getElementById('paymentMessage');
+    const verificationInput = document.getElementById('paymentVerificationCode');
+
+    async function reloadPayment(showStatusMessage = true) {
+        const latest = await api.getPaymentStatus(paymentId);
+        const latestData = latest.data || {};
+        if (await routeFromPaymentStatus(latestData, orderId)) return latestData;
+        if (showStatusMessage) {
+            setInlineMessage(paymentMessage, `Trạng thái hiện tại: ${formatReadableStatus(latestData.payment_status || 'pending')}.`, 'info');
+        }
+        return latestData;
+    }
+
+    mountPaymentCountdown(payment.expired_at, async () => {
+        const latest = await reloadPayment(false);
+        if (!(await routeFromPaymentStatus(latest || payment, orderId))) {
+            window.location.hash = buildPaymentResultHash('failed', paymentId, orderId || payment.order_id || '');
+        }
+    });
+
+    paymentPollingTimer = setInterval(async () => {
+        try {
+            await reloadPayment(false);
+        } catch (error) {
+            console.error('Payment polling failed', error);
+        }
+    }, 8000);
+
+    document.querySelectorAll('.payment-channel-switch').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const channel = button.dataset.channel;
+            if (!channel || channel === activeChannel) return;
+            try {
+                setInlineMessage(paymentMessage, 'Đang cập nhật kênh thanh toán...', 'info');
+                const response = await api.createPayment({
+                    order_id: orderId || payment.order_id,
+                    payment_channel: channel,
+                    bank_code: channel === 'internet_banking' ? (payment.bank_code || 'VCB') : ''
+                });
+                const nextPaymentId = response.data?._id || response.data?.payment_id || paymentId;
+                window.location.hash = buildPaymentHash(nextPaymentId, orderId || payment.order_id, channel);
+            } catch (error) {
+                setInlineMessage(paymentMessage, error.message || 'Không thể đổi kênh thanh toán.', 'error');
+            }
+        });
+    });
+
+    document.getElementById('copyPaymentContent')?.addEventListener('click', async () => {
+        try {
+            if (!navigator.clipboard?.writeText) {
+                throw new Error('Clipboard API không khả dụng');
+            }
+            await navigator.clipboard.writeText(payment.payment_content || '');
+            setInlineMessage(paymentMessage, 'Đã sao chép nội dung thanh toán.', 'success');
+        } catch (error) {
+            setInlineMessage(paymentMessage, 'Không thể sao chép nội dung thanh toán.', 'error');
+        }
+    });
+
+    document.getElementById('checkPaymentStatus')?.addEventListener('click', async () => {
+        try {
+            setInlineMessage(paymentMessage, 'Đang kiểm tra lại trạng thái thanh toán...', 'info');
+            const checked = await api.checkPayment(paymentId);
+            const latestData = checked.data || await reloadPayment(false);
+            if (!(await routeFromPaymentStatus(latestData, orderId))) {
+                setInlineMessage(paymentMessage, `Trạng thái hiện tại: ${formatReadableStatus(latestData.payment_status || 'pending')}.`, 'info');
+            }
+        } catch (error) {
+            setInlineMessage(paymentMessage, error.message || 'Không thể kiểm tra lại giao dịch.', 'error');
+        }
+    });
+
+    document.getElementById('confirmPaymentAction')?.addEventListener('click', async () => {
+        try {
+            if (requiresVerification) {
+                const verificationCode = verificationInput?.value?.trim() || '';
+                if (!verificationCode) {
+                    setInlineMessage(paymentMessage, 'Vui lòng nhập mã xác minh để tiếp tục.', 'error');
+                    verificationInput?.focus();
+                    return;
+                }
+
+                setInlineMessage(paymentMessage, 'Đang xác minh mã thanh toán...', 'info');
+                const verified = await api.verifyPayment(paymentId, verificationCode);
+                const verifiedData = verified.data || {};
+                if (!(await routeFromPaymentStatus(verifiedData, orderId))) {
+                    setInlineMessage(paymentMessage, `Trạng thái hiện tại: ${formatReadableStatus(verifiedData.payment_status || 'pending')}.`, 'info');
+                }
+                return;
+            }
+
+            setInlineMessage(paymentMessage, 'Đang xác nhận giao dịch...', 'info');
+            const callback = await api.submitPaymentCallback({
+                payment_id: paymentId,
+                callback_token: payment.callback_token,
+                status: 'paid',
+                source: 'gateway-ui',
+                note: 'Nguoi mua da hoan tat thanh toan'
+            });
+            await routeFromPaymentStatus(callback.data || payment, orderId);
+        } catch (error) {
+            setInlineMessage(paymentMessage, error.message || 'Không thể xác nhận thanh toán.', 'error');
+        }
+    });
+
+    document.getElementById('cancelPaymentAction')?.addEventListener('click', async () => {
+        try {
+            setInlineMessage(paymentMessage, 'Đang hủy giao dịch...', 'info');
+            const callback = await api.submitPaymentCallback({
+                payment_id: paymentId,
+                callback_token: payment.callback_token,
+                status: 'cancelled',
+                source: 'gateway-ui',
+                note: 'Nguoi mua huy giao dich thanh toan'
+            });
+            await routeFromPaymentStatus(callback.data || payment, orderId);
+        } catch (error) {
+            setInlineMessage(paymentMessage, error.message || 'Không thể hủy giao dịch.', 'error');
+        }
+    });
+}
+
+async function renderPaymentResultView(resultType = 'success', paymentId, orderId) {
+    clearPaymentTimers();
+    if (!requireBuyerView()) return;
+
+    const [paymentRes, orderRes] = await Promise.all([
+        paymentId ? api.getPaymentStatus(paymentId).catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+        orderId ? api.getOrder(orderId).catch(() => ({ data: null })) : Promise.resolve({ data: null })
+    ]);
+
+    const payment = paymentRes.data || {};
+    const order = orderRes.data || {};
+    const result = resultType === 'success' ? 'success' : 'failed';
+    const title = result === 'success' ? 'Thanh toán thành công' : 'Thanh toán chưa thành công';
+    const message = result === 'success'
+        ? 'Hệ thống đã xác nhận giao dịch. Đơn hàng của bạn đã chuyển sang trạng thái chờ người bán xử lý.'
+        : 'Giao dịch chưa hoàn tất. Bạn có thể quay lại bước thanh toán hoặc chọn phương thức khác trong chi tiết đơn hàng.';
+
+    setSpaContent(title, `
+        <div class="payment-result-shell">
+            <article class="payment-result-card ${result}">
+                <div class="payment-result-icon">${result === 'success' ? '✓' : '!'}</div>
+                <h2>${title}</h2>
+                <p>${message}</p>
+                <div class="payment-result-grid">
+                    <div class="payment-info-row"><span>Mã đơn hàng</span><strong>${escapeHtml(order.orderNumber || payment.order_number || '--')}</strong></div>
+                    <div class="payment-info-row"><span>Số tiền</span><strong>${formatCurrency(payment.amount || order.finalAmount || 0)}</strong></div>
+                    <div class="payment-info-row"><span>Phương thức</span><strong>${escapeHtml(formatPaymentChannel(payment.payment_channel || payment.payment_method || 'qr'))}</strong></div>
+                    <div class="payment-info-row"><span>Trạng thái thanh toán</span><strong>${escapeHtml(formatReadableStatus(payment.payment_status || (result === 'success' ? 'paid' : 'failed')))}</strong></div>
+                </div>
+                <div class="payment-actions center">
+                    <a class="btn btn-primary" href="#order?id=${escapeHtml(orderId || payment.order_id || '')}">Xem đơn hàng</a>
+                    ${result === 'failed' ? `<a class="btn btn-secondary" href="#${escapeHtml(buildPaymentHash(paymentId || payment._id || '', orderId || payment.order_id || '', payment.payment_channel || ''))}">Thử lại</a>` : ''}
+                    <a class="btn btn-secondary" href="#shop">Về trang mua sắm</a>
+                </div>
+            </article>
+        </div>
+    `);
 }
 
 async function renderAccountView() {
@@ -2435,6 +3108,8 @@ async function renderOrderDetailView(orderId) {
     if (!orderId) return renderOrdersView();
     const response = await api.getOrder(orderId);
     const order = response.data;
+    const continuePaymentHash = buildContinuePaymentHash(order);
+    const canContinuePayment = !!continuePaymentHash && !['paid', 'refunded'].includes(normalizeStatus(getPaymentStatus(order)));
     setSpaContent(`Order #${order.orderNumber || order._id}`, `
         <div class="order-detail-layout">
             <section class="account-content">
@@ -2463,7 +3138,8 @@ async function renderOrderDetailView(orderId) {
                         <h3>Thanh toán</h3>
                         <p>${formatPaymentMethod(getPaymentMethod(order))}</p>
                         <p>Trạng thái: ${formatReadableStatus(getPaymentStatus(order))}</p>
-                        ${order.payment?.redirectUrl ? `<p><a href="${order.payment.redirectUrl}">Tiếp tục thanh toán</a></p>` : ''}
+                        ${order.payment?.paymentContent ? `<p>Nội dung: ${escapeHtml(order.payment.paymentContent)}</p>` : ''}
+                        ${canContinuePayment ? `<p><a href="#${continuePaymentHash}">Tiếp tục thanh toán</a></p>` : ''}
                     </div>
                     <div class="order-detail-box">
                         <h3>Tóm tắt</h3>
@@ -2550,7 +3226,7 @@ async function renderWishlistView() {
                         <a href="#product?id=${product._id}"><img class="product-img" src="${productImage(product)}" alt="${product.name}"></a>
                         <div class="product-info">
                             <h3 class="product-name"><a href="#product?id=${product._id}">${product.name}</a></h3>
-                            <p>$${(product.price || 0).toFixed(2)}</p>
+                            <p>${window.utils.formatPrice(product.price || 0)}</p>
                             <button class="btn btn-primary btn-small" type="button" data-product-action="quick-add" data-product-id="${product._id}">Thêm giỏ</button>
                             <button class="btn btn-secondary wishlist-remove" data-product-id="${product._id}">Xóa</button>
                         </div>

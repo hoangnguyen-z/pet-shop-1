@@ -7,6 +7,7 @@ const { authenticate } = require('../middleware/auth');
 const { sendSuccess, sendCreated } = require('../middleware/responseHandler');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
+const { resolveFrontendBaseUrl } = require('../utils/frontendUrl');
 const { PAYMENT_METHODS } = require('../config/constants');
 const {
     PAYMENT_CALLBACK_SECRET,
@@ -71,7 +72,8 @@ router.post('/create', asyncHandler(async (req, res) => {
         order,
         buyerId: req.user.id,
         paymentChannel: normalizePaymentChannel(req.body.payment_channel || req.body.paymentChannel),
-        bankCode: req.body.bank_code || req.body.bankCode || ''
+        bankCode: req.body.bank_code || req.body.bankCode || '',
+        frontendBaseUrl: resolveFrontendBaseUrl(req)
     });
 
     sendCreated(res, 'Tao giao dich thanh toan thanh cong', serializePayment(payment));

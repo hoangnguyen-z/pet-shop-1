@@ -8,8 +8,9 @@ const {
     PAYMENT_CHANNELS
 } = require('../config/constants');
 const { syncOrderState, writeOrderLog } = require('./orderService');
+const { sendPaymentVerificationEmail, maskEmail } = require('./mailService');
+const { resolveFrontendBaseUrlFromValue } = require('../utils/frontendUrl');
 
-const FRONTEND_BASE_URL = process.env.FRONTEND_URL || 'http://localhost:5500';
 const PAYMENT_EXPIRY_MINUTES = Math.max(Number(process.env.PAYMENT_EXPIRY_MINUTES || 15), 5);
 const PAYMENT_CALLBACK_SECRET = process.env.PAYMENT_CALLBACK_SECRET || 'dev-payment-secret';
 
@@ -66,8 +67,17 @@ function buildQrImageUrl(qrPayload) {
     return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(qrPayload)}`;
 }
 
-function buildPaymentUrl(payment) {
-    return `${FRONTEND_BASE_URL}/#payment?paymentId=${payment._id}&orderId=${payment.order}&channel=${payment.paymentChannel}`;
+function buildPaymentUrl(payment, frontendBaseUrl = '') {
+    const baseUrl = resolveFrontendBaseUrlFromValue(frontendBaseUrl);
+    return `${baseUrl}/#payment?paymentId=${payment._id}&orderId=${payment.order}&channel=${payment.paymentChannel}`;
+}
+
+function resolveTransactionPaymentMethod(order = {}) {
+    const method = String(order?.paymentMethod || order?.payment?.method || '').trim().toLowerCase();
+    if ([PAYMENT_METHODS.BANK_TRANSFER, PAYMENT_METHODS.VNPAY, PAYMENT_METHODS.MOMO].includes(method)) {
+        return method;
+    }
+    return PAYMENT_METHODS.ONLINE;
 }
 
 function appendStatusHistory(payment, status, note) {
@@ -91,6 +101,9 @@ function assignVerificationCode(payment, order) {
         payment.verificationCode = '';
         payment.verificationAttempts = 0;
         payment.verificationVerifiedAt = undefined;
+        payment.verificationEmail = '';
+        payment.verificationEmailMasked = '';
+        payment.verificationSentAt = undefined;
         return;
     }
 
@@ -98,16 +111,39 @@ function assignVerificationCode(payment, order) {
     payment.verificationCode = generateVerificationCode();
     payment.verificationAttempts = 0;
     payment.verificationVerifiedAt = undefined;
+}
 
-    console.log(
-        `[PAYMENT VERIFY] Don ${order?.orderNumber || payment.order} | Giao dich ${payment.transactionCode} | Kenh ${payment.paymentChannel} | Ma xac minh: ${payment.verificationCode}`
-    );
+async function deliverVerificationCode(payment, order) {
+    if (!payment.verificationRequired) {
+        return payment;
+    }
+
+    const buyerEmail = order?.shippingAddress?.email;
+    if (!buyerEmail) {
+        throw ApiError.badRequest('Don hang chua co email nguoi mua de gui ma xac minh');
+    }
+
+    const sent = await sendPaymentVerificationEmail({
+        to: buyerEmail,
+        verificationCode: payment.verificationCode,
+        orderNumber: order?.orderNumber,
+        amount: payment.amount,
+        expiryMinutes: PAYMENT_EXPIRY_MINUTES
+    });
+
+    payment.verificationEmail = sent.sentTo;
+    payment.verificationEmailMasked = sent.maskedEmail || maskEmail(sent.sentTo);
+    payment.verificationSentAt = new Date();
+    appendStatusHistory(payment, PAYMENT_STATUS.PENDING, 'Da gui ma xac minh thanh toan qua email');
+    await payment.save();
+    return payment;
 }
 
 async function syncOrderForWaitingPayment(order, payment) {
+    const paymentMethod = payment?.paymentMethod || resolveTransactionPaymentMethod(order);
     syncOrderState(order, {
         orderStatus: ORDER_STATUS.WAITING_PAYMENT,
-        paymentMethod: PAYMENT_METHODS.ONLINE,
+        paymentMethod,
         paymentStatus: payment.status
     });
 
@@ -124,9 +160,10 @@ async function syncOrderForWaitingPayment(order, payment) {
 }
 
 async function syncOrderForPaid(order, payment) {
+    const paymentMethod = payment?.paymentMethod || resolveTransactionPaymentMethod(order);
     syncOrderState(order, {
         orderStatus: ORDER_STATUS.PAID,
-        paymentMethod: PAYMENT_METHODS.ONLINE,
+        paymentMethod,
         paymentStatus: PAYMENT_STATUS.PAID
     });
 
@@ -150,9 +187,10 @@ async function syncOrderForPaid(order, payment) {
 }
 
 async function syncOrderForPendingPayment(order, payment, paymentStatus) {
+    const paymentMethod = payment?.paymentMethod || resolveTransactionPaymentMethod(order);
     syncOrderState(order, {
         orderStatus: ORDER_STATUS.WAITING_PAYMENT,
-        paymentMethod: PAYMENT_METHODS.ONLINE,
+        paymentMethod,
         paymentStatus
     });
 
@@ -250,7 +288,7 @@ async function applyPaymentStatus(payment, normalizedStatus, callbackData = {}) 
     return payment;
 }
 
-async function createPaymentTransaction({ order, buyerId, paymentChannel, bankCode = '' }) {
+async function createPaymentTransaction({ order, buyerId, paymentChannel, bankCode = '', frontendBaseUrl = '' }) {
     if (!order) throw ApiError.badRequest('Don hang khong hop le');
     if (String(order.buyer) !== String(buyerId)) {
         throw ApiError.forbidden('Ban khong co quyen tao thanh toan cho don hang nay');
@@ -263,6 +301,7 @@ async function createPaymentTransaction({ order, buyerId, paymentChannel, bankCo
     }
 
     const normalizedChannel = normalizePaymentChannel(paymentChannel);
+    const paymentMethod = resolveTransactionPaymentMethod(order);
     const existingTransactions = await PaymentTransaction.find({
         order: order._id,
         status: { $in: [PAYMENT_STATUS.PENDING, PAYMENT_STATUS.PROCESSING] }
@@ -271,6 +310,7 @@ async function createPaymentTransaction({ order, buyerId, paymentChannel, bankCo
     for (const transaction of existingTransactions) {
         await expirePaymentIfNeeded(transaction);
         if ([PAYMENT_STATUS.PENDING, PAYMENT_STATUS.PROCESSING].includes(transaction.status)) {
+            transaction.paymentMethod = paymentMethod;
             transaction.paymentChannel = normalizedChannel;
             transaction.bankCode = bankCode || transaction.bankCode || '';
             if (normalizedChannel === PAYMENT_CHANNELS.QR) {
@@ -285,8 +325,9 @@ async function createPaymentTransaction({ order, buyerId, paymentChannel, bankCo
                 transaction.qrImageUrl = '';
             }
             assignVerificationCode(transaction, order);
-            transaction.paymentUrl = buildPaymentUrl(transaction);
+            transaction.paymentUrl = buildPaymentUrl(transaction, frontendBaseUrl);
             await transaction.save();
+            await deliverVerificationCode(transaction, order);
             await syncOrderForWaitingPayment(order, transaction);
             return transaction;
         }
@@ -304,7 +345,7 @@ async function createPaymentTransaction({ order, buyerId, paymentChannel, bankCo
         order: order._id,
         buyer: buyerId,
         amount: order.finalAmount,
-        paymentMethod: PAYMENT_METHODS.ONLINE,
+        paymentMethod,
         paymentChannel: normalizedChannel,
         transactionCode,
         paymentContent,
@@ -322,8 +363,9 @@ async function createPaymentTransaction({ order, buyerId, paymentChannel, bankCo
     });
 
     assignVerificationCode(transaction, order);
-    transaction.paymentUrl = buildPaymentUrl(transaction);
+    transaction.paymentUrl = buildPaymentUrl(transaction, frontendBaseUrl);
     await transaction.save();
+    await deliverVerificationCode(transaction, order);
     await syncOrderForWaitingPayment(order, transaction);
 
     await writeOrderLog({
@@ -376,6 +418,8 @@ function serializePayment(payment) {
         verification_expires_at: payment.expiredAt,
         verification_attempts: payment.verificationAttempts || 0,
         verification_verified_at: payment.verificationVerifiedAt,
+        verification_email_masked: payment.verificationEmailMasked || '',
+        verification_sent_at: payment.verificationSentAt,
         callback_token: payment.callbackToken,
         bank_code: payment.bankCode,
         callback_data: payment.callbackData,

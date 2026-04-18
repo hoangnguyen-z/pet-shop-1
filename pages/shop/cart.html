@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giỏ hàng - Pet Marketplace</title>
+    <title>Giá» hĂ ng - Pet Marketplace</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@
     <div class="top-bar">
         <div class="container">
             <div class="top-bar-content">
-                <span><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn từ $35</span>
+                <span><i class="fas fa-truck"></i> Miá»…n phĂ­ váº­n chuyá»ƒn cho Ä‘Æ¡n tá»« 900.000 ₫</span>
             </div>
         </div>
     </div>
@@ -63,12 +63,12 @@
                 <div class="header-actions">
                     <a href="/pages/account/profile.html" class="header-action">
                         <i class="far fa-user"></i>
-                        <span>Tài khoản</span>
+                        <span>TĂ i khoáº£n</span>
                     </a>
                     <a href="#" class="header-action cart-icon">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count">0</span>
-                        <span>Giỏ hàng</span>
+                        <span>Giá» hĂ ng</span>
                     </a>
                 </div>
             </div>
@@ -83,10 +83,10 @@
 
     <script src="../../js/config.js"></script>
     <script src="../../js/api/client.js"></script>
-    <script src="../../js/utils.js"></script>
-    <script src="../../js/components/auth.js"></script>
+    <script src="../../js/utils.js?v=20260418-vnd-1"></script>
+    <script src="../../js/components/auth.js?v=20260418-vntext-1"></script>
     <script src="../../js/components/auth-seller-onboarding.js"></script>
-    <script src="../../js/components/cart.js"></script>
+    <script src="../../js/components/cart.js?v=20260418-vnd-1"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
             await cartManager.loadCart();
@@ -101,11 +101,11 @@
                 container.innerHTML = `
                     <div class="cart-empty-page">
                         <i class="fas fa-shopping-cart"></i>
-                        <h2>Giỏ hàng của bạn đang trống</h2>
-                        <p>Có vẻ bạn chưa thêm sản phẩm nào vào giỏ hàng.</p>
-                        <a href="/pages/shop/shop.html" class="btn btn-primary">Mua sắm ngay</a>
+                        <h2>Giá» hĂ ng cá»§a báº¡n Ä‘ang trá»‘ng</h2>
+                        <p>CĂ³ váº» báº¡n chÆ°a thĂªm sáº£n pháº©m nĂ o vĂ o giá» hĂ ng.</p>
+                        <a href="/pages/shop/shop.html" class="btn btn-primary">Mua sáº¯m ngay</a>
                         <div class="continue-shopping">
-                            <a href="/">Quay về trang chủ</a>
+                            <a href="/">Quay vá» trang chá»§</a>
                         </div>
                     </div>
                 `;
@@ -113,8 +113,10 @@
             }
 
             const subtotal = cartManager.getSubtotal();
-            const shipping = subtotal >= 35 ? 0 : 5.99;
-            const total = subtotal + shipping;
+            const normalizedSubtotal = window.utils.normalizeCurrencyAmount(subtotal);
+            const freeShippingThreshold = 900000;
+            const shipping = normalizedSubtotal >= freeShippingThreshold ? 0 : 30000;
+            const total = normalizedSubtotal + shipping;
 
             container.innerHTML = `
                 <h1>Giỏ hàng (${items.length} sản phẩm)</h1>
@@ -134,7 +136,7 @@
                                         <img src="${image}" alt="${name}" class="cart-item-image">
                                         <div class="cart-item-info">
                                             <h3>${name}</h3>
-                                            <p>Đơn giá: $${price.toFixed(2)}</p>
+                                            <p>Đơn giá: ${window.utils.formatPrice(price)}</p>
                                             <div class="quantity-selector-inline">
                                                 <button onclick="updateQuantity('${itemId}', ${quantity - 1})">-</button>
                                                 <span>${quantity}</span>
@@ -142,7 +144,7 @@
                                             </div>
                                         </div>
                                         <div class="cart-item-actions">
-                                            <div class="cart-item-price">$${(price * quantity).toFixed(2)}</div>
+                                            <div class="cart-item-price">${window.utils.formatPrice(price * quantity)}</div>
                                             <button class="cart-item-remove" onclick="removeItem('${itemId}')">
                                                 <i class="fas fa-trash"></i> Xóa
                                             </button>
@@ -159,20 +161,20 @@
                         <h3>Tóm tắt đơn hàng</h3>
                         <div class="cart-summary-row">
                             <span>Tạm tính</span>
-                            <span>$${subtotal.toFixed(2)}</span>
+                            <span>${window.utils.formatPrice(subtotal)}</span>
                         </div>
                         <div class="cart-summary-row">
                             <span>Phí vận chuyển</span>
-                            <span>${shipping === 0 ? 'FREE' : '$' + shipping.toFixed(2)}</span>
+                            <span>${shipping === 0 ? 'Miễn phí' : window.utils.formatPrice(shipping)}</span>
                         </div>
-                        ${subtotal < 35 ? `
+                        ${normalizedSubtotal < freeShippingThreshold ? `
                             <p style="color: #28a745; font-size: 14px; margin-top: 10px;">
-                                <i class="fas fa-truck"></i> Mua thêm $${(35 - subtotal).toFixed(2)} để được miễn phí vận chuyển!
+                                <i class="fas fa-truck"></i> Mua thêm ${window.utils.formatPrice(freeShippingThreshold - normalizedSubtotal)} để được miễn phí vận chuyển!
                             </p>
                         ` : ''}
                         <div class="cart-summary-row cart-summary-total">
                             <span>Tổng cộng</span>
-                            <span>$${total.toFixed(2)}</span>
+                            <span>${window.utils.formatPrice(total)}</span>
                         </div>
                         <button class="btn btn-primary" onclick="checkout()">
                             Tiến hành thanh toán
@@ -228,5 +230,7 @@
             }
         }
     </script>
+    <script src="/js/text-normalizer.js?v=20260418-vntext-1"></script>
 </body>
 </html>
+

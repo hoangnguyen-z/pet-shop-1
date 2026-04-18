@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cửa hàng - Pet Marketplace</title>
+    <title>Cá»­a hĂ ng - Pet Marketplace</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@
     <div class="top-bar">
         <div class="container">
             <div class="top-bar-content">
-                <span><i class="fas fa-truck"></i> Miễn phí vận chuyển cho đơn từ $35</span>
+                <span><i class="fas fa-truck"></i> Miá»…n phĂ­ váº­n chuyá»ƒn cho Ä‘Æ¡n tá»« 900.000 ₫</span>
             </div>
         </div>
     </div>
@@ -42,14 +42,14 @@
                     <span class="logo-text">Pet Marketplace</span>
                 </a>
                 <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="Tìm thức ăn, bánh thưởng, đồ chơi và nhiều hơn...">
+                    <input type="text" id="searchInput" placeholder="TĂ¬m thá»©c Äƒn, bĂ¡nh thÆ°á»Ÿng, Ä‘á»“ chÆ¡i vĂ  nhiá»u hÆ¡n...">
                     <button class="search-btn" id="searchBtn"><i class="fas fa-search"></i></button>
                 </div>
                 <div class="header-actions">
                     <a href="/pages/shop/cart.html" class="header-action cart-icon">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count">0</span>
-                        <span>Giỏ hàng</span>
+                        <span>Giá» hĂ ng</span>
                     </a>
                 </div>
             </div>
@@ -59,15 +59,15 @@
     <div class="shop-container">
         <div class="container">
             <div class="shop-header">
-                <h1>Cửa hàng</h1>
+                <h1>Cá»­a hĂ ng</h1>
                 <div class="shop-controls">
                     <select id="sortSelect" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px;">
-                        <option value="createdAt-desc">Mới nhất</option>
-                        <option value="price-asc">Giá: thấp đến cao</option>
-                        <option value="price-desc">Giá: cao đến thấp</option>
-                        <option value="soldCount-desc">Bán chạy</option>
-                        <option value="rating-desc">Đánh giá cao</option>
-                        <option value="originalPrice-desc">Giảm nhiều nhất</option>
+                        <option value="createdAt-desc">Má»›i nháº¥t</option>
+                        <option value="price-asc">GiĂ¡: tháº¥p Ä‘áº¿n cao</option>
+                        <option value="price-desc">GiĂ¡: cao Ä‘áº¿n tháº¥p</option>
+                        <option value="soldCount-desc">BĂ¡n cháº¡y</option>
+                        <option value="rating-desc">ÄĂ¡nh giĂ¡ cao</option>
+                        <option value="originalPrice-desc">Giáº£m nhiá»u nháº¥t</option>
                     </select>
                 </div>
             </div>
@@ -75,55 +75,55 @@
             <div class="shop-content">
                 <aside class="shop-sidebar">
                     <div class="filter-section">
-                        <h3>Danh mục</h3>
+                        <h3>Danh má»¥c</h3>
                         <div id="categoryFilters">
-                            <label><input type="radio" name="category" value="" checked> Tất cả danh mục</label>
+                            <label><input type="radio" name="category" value="" checked> Táº¥t cáº£ danh má»¥c</label>
                         </div>
                     </div>
 
                     <div class="filter-section">
-                        <h3>Khoảng giá</h3>
+                        <h3>Khoáº£ng giĂ¡</h3>
                         <div class="price-range">
-                            <input type="number" id="minPrice" placeholder="Từ">
+                            <input type="number" id="minPrice" placeholder="Tá»«">
                             <span>-</span>
-                            <input type="number" id="maxPrice" placeholder="Đến">
-                            <button class="btn btn-secondary btn-small" onclick="applyFilters()">Lọc</button>
+                            <input type="number" id="maxPrice" placeholder="Äáº¿n">
+                            <button class="btn btn-secondary btn-small" onclick="applyFilters()">Lá»c</button>
                         </div>
                     </div>
 
                     <div class="filter-section">
-                        <h3>Loại thú cưng</h3>
+                        <h3>Loáº¡i thĂº cÆ°ng</h3>
                         <div id="petTypeFilters">
-                            <label><input type="radio" name="petType" value="" checked> Tất cả thú cưng</label>
-                            <label><input type="radio" name="petType" value="dog"> Chó</label>
-                            <label><input type="radio" name="petType" value="cat"> Mèo</label>
+                            <label><input type="radio" name="petType" value="" checked> Táº¥t cáº£ thĂº cÆ°ng</label>
+                            <label><input type="radio" name="petType" value="dog"> ChĂ³</label>
+                            <label><input type="radio" name="petType" value="cat"> MĂ¨o</label>
                             <label><input type="radio" name="petType" value="bird"> Chim</label>
-                            <label><input type="radio" name="petType" value="fish"> Cá</label>
-                            <label><input type="radio" name="petType" value="small-pet"> Thú nhỏ</label>
+                            <label><input type="radio" name="petType" value="fish"> CĂ¡</label>
+                            <label><input type="radio" name="petType" value="small-pet"> ThĂº nhá»</label>
                         </div>
                     </div>
 
                     <div class="filter-section">
-                        <h3>Thương hiệu</h3>
+                        <h3>ThÆ°Æ¡ng hiá»‡u</h3>
                         <select id="brandFilter" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-                            <option value="">Tất cả thương hiệu</option>
+                            <option value="">Táº¥t cáº£ thÆ°Æ¡ng hiá»‡u</option>
                         </select>
                     </div>
 
                     <div class="filter-section">
-                        <h3>Tình trạng</h3>
-                        <label><input type="checkbox" id="inStockFilter"> Chỉ hiển thị còn hàng</label>
-                        <label><input type="checkbox" id="onSaleFilter"> Đang giảm giá</label>
+                        <h3>TĂ¬nh tráº¡ng</h3>
+                        <label><input type="checkbox" id="inStockFilter"> Chá»‰ hiá»ƒn thá»‹ cĂ²n hĂ ng</label>
+                        <label><input type="checkbox" id="onSaleFilter"> Äang giáº£m giĂ¡</label>
                     </div>
 
                     <div class="filter-section">
-                        <h3>Đánh giá</h3>
+                        <h3>ÄĂ¡nh giĂ¡</h3>
                         <select id="ratingFilter" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
-                            <option value="">Tất cả mức đánh giá</option>
+                            <option value="">Táº¥t cáº£ má»©c Ä‘Ă¡nh giĂ¡</option>
                             <option value="5">5 sao</option>
-                            <option value="4">Từ 4 sao trở lên</option>
-                            <option value="3">Từ 3 sao trở lên</option>
-                            <option value="2">Từ 2 sao trở lên</option>
+                            <option value="4">Tá»« 4 sao trá»Ÿ lĂªn</option>
+                            <option value="3">Tá»« 3 sao trá»Ÿ lĂªn</option>
+                            <option value="2">Tá»« 2 sao trá»Ÿ lĂªn</option>
                         </select>
                     </div>
                 </aside>
@@ -139,8 +139,8 @@
 
     <script src="../../js/config.js"></script>
     <script src="../../js/api/client.js"></script>
-    <script src="../../js/utils.js"></script>
-    <script src="../../js/components/auth.js"></script>
+    <script src="../../js/utils.js?v=20260418-vnd-1"></script>
+    <script src="../../js/components/auth.js?v=20260418-vntext-1"></script>
     <script src="../../js/components/auth-seller-onboarding.js"></script>
     <script>
         let currentParams = {};
@@ -176,7 +176,7 @@
                 const categories = response.data || [];
                 const container = document.getElementById('categoryFilters');
 
-                container.innerHTML = `<label><input type="radio" name="category" value="" checked> Tất cả danh mục</label>` +
+                container.innerHTML = `<label><input type="radio" name="category" value="" checked> Táº¥t cáº£ danh má»¥c</label>` +
                     categories.map(cat => `<label><input type="radio" name="category" value="${cat._id}"> ${cat.name} (${cat.productCount || 0})</label>`).join('');
 
                 container.querySelectorAll('input[name="category"]').forEach(input => {
@@ -186,7 +186,7 @@
                     });
                 });
             } catch (error) {
-                console.error('Không thể tải danh mục:', error);
+                console.error('KhĂ´ng thá»ƒ táº£i danh má»¥c:', error);
             }
         }
 
@@ -195,7 +195,7 @@
                 const response = await api.getProductFilters();
                 const filters = response.data || {};
                 const brandFilter = document.getElementById('brandFilter');
-                brandFilter.innerHTML = '<option value="">Tất cả thương hiệu</option>' +
+                brandFilter.innerHTML = '<option value="">Táº¥t cáº£ thÆ°Æ¡ng hiá»‡u</option>' +
                     (filters.brands || []).map(brand => `<option value="${brand}">${brand}</option>`).join('');
             } catch (error) {
                 console.error('Failed to load filters:', error);
@@ -227,7 +227,7 @@
                 const products = response.data || [];
 
                 if (products.length === 0) {
-                    container.innerHTML = '<p class="text-center">Không tìm thấy sản phẩm nào</p>';
+                    container.innerHTML = '<p class="text-center">KhĂ´ng tĂ¬m tháº¥y sáº£n pháº©m nĂ o</p>';
                     return;
                 }
 
@@ -237,7 +237,7 @@
                     btn.addEventListener('click', () => addToCart(btn.dataset.productId));
                 });
             } catch (error) {
-                container.innerHTML = '<p class="text-center">Không thể tải danh sách sản phẩm</p>';
+                container.innerHTML = '<p class="text-center">KhĂ´ng thá»ƒ táº£i danh sĂ¡ch sáº£n pháº©m</p>';
             }
         }
 
@@ -250,26 +250,26 @@
                 <div class="product-card">
                     <div class="product-image">
                         ${discount ? `<span class="product-badge badge-sale">-${discount}%</span>` : ''}
-                        ${product.stock <= 0 ? `<span class="product-badge">Hết hàng</span>` : ''}
+                        ${product.stock <= 0 ? `<span class="product-badge">Háº¿t hĂ ng</span>` : ''}
                         <a href="/pages/shop/product.html?id=${product._id}">
                             <img src="${image}" alt="${product.name}" class="product-img">
                         </a>
                         <div class="product-actions">
-                            <button class="quick-add" data-product-id="${product._id}"><i class="fas fa-plus"></i> Thêm nhanh</button>
+                            <button class="quick-add" data-product-id="${product._id}"><i class="fas fa-plus"></i> ThĂªm nhanh</button>
                         </div>
                     </div>
                     <div class="product-info">
-                        <span class="product-brand">${product.brand || product.shop?.name || 'Cửa hàng thú cưng'}</span>
+                        <span class="product-brand">${product.brand || product.shop?.name || 'Cá»­a hĂ ng thĂº cÆ°ng'}</span>
                         <h4 class="product-name"><a href="/pages/shop/product.html?id=${product._id}">${product.name}</a></h4>
                         <div class="product-rating">
                             <div class="stars">${generateStars(product.rating || 0)}</div>
                             <span>(${product.reviewCount || 0})</span>
                         </div>
                         <div class="product-price">
-                            <span class="price-current">$${price.toFixed(2)}</span>
-                            ${originalPrice > price ? `<span class="price-old">$${originalPrice.toFixed(2)}</span>` : ''}
+                            <span class="price-current">${window.utils.formatPrice(price)}</span>
+                            ${originalPrice > price ? `<span class="price-old">${window.utils.formatPrice(originalPrice)}</span>` : ''}
                         </div>
-                        <div class="product-delivery">${product.stock > 0 ? 'Còn hàng' : 'Hết hàng'}</div>
+                        <div class="product-delivery">${product.stock > 0 ? 'CĂ²n hĂ ng' : 'Háº¿t hĂ ng'}</div>
                         <div class="product-delivery"><i class="fas fa-truck"></i> Free delivery</div>
                     </div>
                 </div>
@@ -329,5 +329,7 @@
             });
         }
     </script>
+    <script src="/js/text-normalizer.js?v=20260418-vntext-1"></script>
 </body>
 </html>
+

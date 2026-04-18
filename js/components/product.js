@@ -7,15 +7,20 @@ class ProductManager {
     }
 
     productImage(product = {}) {
-        const haystack = [product.name, product.brand, ...(product.tags || [])].filter(Boolean).join(' ').toLowerCase();
+        const haystack = [product.name, product.brand, ...(product.tags || [])]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
         const image = product.images?.[0] || product.image || product.thumbnail;
-        if (image && !/images\.unsplash\.com|via\.placeholder\.com|placeholder\.com/i.test(image)) return image;
-        if (haystack.includes('cat')) return '/assets/images/pet-cat.svg';
-        if (haystack.includes('bird')) return '/assets/images/pet-bird.svg';
-        if (haystack.includes('fish')) return '/assets/images/pet-fish.svg';
-        if (haystack.includes('rabbit')) return '/assets/images/pet-rabbit.svg';
-        if (haystack.includes('toy')) return '/assets/images/pet-toy.svg';
-        if (haystack.includes('food') || haystack.includes('treat')) return '/assets/images/pet-food.svg';
+        if (image && !/images\.unsplash\.com|via\.placeholder\.com|placeholder\.com/i.test(image)) {
+            return image;
+        }
+        if (haystack.includes('cat') || haystack.includes('mèo')) return '/assets/images/pet-cat.svg';
+        if (haystack.includes('bird') || haystack.includes('chim')) return '/assets/images/pet-bird.svg';
+        if (haystack.includes('fish') || haystack.includes('cá')) return '/assets/images/pet-fish.svg';
+        if (haystack.includes('rabbit') || haystack.includes('thỏ')) return '/assets/images/pet-rabbit.svg';
+        if (haystack.includes('toy') || haystack.includes('đồ chơi')) return '/assets/images/pet-toy.svg';
+        if (haystack.includes('food') || haystack.includes('treat') || haystack.includes('thức ăn')) return '/assets/images/pet-food.svg';
         return '/assets/images/pet-generic.svg';
     }
 
@@ -36,10 +41,10 @@ class ProductManager {
     renderCategoryDropdown() {
         const dropdowns = document.querySelectorAll('#searchCategory');
         dropdowns.forEach(dropdown => {
-            const currentOptions = dropdown.innerHTML;
-            dropdown.innerHTML = '<option value="all">Tất cả danh mục</option>' + 
-                this.categories.map(cat => `<option value="${cat._id}">${cat.name}</option>`).join('') +
-                currentOptions.replace(/<option[^>]*>All<\/option>/, '').replace(/<option[^>]*>Dogs<\/option>/, '').replace(/<option[^>]*>Cats<\/option>/, '').replace(/<option[^>]*>Birds<\/option>/, '').replace(/<option[^>]*>Fish<\/option>/, '').replace(/<option[^>]*>Small Pets<\/option>/, '').replace(/<option[^>]*>Reptiles<\/option>/, '');
+            dropdown.innerHTML = [
+                '<option value="all">Tất cả danh mục</option>',
+                ...this.categories.map(cat => `<option value="${cat._id}">${cat.name}</option>`)
+            ].join('');
         });
     }
 
@@ -100,14 +105,13 @@ class ProductManager {
 
     createProductCard(product) {
         const price = product.price || 0;
-        const originalPrice = product.originalPrice || product.salePrice;
+        const originalPrice = product.originalPrice || product.salePrice || 0;
         const discount = originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
         const image = this.productImage(product);
         const name = product.name || 'Sản phẩm';
         const rating = product.rating || 4.5;
         const reviewCount = product.reviewCount || 0;
         const productId = product._id || product.id;
-
         const stars = this.renderStars(rating);
 
         return `
@@ -120,17 +124,17 @@ class ProductManager {
                     <img src="${image}" alt="${name}" class="product-img" loading="lazy">
                 </div>
                 <div class="product-info">
-                    <span class="product-brand">${product.brand || 'Petco Brand'}</span>
+                    <span class="product-brand">${product.brand || 'PetNest'}</span>
                     <h4 class="product-name"><a href="/pages/shop/product.html?id=${productId}">${name}</a></h4>
                     <div class="product-rating">
                         <div class="stars">${stars}</div>
                         <span>(${reviewCount})</span>
                     </div>
                     <div class="product-price">
-                        <span class="price-current">$${price.toFixed(2)}</span>
-                        ${originalPrice > price ? `<span class="price-old">$${originalPrice.toFixed(2)}</span>` : ''}
+                        <span class="price-current">${window.utils.formatPrice(price)}</span>
+                        ${originalPrice > price ? `<span class="price-old">${window.utils.formatPrice(originalPrice)}</span>` : ''}
                     </div>
-                    <div class="product-delivery"><i class="fas fa-truck"></i> Free 1-day delivery</div>
+                    <div class="product-delivery"><i class="fas fa-truck"></i> Giao nhanh trong ngày</div>
                 </div>
             </div>
         `;
@@ -152,14 +156,14 @@ class ProductManager {
 
     loadSampleProducts() {
         const sampleProducts = [
-            { _id: '1', name: 'Hạt cao cấp cho chó', price: 42.99, originalPrice: 54.99, rating: 4.5, reviewCount: 2456, images: ['/assets/images/pet-food.svg'] },
-            { _id: '2', name: 'Thức ăn trong nhà cho mèo', price: 38.49, rating: 5, reviewCount: 1892, images: ['/assets/images/pet-cat.svg'] },
-            { _id: '3', name: 'Bánh thưởng dinh dưỡng cho chó', price: 15.99, originalPrice: 21.99, rating: 4, reviewCount: 3221, images: ['/assets/images/pet-food.svg'] },
-            { _id: '4', name: 'Thức ăn cho chim Forti-Diet', price: 12.99, rating: 4.5, reviewCount: 567, images: ['/assets/images/pet-bird.svg'] },
-            { _id: '5', name: 'Thức ăn cá Tropical Flakes', price: 8.49, rating: 5, reviewCount: 4102, images: ['/assets/images/pet-fish.svg'] },
-            { _id: '6', name: 'Cỏ khô Timothy cho thỏ', price: 18.99, rating: 4.5, reviewCount: 892, images: ['/assets/images/pet-rabbit.svg'] },
-            { _id: '7', name: 'Đồ chơi Kong Classic cho chó', price: 16.99, rating: 5, reviewCount: 5678, images: ['/assets/images/pet-toy.svg'] },
-            { _id: '8', name: 'Đồ chơi đào bới cho mèo', price: 19.99, originalPrice: 24.99, rating: 4, reviewCount: 1234, images: ['/assets/images/pet-toy.svg'] }
+            { _id: '1', name: 'Hạt cao cấp cho chó', price: 429000, originalPrice: 549000, rating: 4.5, reviewCount: 2456, images: ['/assets/images/pet-food.svg'] },
+            { _id: '2', name: 'Thức ăn trong nhà cho mèo', price: 385000, rating: 5, reviewCount: 1892, images: ['/assets/images/pet-cat.svg'] },
+            { _id: '3', name: 'Bánh thưởng dinh dưỡng cho chó', price: 159000, originalPrice: 219000, rating: 4, reviewCount: 3221, images: ['/assets/images/pet-food.svg'] },
+            { _id: '4', name: 'Thức ăn cho chim Forti-Diet', price: 129000, rating: 4.5, reviewCount: 567, images: ['/assets/images/pet-bird.svg'] },
+            { _id: '5', name: 'Thức ăn cá Tropical Flakes', price: 85000, rating: 5, reviewCount: 4102, images: ['/assets/images/pet-fish.svg'] },
+            { _id: '6', name: 'Cỏ khô Timothy cho thỏ', price: 189000, rating: 4.5, reviewCount: 892, images: ['/assets/images/pet-rabbit.svg'] },
+            { _id: '7', name: 'Đồ chơi Kong Classic cho chó', price: 169000, rating: 5, reviewCount: 5678, images: ['/assets/images/pet-toy.svg'] },
+            { _id: '8', name: 'Đồ chơi đào bới cho mèo', price: 199000, originalPrice: 249000, rating: 4, reviewCount: 1234, images: ['/assets/images/pet-toy.svg'] }
         ];
         this.renderProducts(sampleProducts);
     }
@@ -174,7 +178,7 @@ class ProductManager {
             }
             return response.data?.products || response.data || [];
         } catch (error) {
-            console.error('Search failed:', error);
+            console.error('Không thể tìm kiếm sản phẩm:', error);
             return [];
         }
     }
@@ -184,7 +188,7 @@ class ProductManager {
             const response = await this.guestApi.getProductReviews(productId, { page, limit: 10 });
             return response.data || { reviews: [], ratingStats: {} };
         } catch (error) {
-            console.error('Failed to load reviews:', error);
+            console.error('Không thể tải đánh giá:', error);
             return { reviews: [], ratingStats: {} };
         }
     }
