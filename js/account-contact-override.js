@@ -834,4 +834,38 @@
     renderWishlistView = window.renderWishlistView;
     renderNotificationsView = renderNotificationsViewOverride;
     renderResetPasswordView = renderResetPasswordViewOverride;
+
+    function rerenderBuyerRouteIfNeeded() {
+        if (typeof parseHashRoute !== 'function') return;
+        const { route } = parseHashRoute();
+        const supportedRoutes = new Set([
+            'account',
+            'contact',
+            'orders',
+            'service-bookings',
+            'wishlist',
+            'notifications',
+            'reset-password'
+        ]);
+
+        if (!supportedRoutes.has(route)) {
+            return;
+        }
+
+        const rerender = typeof window.renderHashView === 'function'
+            ? window.renderHashView
+            : (typeof renderHashView === 'function' ? renderHashView : null);
+
+        if (typeof rerender === 'function') {
+            Promise.resolve()
+                .then(() => rerender())
+                .catch((error) => console.warn('Buyer UI rerender skipped:', error));
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', rerenderBuyerRouteIfNeeded, { once: true });
+    } else {
+        setTimeout(rerenderBuyerRouteIfNeeded, 0);
+    }
 })();

@@ -1,5 +1,11 @@
-2026/04/18-22:15:19.410 55b8 Reusing MANIFEST D:\pet shop\.edge-headless\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
-2026/04/18-22:15:19.411 55b8 Recovering log #27
-2026/04/18-22:15:19.411 55b8 Reusing old log D:\pet shop\.edge-headless\Default\EdgeCoupons/coupons_data.db/000027.log 
-2026/04/18-22:15:19.416 5a6c Level-0 table #31: started
-2026/04/18-22:15:19.422 5a6c Level-0 table #31: 682280 bytes OK
+2026/04/20-23:15:31.910 3f7c Reusing MANIFEST D:\pet shop\.edge-headless\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/04/20-23:15:31.922 3f7c Recovering log #27
+2026/04/20-23:15:31.966 3f7c Level-0 table #30: started
+2026/04/20-23:15:31.978 3f7c Level-0 table #30: 682280 bytes OK
+2026/04/20-23:15:31.978 3f7c Recovering log #30
+2026/04/20-23:15:31.979 3f7c Reusing old log D:\pet shop\.edge-headless\Default\EdgeCoupons/coupons_data.db/000030.log 
+2026/04/20-23:15:31.981 3f7c Delete type=0 #27
+2026/04/20-23:15:31.981 3f7c Delete type=2 #31
+2026/04/20-23:15:32.071 3624 Level-0 table #32: started
+2026/04/20-23:15:32.075 3624 Level-0 table #32: 682280 bytes OK
+2026/04/20-23:15:32.077 3624 Delete type=0 #30

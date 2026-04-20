@@ -45,7 +45,11 @@ const ORDER_STATUS_LABELS = {
     returned: 'Đã hoàn trả'
 };
 
-document.addEventListener('DOMContentLoaded', async () => {
+let sellerDashboardInitialized = false;
+
+async function initSellerDashboard() {
+    if (sellerDashboardInitialized) return;
+    sellerDashboardInitialized = true;
     if (!authManager.isLoggedIn() || !authManager.isSeller()) {
         authManager.showNotification('Vui lòng đăng nhập bằng tài khoản người bán', 'error');
         window.location.href = '/';
@@ -60,7 +64,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await loadSellerDashboard();
-});
+}
+
+function bootSellerDashboard() {
+    initSellerDashboard().catch((error) => {
+        console.error('Seller dashboard init failed', error);
+        authManager.showNotification(error.message || 'Khong the khoi tao trung tam nguoi ban', 'error');
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootSellerDashboard);
+} else {
+    bootSellerDashboard();
+}
 
 function bindDashboardShell() {
     const addProductTarget = authManager.hasSellerCenterAccess()
@@ -438,7 +455,7 @@ function renderRecentReviews(reviews) {
                     <span class="seller-review-stars">${renderStars(review.rating)}</span>
                 </div>
                 <p>${escapeHtml(review.product?.name || 'Sản phẩm')} · ${escapeHtml(review.comment || review.title || 'Không có nhận xét')}</p>
-                <small>${review.sellerReply?.comment ? 'Đã phản hồi' : 'Chưa phản hồi'} · ${formatDate(review.createdAt)}</small>
+                <small>${review.sellerReply?.comment ? 'Đã phản hồi' : 'Chưa phản hồi'} · ${formatDashboardDate(review.createdAt)}</small>
             </div>
         </article>
     `).join('');
@@ -459,7 +476,7 @@ function renderSettlements(settlements) {
                     <span class="seller-status-pill ${statusClass(settlement.status)}">${formatSettlementStatus(settlement.status)}</span>
                 </div>
                 <p>${escapeHtml(settlement.notes || 'Đơn đối soát / chuyển tiền cho shop')}</p>
-                <small>${formatDate(settlement.completedAt || settlement.createdAt)}</small>
+                <small>${formatDashboardDate(settlement.completedAt || settlement.createdAt)}</small>
             </div>
             <div class="seller-list-side">
                 <span class="seller-list-subtle">Phí sàn</span>
@@ -708,7 +725,7 @@ function formatMoney(value) {
     return sellerMoneyFormatter.format(Number(value || 0));
 }
 
-function formatDate(value) {
+function formatDashboardDate(value) {
     return value ? new Date(value).toLocaleString('vi-VN') : 'Chưa cập nhật';
 }
 

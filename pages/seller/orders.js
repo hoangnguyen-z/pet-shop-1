@@ -80,7 +80,12 @@ const sellerOrderMoneyFormatter = new Intl.NumberFormat('vi-VN', {
     maximumFractionDigits: 0
 });
 
-document.addEventListener('DOMContentLoaded', async () => {
+let sellerOrdersInitialized = false;
+
+async function initSellerOrdersPage() {
+    if (sellerOrdersInitialized) return;
+    sellerOrdersInitialized = true;
+
     if (!authManager.isLoggedIn() || !authManager.isSeller()) {
         authManager.showNotification('Vui lòng đăng nhập seller để vào quản lý đơn hàng', 'error');
         window.location.href = '/';
@@ -90,7 +95,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindSellerOrdersShell();
     hydrateSellerIdentity();
     await loadSellerOrdersPage({ refreshSummary: true });
-});
+}
+
+function bootSellerOrdersPage() {
+    initSellerOrdersPage().catch((error) => {
+        console.error('Seller orders init failed', error);
+        renderOrdersErrorState(error.message || 'Không thể khởi tạo trang đơn hàng.');
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootSellerOrdersPage);
+} else {
+    bootSellerOrdersPage();
+}
 
 function bindSellerOrdersShell() {
     document.getElementById('sellerSidebarToggle')?.addEventListener('click', () => {
@@ -669,7 +687,7 @@ function renderOrderDrawer(order) {
                     <div><dt>Tổng tiền đơn</dt><dd>${escapeHtml(formatOrderMoney(financial.grossAmount || 0))}</dd></div>
                     <div><dt>Phí sàn</dt><dd>${escapeHtml(formatOrderMoney(financial.platformFee || 0))}</dd></div>
                     <div><dt>Thực nhận</dt><dd>${escapeHtml(formatOrderMoney(financial.netAmount || 0))}</dd></div>
-                    <div><dt>Dự kiến đối soát</dt><dd>${escapeHtml(formatDateTime(financial.estimatedSettlementAt))}</dd></div>
+                    <div><dt>Dự kiến đối soát</dt><dd>${escapeHtml(formatOrderDateTime(financial.estimatedSettlementAt))}</dd></div>
                 </dl>
             </article>
         </section>
@@ -733,7 +751,7 @@ function buildOrderTimeline(order) {
             <span class="seller-orders-activity-dot ${statusBadgeClass(entry.status)}"></span>
             <div>
                 <strong>${escapeHtml(ORDER_STATUS_LABELS[entry.status] || formatLabel(entry.status))}</strong>
-                <span>${escapeHtml(entry.note || 'Không có ghi chú')} · ${escapeHtml(formatDateTime(entry.updatedAt))}</span>
+                <span>${escapeHtml(entry.note || 'Không có ghi chú')} · ${escapeHtml(formatOrderDateTime(entry.updatedAt))}</span>
             </div>
         </li>
     `).join('');
@@ -752,7 +770,7 @@ function exportSellerOrdersReport() {
         return [
             order.orderNumber || order._id,
             getBuyerName(order),
-            formatDateTime(order.createdAt),
+            formatOrderDateTime(order.createdAt),
             String(financial.grossAmount || 0),
             getSellerOrderStatus(order),
             financial.paymentStatus || '',
@@ -848,7 +866,7 @@ function formatShortDate(value) {
     return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(value));
 }
 
-function formatDateTime(value) {
+function formatOrderDateTime(value) {
     if (!value) return 'Chưa có dữ liệu';
     return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 }

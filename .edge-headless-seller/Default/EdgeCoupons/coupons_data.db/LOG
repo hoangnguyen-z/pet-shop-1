@@ -1,0 +1,4 @@
+2026/04/20-23:43:15.656 4b88 Creating DB D:\pet shop\.edge-headless-seller\Default\EdgeCoupons/coupons_data.db since it was missing.
+2026/04/20-23:43:15.664 4b88 Reusing MANIFEST D:\pet shop\.edge-headless-seller\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/04/20-23:43:15.669 46ec Level-0 table #5: started
+2026/04/20-23:43:15.675 46ec Level-0 table #5: 682109 bytes OK

@@ -1,22 +1,5 @@
-2026/04/18-22:14:50.888 3064 Reusing MANIFEST D:\pet shop\.edge-headless\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
-2026/04/18-22:14:50.895 3064 Recovering log #23
-2026/04/18-22:14:50.906 3064 Level-0 table #25: started
-2026/04/18-22:14:50.929 3064 Level-0 table #25: 682212 bytes OK
-2026/04/18-22:14:50.932 3064 Recovering log #25
-2026/04/18-22:14:50.933 3064 Reusing old log D:\pet shop\.edge-headless\Default\EdgeCoupons/coupons_data.db/000025.log 
-2026/04/18-22:14:50.939 3064 Delete type=0 #23
-2026/04/18-22:14:50.939 3064 Delete type=2 #24
-2026/04/18-22:14:50.939 3064 Delete type=2 #26
-2026/04/18-22:14:50.942 50ac Compacting 6@0 + 0@1 files
-2026/04/18-22:14:50.953 50ac Generated table #26@0: 4 keys, 682235 bytes
-2026/04/18-22:14:50.953 50ac Compacted 6@0 + 0@1 files => 682235 bytes
-2026/04/18-22:14:50.956 50ac compacted to: files[ 0 1 0 0 0 0 0 ]
-2026/04/18-22:14:50.957 50ac Delete type=2 #3
-2026/04/18-22:14:50.957 50ac Delete type=2 #17
-2026/04/18-22:14:50.957 50ac Delete type=2 #19
-2026/04/18-22:14:50.957 50ac Delete type=2 #21
-2026/04/18-22:14:50.957 50ac Delete type=2 #23
-2026/04/18-22:14:50.957 50ac Delete type=2 #25
-2026/04/18-22:14:51.087 50fc Level-0 table #28: started
-2026/04/18-22:14:51.095 50fc Level-0 table #28: 682212 bytes OK
-2026/04/18-22:14:51.103 50fc Delete type=0 #25
+2026/04/18-22:15:19.410 55b8 Reusing MANIFEST D:\pet shop\.edge-headless\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/04/18-22:15:19.411 55b8 Recovering log #27
+2026/04/18-22:15:19.411 55b8 Reusing old log D:\pet shop\.edge-headless\Default\EdgeCoupons/coupons_data.db/000027.log 
+2026/04/18-22:15:19.416 5a6c Level-0 table #31: started
+2026/04/18-22:15:19.422 5a6c Level-0 table #31: 682280 bytes OK

@@ -1,2 +1,3 @@
-2026/04/18-22:14:50.815 10f4 Creating DB D:\pet shop\.edge-headless\Default\EntityExtractionAssetStore.db since it was missing.
-2026/04/18-22:14:50.887 10f4 Reusing MANIFEST D:\pet shop\.edge-headless\Default\EntityExtractionAssetStore.db/MANIFEST-000001
+2026/04/20-23:15:31.901 48b8 Reusing MANIFEST D:\pet shop\.edge-headless\Default\EntityExtractionAssetStore.db/MANIFEST-000001
+2026/04/20-23:15:31.910 48b8 Recovering log #3
+2026/04/20-23:15:31.911 48b8 Reusing old log D:\pet shop\.edge-headless\Default\EntityExtractionAssetStore.db/000003.log 
