@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Order, Product, Review, Coupon, OrderLog } = require('../models');
+const ReturnRequest = require('../models/admin/Return');
 const { authenticate } = require('../middleware/auth');
 const { getPaginationMeta } = require('../middleware/pagination');
 const { sendSuccess, sendCreated } = require('../middleware/responseHandler');
@@ -202,6 +203,101 @@ router.post('/:orderId/reviews/:productId', asyncHandler(async (req, res) => {
     await product.save();
 
     sendCreated(res, review, 'Review created');
+}));
+
+router.post('/:id/return-request', asyncHandler(async (req, res) => {
+    const { reason, description = '', images = [], items = [], resolution = 'refund' } = req.body;
+
+    if (!String(reason || '').trim()) {
+        throw ApiError.badRequest('Return reason is required');
+    }
+
+    const order = await Order.findOne({
+        _id: req.params.id,
+        buyer: req.user.id,
+        isDeleted: false
+    }).populate('items.product', 'name images thumbnail');
+
+    if (!order) {
+        throw ApiError.notFound('Order not found');
+    }
+
+    const eligibleStatuses = [ORDER_STATUS.SHIPPING, ORDER_STATUS.DELIVERED, ORDER_STATUS.COMPLETED];
+    const currentStatus = order.orderStatus || order.status;
+    if (!eligibleStatuses.includes(currentStatus)) {
+        throw ApiError.badRequest('Order is not eligible for a return request yet');
+    }
+
+    const existingRequest = await ReturnRequest.findOne({ order: order._id }).sort({ createdAt: -1 });
+    if (existingRequest && !['rejected', 'rejected_inspection'].includes(existingRequest.status)) {
+        throw ApiError.badRequest('A return request for this order is already being processed');
+    }
+
+    const selectedProductIds = new Set(
+        (Array.isArray(items) ? items : [])
+            .map((item) => String(item.productId || item.product || '').trim())
+            .filter(Boolean)
+    );
+
+    const selectedOrderItems = (order.items || []).filter((item) => selectedProductIds.has(String(item.product?._id || item.product)));
+    if (!selectedOrderItems.length) {
+        throw ApiError.badRequest('Please select at least one product to return');
+    }
+
+    const returnItems = selectedOrderItems.map((item) => ({
+        product: item.product?._id || item.product,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        reason
+    }));
+
+    const refundAmount = returnItems.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 0)), 0);
+    const shopId = selectedOrderItems[0]?.shop;
+
+    const request = await ReturnRequest.create({
+        order: order._id,
+        buyer: req.user.id,
+        shop: shopId,
+        items: returnItems,
+        reason,
+        description: [description, `Requested resolution: ${resolution}`].filter(Boolean).join('\n'),
+        images: Array.isArray(images) ? images : [],
+        refundAmount,
+        status: 'pending'
+    });
+
+    syncOrderState(order, {
+        orderStatus: ORDER_STATUS.RETURN_PENDING,
+        paymentStatus: order.paymentStatus
+    });
+    order.items = (order.items || []).map((item) => {
+        if (selectedProductIds.has(String(item.product?._id || item.product))) {
+            item.shopStatus = ORDER_STATUS.RETURN_PENDING;
+        }
+        return item;
+    });
+    order.statusHistory.push({
+        status: ORDER_STATUS.RETURN_PENDING,
+        note: `Buyer requested return: ${reason}`,
+        updatedBy: req.user.id
+    });
+    await order.save();
+
+    await writeOrderLog({
+        orderId: order._id,
+        event: 'return_requested',
+        actorType: 'buyer',
+        actorId: req.user.id,
+        message: `Buyer requested return for order ${order.orderNumber}`,
+        data: {
+            reason,
+            resolution,
+            itemCount: returnItems.length
+        }
+    });
+
+    sendCreated(res, request, 'Return request created successfully');
 }));
 
 router.put('/:id/cancel', asyncHandler(async (req, res) => {

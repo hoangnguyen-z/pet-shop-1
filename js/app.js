@@ -3110,6 +3110,16 @@ async function renderOrderDetailView(orderId) {
     const order = response.data;
     const continuePaymentHash = buildContinuePaymentHash(order);
     const canContinuePayment = !!continuePaymentHash && !['paid', 'refunded'].includes(normalizeStatus(getPaymentStatus(order)));
+    const orderStatus = getOrderStatus(order);
+    const canRequestReturn = ['shipping', 'delivered', 'completed'].includes(orderStatus);
+    const returnReasons = [
+        { value: 'damaged', label: 'Sản phẩm lỗi / hỏng' },
+        { value: 'wrong_item', label: 'Sai sản phẩm' },
+        { value: 'missing_item', label: 'Thiếu sản phẩm' },
+        { value: 'not_as_described', label: 'Hàng không đúng mô tả' },
+        { value: 'suspected_fake', label: 'Nghi ngờ hàng giả / kém chất lượng' },
+        { value: 'other', label: 'Lý do khác' }
+    ];
     setSpaContent(`Order #${order.orderNumber || order._id}`, `
         <div class="order-detail-layout">
             <section class="account-content">
@@ -3188,6 +3198,37 @@ async function renderOrderDetailView(orderId) {
                     `).join('') || '<p>Chưa có nhật ký hoạt động.</p>'}
                 </div>
                 ${['pending', 'confirmed'].includes(getOrderStatus(order)) ? `<button class="btn btn-secondary cancel-order" data-order-id="${order._id}">Hủy đơn</button>` : ''}
+                ${canRequestReturn ? `<button class="btn btn-secondary order-return-toggle" data-order-id="${order._id}" type="button">Trả hàng</button>` : ''}
+                ${canRequestReturn ? `
+                    <form id="orderReturnForm" class="order-return-form" style="display:none; margin-top:16px;">
+                        <h3 style="margin:0 0 10px;">Yêu cầu trả hàng</h3>
+                        <div style="display:grid; gap:10px;">
+                            <div>
+                                <strong>Chọn sản phẩm cần trả</strong>
+                                <div style="display:grid; gap:8px; margin-top:8px;">
+                                    ${(order.items || []).map((item) => `
+                                        <label style="display:flex; gap:10px; align-items:flex-start;">
+                                            <input type="checkbox" name="returnProduct" value="${escapeHtml(item.product?._id || item.product || '')}">
+                                            <span>${escapeHtml(item.name || 'Sản phẩm')} · SL ${escapeHtml(String(item.quantity || 1))}</span>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <select name="reason" required>
+                                <option value="">Chọn lý do trả hàng</option>
+                                ${returnReasons.map((entry) => `<option value="${entry.value}">${entry.label}</option>`).join('')}
+                            </select>
+                            <select name="resolution">
+                                <option value="refund">Hoàn tiền</option>
+                                <option value="exchange">Đổi sản phẩm</option>
+                                <option value="return_refund">Trả hàng hoàn tiền</option>
+                            </select>
+                            <textarea name="description" rows="4" placeholder="Mô tả chi tiết tình trạng hàng hóa, vấn đề bạn gặp phải và mong muốn xử lý"></textarea>
+                            <input name="evidence" type="text" placeholder="Link ảnh/video minh chứng (nếu có)">
+                            <button class="btn btn-primary" type="submit">Gửi yêu cầu trả hàng</button>
+                        </div>
+                    </form>
+                ` : ''}
             </aside>
         </div>
     `);
@@ -3210,6 +3251,45 @@ async function renderOrderDetailView(orderId) {
             authManager.showNotification('Đã gửi đánh giá thành công.', 'success');
             renderOrderDetailView(order._id);
         });
+    });
+
+    document.querySelector('.order-return-toggle')?.addEventListener('click', () => {
+        const form = document.getElementById('orderReturnForm');
+        if (!form) return;
+        form.style.display = form.style.display === 'none' ? 'grid' : 'none';
+    });
+
+    document.getElementById('orderReturnForm')?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const selectedItems = formData.getAll('returnProduct').map((productId) => ({ productId }));
+        if (!selectedItems.length) {
+            authManager.showNotification('Hãy chọn ít nhất một sản phẩm cần trả hàng.', 'error');
+            return;
+        }
+
+        const reasonMap = {
+            damaged: 'Sản phẩm lỗi / hỏng',
+            wrong_item: 'Sai sản phẩm',
+            missing_item: 'Thiếu sản phẩm',
+            not_as_described: 'Hàng không đúng mô tả',
+            suspected_fake: 'Nghi ngờ hàng giả / kém chất lượng',
+            other: 'Lý do khác'
+        };
+
+        try {
+            await api.requestOrderReturn(order._id, {
+                items: selectedItems,
+                reason: reasonMap[formData.get('reason')] || formData.get('reason') || 'Lý do khác',
+                description: formData.get('description') || '',
+                resolution: formData.get('resolution') || 'refund',
+                images: formData.get('evidence') ? [formData.get('evidence')] : []
+            });
+            authManager.showNotification('Đã gửi yêu cầu trả hàng. Sàn sẽ tiếp tục giữ tiền cho đến khi xử lý xong.', 'success');
+            renderOrderDetailView(order._id);
+        } catch (error) {
+            authManager.showNotification(error.message || 'Không thể gửi yêu cầu trả hàng.', 'error');
+        }
     });
 }
 

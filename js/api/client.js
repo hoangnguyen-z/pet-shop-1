@@ -361,6 +361,10 @@ class ApiClient {
         return this.post(`/orders/${orderId}/reviews/${productId}`, data);
     }
 
+    requestOrderReturn(id, data) {
+        return this.post(`/orders/${id}/return-request`, data);
+    }
+
     getMyShop() {
         return this.get('/shops/my-shop');
     }
@@ -687,7 +691,8 @@ api.buyerApi = {
     submitPaymentCallback: api.submitPaymentCallback.bind(api),
     cancelOrder: api.cancelOrder.bind(api),
     validateCoupon: api.validateCoupon.bind(api),
-    createReview: api.createReview.bind(api)
+    createReview: api.createReview.bind(api),
+    requestOrderReturn: api.requestOrderReturn.bind(api)
 };
 api.sellerApi = {
     getDashboard: api.getSellerDashboard.bind(api),

@@ -551,6 +551,7 @@
                 </div>
                 <div class="order-card-actions">
                     <a class="btn btn-secondary" href="#order?id=${escapeHtml(order._id || '')}">Xem chi tiết</a>
+                    ${['shipping', 'delivered', 'completed'].includes(String(order.orderStatus || order.status || '').toLowerCase()) ? `<a class="btn btn-secondary" href="#order?id=${escapeHtml(order._id || '')}">Trả hàng</a>` : ''}
                 </div>
             </article>
         `).join('');
