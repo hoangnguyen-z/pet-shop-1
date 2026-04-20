@@ -36,6 +36,47 @@ const generateTokens = (userId) => {
     return { accessToken, refreshToken };
 };
 
+function maskLinkedPaymentIdentifier(identifier = '') {
+    const cleaned = String(identifier || '').trim();
+    if (!cleaned) return '';
+
+    if (cleaned.includes('@')) {
+        const [name, domain] = cleaned.split('@');
+        const safeHead = name.slice(0, 2);
+        const safeTail = name.slice(-1);
+        return `${safeHead}${'*'.repeat(Math.max(name.length - 3, 2))}${safeTail}@${domain}`;
+    }
+
+    const compact = cleaned.replace(/\s+/g, '');
+    if (compact.length <= 4) return compact;
+    return `${'*'.repeat(Math.max(compact.length - 4, 4))}${compact.slice(-4)}`;
+}
+
+function sanitizeLinkedPaymentAccounts(accounts = []) {
+    if (!Array.isArray(accounts)) return [];
+
+    return accounts
+        .map((account) => ({
+            providerType: ['bank', 'wallet', 'gateway'].includes(account?.providerType) ? account.providerType : 'gateway',
+            providerCode: String(account?.providerCode || '').trim(),
+            providerName: String(account?.providerName || account?.providerCode || '').trim(),
+            accountName: String(account?.accountName || '').trim(),
+            accountIdentifier: String(account?.accountIdentifier || '').trim(),
+            accountMask: String(account?.accountMask || '').trim(),
+            isDefault: !!account?.isDefault,
+            savedAt: account?.savedAt || new Date()
+        }))
+        .filter((account) => account.providerCode && account.accountName && account.accountIdentifier)
+        .map((account) => ({
+            ...account,
+            accountMask: account.accountMask || maskLinkedPaymentIdentifier(account.accountIdentifier)
+        }))
+        .map((account, index, all) => ({
+            ...account,
+            isDefault: account.isDefault || (!all.some((item) => item.isDefault) && index === 0)
+        }));
+}
+
 const buyerRegisterValidation = [
     body('name')
         .trim()
@@ -478,6 +519,10 @@ router.put('/profile', authenticate, async (req, res, next) => {
                 updates[field] = req.body[field];
             }
         });
+
+        if (updates.linkedPaymentAccounts !== undefined) {
+            updates.linkedPaymentAccounts = sanitizeLinkedPaymentAccounts(updates.linkedPaymentAccounts);
+        }
 
         const user = await User.findByIdAndUpdate(
             req.user.id,

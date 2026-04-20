@@ -187,12 +187,12 @@ async function loadSellerOrdersPage({ refreshSummary = false } = {}) {
         sellerOrdersState.summaryOrders = summaryOrders;
         sellerOrdersState.stats = buildOrderFinanceStats(summaryOrders);
 
-        renderOrdersStats();
-        renderOrdersTable();
-        renderOrdersPagination();
-        renderRecentOrderActivity();
-        renderOrdersTip();
-        updateOrdersNotificationState();
+        safelyRenderSellerOrdersPanel(renderOrdersStats, 'renderOrdersStats');
+        safelyRenderSellerOrdersPanel(renderOrdersTable, 'renderOrdersTable');
+        safelyRenderSellerOrdersPanel(renderOrdersPagination, 'renderOrdersPagination');
+        safelyRenderSellerOrdersPanel(renderRecentOrderActivity, 'renderRecentOrderActivity');
+        safelyRenderSellerOrdersPanel(renderOrdersTip, 'renderOrdersTip');
+        safelyRenderSellerOrdersPanel(updateOrdersNotificationState, 'updateOrdersNotificationState');
 
         if (sellerOrdersState.selectedOrderId) {
             await openSellerOrderDetail(sellerOrdersState.selectedOrderId, { silent: true });
@@ -231,7 +231,7 @@ async function fetchVisibleOrders() {
         limit: sellerOrdersState.limit
     });
 
-    const meta = normalizeMeta(response.meta, sellerOrdersState.page, sellerOrdersState.limit);
+    const meta = normalizeMeta(response.meta || response.pagination, sellerOrdersState.page, sellerOrdersState.limit);
     if (meta.totalPages && sellerOrdersState.page > meta.totalPages) {
         sellerOrdersState.page = meta.totalPages;
         return fetchVisibleOrders();
@@ -241,6 +241,14 @@ async function fetchVisibleOrders() {
         orders: response.data || [],
         meta
     };
+}
+
+function safelyRenderSellerOrdersPanel(renderFn, label) {
+    try {
+        renderFn();
+    } catch (error) {
+        console.error(`Seller orders panel failed: ${label}`, error);
+    }
 }
 
 async function fetchOrderSummaryOrders() {
@@ -429,6 +437,7 @@ function renderOrdersPagination() {
 
 function renderRecentOrderActivity() {
     const activityList = document.getElementById('ordersActivityList');
+    if (!activityList) return;
     const activities = (sellerOrdersState.summaryOrders || [])
         .map((order) => getLatestOrderEvent(order))
         .filter(Boolean)
@@ -467,8 +476,9 @@ function renderOrdersTip() {
 }
 
 function updateOrdersNotificationState() {
-    document.getElementById('ordersNotificationDot').style.display =
-        Number(sellerOrdersState.stats?.pendingActionCount || 0) > 0 ? 'block' : 'none';
+    const dot = document.getElementById('ordersNotificationDot');
+    if (!dot) return;
+    dot.style.display = Number(sellerOrdersState.stats?.pendingActionCount || 0) > 0 ? 'block' : 'none';
 }
 
 function handleOrdersTableClick(event) {

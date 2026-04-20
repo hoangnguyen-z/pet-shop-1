@@ -643,15 +643,15 @@ function isSellerBuyingBlocked() {
 function buildCatalogActionButtons(productId) {
     if (isSellerBuyingBlocked()) {
         return `
-            <a class="btn btn-secondary btn-small" href="#product?id=${productId}" onclick="return window.handleProductAction && window.handleProductAction('view', '${productId}')">View details</a>
+            <a class="btn btn-secondary btn-small" href="#product?id=${productId}">View details</a>
             <a class="btn btn-secondary btn-small" href="/pages/seller/dashboard.html">Seller dashboard</a>
         `;
     }
 
     return `
-        <a class="btn btn-secondary btn-small" href="#product?id=${productId}" onclick="return window.handleProductAction && window.handleProductAction('view', '${productId}')">View details</a>
-        <button class="btn btn-primary btn-small quick-add" type="button" data-product-action="quick-add" data-product-id="${productId}" onclick="event.preventDefault(); event.stopPropagation(); return window.handleProductAction && window.handleProductAction('quick-add', '${productId}')">Add to cart</button>
-        <button class="btn btn-secondary btn-small" type="button" data-product-action="buy-now" data-product-id="${productId}" onclick="event.preventDefault(); event.stopPropagation(); return window.handleProductAction && window.handleProductAction('buy-now', '${productId}')">Buy now</button>
+        <a class="btn btn-secondary btn-small" href="#product?id=${productId}">View details</a>
+        <button class="btn btn-primary btn-small quick-add" type="button" data-product-action="quick-add" data-product-id="${productId}">Add to cart</button>
+        <button class="btn btn-secondary btn-small" type="button" data-product-action="buy-now" data-product-id="${productId}">Buy now</button>
     `;
 }
 

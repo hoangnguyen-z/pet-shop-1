@@ -54,9 +54,9 @@
                     </div>
                     <div class="product-delivery"><i class="fas fa-truck"></i> Fast delivery today</div>
                     <div class="product-card-actions">
-                        <a class="btn btn-secondary btn-small" href="#product?id=${encodeURIComponent(productId)}" onclick="return window.handleProductAction && window.handleProductAction('view', '${productId}')">View details</a>
-                        <button class="btn btn-primary btn-small" type="button" data-product-action="quick-add" data-product-id="${productId}" onclick="event.preventDefault(); event.stopPropagation(); return window.handleProductAction && window.handleProductAction('quick-add', '${productId}')">Add to cart</button>
-                        <button class="btn btn-secondary btn-small" type="button" data-product-action="buy-now" data-product-id="${productId}" onclick="event.preventDefault(); event.stopPropagation(); return window.handleProductAction && window.handleProductAction('buy-now', '${productId}')">Buy now</button>
+                        <a class="btn btn-secondary btn-small" href="#product?id=${encodeURIComponent(productId)}">View details</a>
+                        <button class="btn btn-primary btn-small" type="button" data-product-action="quick-add" data-product-id="${productId}">Add to cart</button>
+                        <button class="btn btn-secondary btn-small" type="button" data-product-action="buy-now" data-product-id="${productId}">Buy now</button>
                     </div>
                 </div>
             </div>
@@ -119,48 +119,6 @@
                 const href = link.getAttribute('href');
                 if (!href) return;
                 window.location.hash = href.slice(1);
-            });
-        });
-
-        scope.querySelectorAll('[data-product-action="quick-add"]').forEach((button) => {
-            if (button.dataset.bound === 'true') return;
-            button.dataset.bound = 'true';
-            button.addEventListener('click', async (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                const productId = button.dataset.productId;
-                if (!productId) return;
-
-                try {
-                    if (typeof window.addToCart === 'function') {
-                        await window.addToCart(productId);
-                    } else if (typeof addToCart === 'function') {
-                        await addToCart(productId);
-                    } else if (window.cartManager?.addToCart) {
-                        await window.cartManager.addToCart(productId, 1);
-                    }
-                } catch (error) {
-                    console.error('Add to cart failed:', error);
-                }
-            });
-        });
-
-        scope.querySelectorAll('[data-product-action="buy-now"]').forEach((button) => {
-            if (button.dataset.bound === 'true') return;
-            button.dataset.bound = 'true';
-            button.addEventListener('click', async (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                const productId = button.dataset.productId;
-                if (!productId) return;
-
-                if (typeof window.buyNow === 'function') {
-                    await window.buyNow(productId);
-                } else if (typeof buyNow === 'function') {
-                    await buyNow(productId);
-                } else {
-                    window.location.hash = `product?id=${encodeURIComponent(productId)}`;
-                }
             });
         });
     }

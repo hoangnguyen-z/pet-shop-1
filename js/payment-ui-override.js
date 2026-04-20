@@ -56,6 +56,19 @@
         return response?.data?.user || response?.data || {};
     }
 
+    function syncBuyerProfile(user = {}, nextAccounts = []) {
+        user.linkedPaymentAccounts = nextAccounts;
+        try {
+            const raw = localStorage.getItem('user');
+            if (!raw) return;
+            const currentUser = JSON.parse(raw);
+            currentUser.linkedPaymentAccounts = nextAccounts;
+            localStorage.setItem('user', JSON.stringify(currentUser));
+        } catch (error) {
+            console.warn('Không thể đồng bộ tài khoản thanh toán trong localStorage:', error);
+        }
+    }
+
     function setInlineMessage(element, message = '', type = '') {
         if (!element) return;
         element.textContent = message;
@@ -454,8 +467,20 @@
                 nextAccounts.unshift(draft);
             }
 
-            await api.updateProfile({ linkedPaymentAccounts: nextAccounts });
-            user.linkedPaymentAccounts = nextAccounts;
+            const profileResponse = await api.updateProfile({ linkedPaymentAccounts: nextAccounts });
+            const persistedAccounts = normalizeLinkedAccounts(profileResponse?.data?.linkedPaymentAccounts || nextAccounts);
+            nextAccounts = persistedAccounts;
+            syncBuyerProfile(user, persistedAccounts);
+
+            const persistedDraft = nextAccounts.find((item) => (
+                item.providerType !== 'bank'
+                && item.providerCode === draft.providerCode
+                && item.accountIdentifier === draft.accountIdentifier
+            ));
+            if (persistedDraft) {
+                persistSelectedLinkedAccount(persistedDraft);
+                return { account: persistedDraft, accounts: nextAccounts };
+            }
         }
 
         persistSelectedLinkedAccount(draft);
@@ -508,8 +533,20 @@
                 nextAccounts.unshift(draft);
             }
 
-            await api.updateProfile({ linkedPaymentAccounts: nextAccounts });
-            user.linkedPaymentAccounts = nextAccounts;
+            const profileResponse = await api.updateProfile({ linkedPaymentAccounts: nextAccounts });
+            const persistedAccounts = normalizeLinkedAccounts(profileResponse?.data?.linkedPaymentAccounts || nextAccounts);
+            nextAccounts = persistedAccounts;
+            syncBuyerProfile(user, persistedAccounts);
+
+            const persistedDraft = nextAccounts.find((account) => (
+                account.providerType === 'bank'
+                && account.providerCode === draft.providerCode
+                && account.accountIdentifier === draft.accountIdentifier
+            ));
+            if (persistedDraft) {
+                persistSelectedLinkedAccount(persistedDraft);
+                return { account: persistedDraft, accounts: nextAccounts };
+            }
         }
 
         persistSelectedLinkedAccount(draft);

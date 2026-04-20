@@ -69,6 +69,9 @@ function bindDashboardShell() {
     const orderTarget = authManager.hasSellerCenterAccess()
         ? '/pages/seller/orders.html'
         : '/pages/account/seller-application.html';
+    const productTarget = authManager.hasSellerCenterAccess()
+        ? '/pages/seller/products.html'
+        : '/pages/account/seller-application.html';
 
     document.querySelectorAll('[data-dashboard-add-product]').forEach((button) => {
         button.addEventListener('click', () => {
@@ -83,7 +86,23 @@ function bindDashboardShell() {
     });
 
     document.querySelectorAll('[data-dashboard-logout]').forEach((button) => {
-        button.addEventListener('click', () => authManager.logout());
+        button.addEventListener('click', () => {
+            if (typeof authManager?.logout === 'function') {
+                authManager.logout();
+                return;
+            }
+
+            try {
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('user');
+                localStorage.removeItem('shop');
+            } catch (error) {
+                console.warn('Failed to clear seller auth state', error);
+            }
+
+            window.location.href = '/';
+        });
     });
 
     document.getElementById('dashboardNotificationButton')?.addEventListener('click', () => {
@@ -101,14 +120,19 @@ function bindDashboardShell() {
     });
 
     document.getElementById('dashboardExportButton')?.addEventListener('click', exportDashboardReport);
-    document.getElementById('dashboardManageProductsButton')?.addEventListener('click', () => {
-        window.location.href = authManager.hasSellerCenterAccess()
-            ? '/pages/seller/products.html'
-            : '/pages/account/seller-application.html';
+    document.getElementById('dashboardManageProductsButton')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        window.location.href = productTarget;
     });
-    document.getElementById('dashboardGoStorefrontButton')?.addEventListener('click', openStorefront);
+    document.getElementById('dashboardGoStorefrontButton')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        openStorefront();
+    });
     document.getElementById('dashboardOpenStoreButton')?.addEventListener('click', openStorefront);
     document.getElementById('walletRequestSettlementButton')?.addEventListener('click', requestSettlement);
+
+    document.getElementById('dashboardManageProductsButton')?.setAttribute('href', productTarget);
+    document.getElementById('dashboardGoStorefrontButton')?.setAttribute('href', '/#shop');
 
     document.getElementById('sellerSidebarToggle')?.addEventListener('click', () => {
         document.body.classList.toggle('seller-sidebar-open');
@@ -594,7 +618,7 @@ function exportDashboardReport() {
 }
 
 function openStorefront() {
-    const shopId = sellerDashboardState.data?.shop?._id;
+    const shopId = sellerDashboardState.data?.shop?._id || authManager.shop?._id;
     window.location.href = shopId ? `/#shop-detail?id=${shopId}` : '/#shop';
 }
 

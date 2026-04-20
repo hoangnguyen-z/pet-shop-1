@@ -511,6 +511,21 @@
         });
     }
 
+    async function renderAccountSectionView(sectionId, navSelector) {
+        await renderAccountViewExpandedOverride();
+        const section = document.getElementById(sectionId);
+        const navButton = navSelector ? document.querySelector(navSelector) : null;
+
+        document.querySelectorAll('.buyer-account-nav-link').forEach((item) => item.classList.remove('is-active'));
+        if (navButton) navButton.classList.add('is-active');
+
+        if (section) {
+            requestAnimationFrame(() => {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    }
+
     function renderBuyerOrdersSection(orders = []) {
         if (!orders.length) {
             return `<div class="buyer-address-empty"><strong>Bạn chưa có đơn hàng nào.</strong><p>Khi phát sinh đơn hàng mới, thông tin sẽ hiển thị tại đây.</p></div>`;
@@ -805,12 +820,18 @@
     window.renderAccountView = renderAccountViewExpandedOverride;
     window.renderAccountViewOverride = renderAccountViewBase;
     window.renderContactView = renderContactViewCleanOverride;
+    window.renderOrdersView = () => renderAccountSectionView('buyerAccountOrdersSection', '[data-account-extra-nav="orders"]');
+    window.renderCareServiceBookingsView = () => renderAccountSectionView('buyerAccountCareSection', '[data-account-extra-nav="care"]');
+    window.renderWishlistView = () => renderAccountSectionView('buyerAccountWishlistSection', '[data-account-extra-nav="wishlist"]');
     window.renderNotificationsView = renderNotificationsViewOverride;
     window.renderResetPasswordView = renderResetPasswordViewOverride;
     renderAddressRows = renderAddressRowsOverride;
     renderAccountView = renderAccountViewExpandedOverride;
     renderAccountViewOverride = renderAccountViewBase;
     renderContactView = renderContactViewCleanOverride;
+    renderOrdersView = window.renderOrdersView;
+    renderCareServiceBookingsView = window.renderCareServiceBookingsView;
+    renderWishlistView = window.renderWishlistView;
     renderNotificationsView = renderNotificationsViewOverride;
     renderResetPasswordView = renderResetPasswordViewOverride;
 })();

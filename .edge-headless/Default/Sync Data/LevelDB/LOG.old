@@ -1,3 +1,3 @@
-2026/04/18-22:15:17.446 5a6c Reusing MANIFEST D:\pet shop\.edge-headless\Default\Sync Data\LevelDB/MANIFEST-000001
-2026/04/18-22:15:17.450 5a6c Recovering log #3
-2026/04/18-22:15:17.451 5a6c Reusing old log D:\pet shop\.edge-headless\Default\Sync Data\LevelDB/000003.log 
+2026/04/18-22:45:38.511 5214 Reusing MANIFEST D:\pet shop\.edge-headless\Default\Sync Data\LevelDB/MANIFEST-000001
+2026/04/18-22:45:38.514 5214 Recovering log #3
+2026/04/18-22:45:38.514 5214 Reusing old log D:\pet shop\.edge-headless\Default\Sync Data\LevelDB/000003.log 
