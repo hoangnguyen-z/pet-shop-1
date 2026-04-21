@@ -2,3 +2,4 @@
 .env
 backend/.env
 backend/node_modules/
+.edge-headless-admin/

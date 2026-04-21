@@ -560,7 +560,7 @@
             await api(section.endpoint, { method: 'POST', body: payload });
             notify('Đã tạo mới');
             await loadSection(section.id);
-        });
+        }, { section });
     }
 
     function editRecord(section, row) {
@@ -569,7 +569,7 @@
             await api(`${section.endpoint}/${row._id}`, { method: 'PUT', body: payload });
             notify('Đã cập nhật');
             await loadSection(section.id);
-        });
+        }, { section });
     }
 
     function deleteRecord(section, row) {
@@ -581,30 +581,186 @@
         };
     }
 
-    function openJson(title, payload, onSave) {
+    function humanizeKey(key) {
+        return String(key || '')
+            .replace(/([a-z])([A-Z])/g, '$1 $2')
+            .replace(/[_-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .replace(/^./, char => char.toUpperCase());
+    }
+
+    function isObject(value) {
+        return value && typeof value === 'object' && !Array.isArray(value);
+    }
+
+    function formatDateTimeLocalValue(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+        return local.toISOString().slice(0, 16);
+    }
+
+    function detectFieldType(key, value) {
+        if (typeof value === 'boolean') return 'checkbox';
+        if (typeof value === 'number') return 'number';
+        if (Array.isArray(value) || isObject(value)) return 'json';
+        if (/password/i.test(key)) return 'password';
+        if (/email/i.test(key)) return 'email';
+        if (/url|image|logo|banner|website|link/i.test(key)) return 'url';
+        if (/date|at$/i.test(key)) return 'datetime-local';
+        if (/description|content|excerpt|note|reason|response|seo/i.test(key)) return 'textarea';
+        return 'text';
+    }
+
+    function renderModalField(key, value) {
+        const type = detectFieldType(key, value);
+        const id = `field_${key}`;
+        if (type === 'checkbox') {
+            return `
+                <label class="field field-inline" for="${id}">
+                    <span>${escapeHtml(humanizeKey(key))}</span>
+                    <input id="${id}" name="${escapeHtml(key)}" type="checkbox" ${value ? 'checked' : ''}>
+                </label>
+            `;
+        }
+        if (type === 'textarea') {
+            return `
+                <label class="field" for="${id}">
+                    <span>${escapeHtml(humanizeKey(key))}</span>
+                    <textarea id="${id}" name="${escapeHtml(key)}">${escapeHtml(value ?? '')}</textarea>
+                </label>
+            `;
+        }
+        if (type === 'json') {
+            return `
+                <label class="field" for="${id}">
+                    <span>${escapeHtml(humanizeKey(key))}</span>
+                    <textarea id="${id}" name="${escapeHtml(key)}" data-field-type="json">${escapeHtml(JSON.stringify(value ?? (Array.isArray(value) ? [] : {}), null, 2))}</textarea>
+                </label>
+            `;
+        }
+        const inputValue = type === 'datetime-local'
+            ? formatDateTimeLocalValue(value)
+            : value ?? '';
+        return `
+            <label class="field" for="${id}">
+                <span>${escapeHtml(humanizeKey(key))}</span>
+                <input id="${id}" name="${escapeHtml(key)}" type="${type}" value="${escapeHtml(inputValue)}">
+            </label>
+        `;
+    }
+
+    function parseModalValue(input, originalValue) {
+        if (input.type === 'checkbox') return input.checked;
+        if (input.dataset.fieldType === 'json') {
+            return input.value.trim() ? JSON.parse(input.value) : (Array.isArray(originalValue) ? [] : {});
+        }
+        if (input.type === 'number') return input.value === '' ? 0 : Number(input.value);
+        if (input.type === 'datetime-local') return input.value ? new Date(input.value).toISOString() : null;
+        return input.value;
+    }
+
+    function serializePrimitive(value) {
+        if (value === null || value === undefined || value === '') return '<span class="muted">Chưa có dữ liệu</span>';
+        if (typeof value === 'boolean') return `<span class="badge ${value ? 'active' : 'inactive'}">${value ? 'Có' : 'Không'}</span>`;
+        if (typeof value === 'number') return escapeHtml(Number.isFinite(value) ? String(value) : '0');
+        return escapeHtml(String(value));
+    }
+
+    function renderDetailValue(value, depth = 0) {
+        if (value === null || value === undefined || value === '') {
+            return '<span class="muted">Chưa có dữ liệu</span>';
+        }
+        if (Array.isArray(value)) {
+            if (!value.length) return '<span class="muted">Không có dữ liệu</span>';
+            if (value.every(item => !isObject(item))) {
+                return `<div class="chip-list">${value.map(item => `<span class="detail-chip">${escapeHtml(translateAdminLabel(item))}</span>`).join('')}</div>`;
+            }
+            return `
+                <div class="detail-array">
+                    ${value.map((item, index) => `
+                        <div class="detail-card">
+                            <div class="detail-card-title">Mục ${index + 1}</div>
+                            ${renderDetailFields(item, depth + 1)}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        if (isObject(value)) {
+            return `<div class="detail-card detail-card-nested">${renderDetailFields(value, depth + 1)}</div>`;
+        }
+        return serializePrimitive(
+            typeof value === 'string' && /^https?:\/\//i.test(value)
+                ? value
+                : value
+        );
+    }
+
+    function renderDetailFields(payload, depth = 0) {
+        const entries = Object.entries(payload || {}).filter(([, value]) => value !== undefined);
+        if (!entries.length) {
+            return '<div class="empty compact">Không có dữ liệu để hiển thị.</div>';
+        }
+        return `
+            <div class="detail-grid ${depth > 0 ? 'nested' : ''}">
+                ${entries.map(([key, value]) => `
+                    <div class="detail-item">
+                        <div class="detail-label">${escapeHtml(humanizeKey(key))}</div>
+                        <div class="detail-value">${renderDetailValue(value, depth)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function renderRichModal(title, subtitle, body, actionsHtml) {
         const modalRoot = document.getElementById('modalRoot');
         modalRoot.innerHTML = `
             <div class="modal-backdrop">
-                <div class="modal">
+                <div class="modal modal-rich">
                     <h2>${escapeHtml(title)}</h2>
-                    <p class="muted">Chỉnh JSON và lưu thay đổi.</p>
+                    <p class="muted">${escapeHtml(subtitle)}</p>
                     <div id="modalError" class="notice error" hidden></div>
-                    <div class="field"><textarea id="jsonInput">${escapeHtml(JSON.stringify(payload, null, 2))}</textarea></div>
-                    <div class="modal-actions">
-                        <button class="secondary-btn" id="cancelModal">Hủy</button>
-                        <button class="primary-btn" id="saveModal">Lưu</button>
-                    </div>
+                    ${body}
+                    <div class="modal-actions">${actionsHtml}</div>
                 </div>
             </div>
         `;
-        document.getElementById('cancelModal').addEventListener('click', closeModal);
         document.querySelector('.modal-backdrop').addEventListener('click', event => {
             if (event.target.classList.contains('modal-backdrop')) closeModal();
         });
+    }
+
+    function openJson(title, payload, onSave, options = {}) {
+        const fieldEntries = Object.entries(payload || {});
+        const body = `
+            <form id="recordForm" class="modal-form">
+                ${fieldEntries.map(([key, value]) => renderModalField(key, value)).join('')}
+            </form>
+        `;
+        renderRichModal(
+            title,
+            options.subtitle || 'Điền thông tin và lưu thay đổi.',
+            body,
+            `
+                <button class="secondary-btn" id="cancelModal">Hủy</button>
+                <button class="primary-btn" id="saveModal">Lưu</button>
+            `
+        );
+        document.getElementById('cancelModal').addEventListener('click', closeModal);
         document.getElementById('saveModal').addEventListener('click', async () => {
             const errorBox = document.getElementById('modalError');
             try {
-                const parsed = JSON.parse(document.getElementById('jsonInput').value);
+                const form = document.getElementById('recordForm');
+                const parsed = {};
+                fieldEntries.forEach(([key, originalValue]) => {
+                    const input = form.elements.namedItem(key);
+                    if (!input) return;
+                    parsed[key] = parseModalValue(input, originalValue);
+                });
                 await onSave(parsed);
                 closeModal();
             } catch (error) {
@@ -619,12 +775,23 @@
         if (modal) modal.innerHTML = '';
     }
 
-    function details(row) {
-        return { label: 'Chi tiết', run: () => openJson('Chi tiết bản ghi', row, async () => closeModal()) };
+    function openReadonlyJson(title, payload, options = {}) {
+        const body = `<div class="detail-view">${renderDetailFields(payload)}</div>`;
+        renderRichModal(
+            title,
+            options.subtitle || 'Xem thông tin chi tiết.',
+            body,
+            `<button class="primary-btn" id="closeReadonlyModal">Đóng</button>`
+        );
+        document.getElementById('closeReadonlyModal').addEventListener('click', closeModal);
+    }
+
+    function details(section, row) {
+        return { label: 'Chi tiết', run: () => openReadonlyJson(`Chi tiết ${section.title.toLowerCase()}`, row, { section }) };
     }
 
     function crudActions(section, row) {
-        const actions = [details(row), { label: 'Chỉnh sửa', run: () => editRecord(section, row) }];
+        const actions = [details(section, row), { label: 'Chỉnh sửa', run: () => editRecord(section, row) }];
         if ('isActive' in row) {
             actions.push({
                 label: row.isActive ? 'Tắt' : 'Bật',
@@ -642,7 +809,7 @@
 
     function adminActions(section, row) {
         return [
-            details(row),
+            details(section, row),
             { label: 'Chỉnh sửa', run: () => editRecord(section, row) },
             {
                 label: row.status === 'active' ? 'Khóa' : 'Mở khóa',
@@ -667,7 +834,7 @@
     }
 
     function roleActions(section, row) {
-        const actions = [details(row)];
+        const actions = [details(section, row)];
         if (!row.isSystem) {
             actions.push({ label: 'Chỉnh sửa', run: () => editRecord(section, row) });
             actions.push({ label: 'Xóa', kind: 'danger', run: deleteRecord(section, row) });
@@ -677,7 +844,7 @@
 
     function userActions(section, row) {
         return [
-            details(row),
+            details(section, row),
             {
                 label: row.status === 'active' ? 'Khóa tài khoản' : 'Kích hoạt',
                 kind: row.status === 'active' ? 'warn' : 'success',
@@ -711,7 +878,7 @@
 
     function shopActions(section, row) {
         return [
-            details(row),
+            details(section, row),
             {
                 label: 'Duyệt',
                 kind: 'success',
@@ -744,7 +911,7 @@
 
     function productActions(section, row) {
         return [
-            details(row),
+            details(section, row),
             {
                 label: 'Duyệt',
                 kind: 'success',
@@ -776,7 +943,7 @@
 
     function orderActions(section, row) {
         return [
-            details(row),
+            details(section, row),
             {
                 label: 'Cập nhật trạng thái',
                 run: async () => {
@@ -793,10 +960,10 @@
     }
 
     function paymentActions(section, row) {
-        return [details(row), { label: 'Cập nhật', run: () => editPayment(row) }];
+        return [details(section, row), { label: 'Cập nhật', run: () => editPayment(row, section) }];
     }
 
-    function editPayment(row) {
+    function editPayment(row, section = currentSection()) {
         openJson('Cập nhật thanh toán', {
             status: row.payment?.status || 'paid',
             method: row.payment?.method || 'cod',
@@ -805,12 +972,12 @@
             await api(`/admin/orders/${row._id}/payment`, { method: 'PUT', body: payload });
             notify('Đã cập nhật thanh toán');
             await loadSection(state.section);
-        });
+        }, { section });
     }
 
     function reviewActions(section, row) {
         return [
-            details(row),
+            details(section, row),
             {
                 label: row.status === 'hidden' ? 'Hiện' : 'Ẩn',
                 kind: row.status === 'hidden' ? 'success' : 'warn',
@@ -826,7 +993,7 @@
 
     function messageActions(endpoint) {
         return (section, row) => [
-            details(row),
+            details(section, row),
             {
                 label: 'Phản hồi',
                 run: async () => {
@@ -843,7 +1010,7 @@
 
     function statusActions(endpoint) {
         return (section, row) => [
-            details(row),
+            details(section, row),
             {
                 label: 'Cập nhật trạng thái',
                 run: async () => {
@@ -888,7 +1055,7 @@
                     status: order.status
                 }))
             };
-            openReadonlyJson('Chi tiết đối soát người bán.', detail);
+            openReadonlyJson('Chi tiết đối soát người bán', detail);
         }
 
         async function updateSettlement(row, payload, successMessage) {
@@ -969,7 +1136,7 @@
 
     function settingActions(section, row) {
         return [
-            details(row),
+            details(section, row),
             { label: 'Chỉnh sửa', run: () => editRecord(section, row) },
             { label: 'Xóa', kind: 'danger', run: deleteRecord(section, row) }
         ];
@@ -1022,37 +1189,13 @@
         return baseUnwrapRows(data, key);
     };
 
-    function openReadonlyJson(title, payload) {
-        const modalRoot = document.getElementById('modalRoot');
-        modalRoot.innerHTML = `
-            <div class="modal-backdrop">
-                <div class="modal">
-                    <h2>${escapeHtml(title)}</h2>
-                    <p class="muted">Xem thông tin chi tiết.</p>
-                    <div class="field"><textarea id="jsonInput" readonly>${escapeHtml(JSON.stringify(payload, null, 2))}</textarea></div>
-                    <div class="modal-actions">
-                        <button class="primary-btn" id="closeReadonlyModal">Đóng</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.getElementById('closeReadonlyModal').addEventListener('click', closeModal);
-        document.querySelector('.modal-backdrop').addEventListener('click', event => {
-            if (event.target.classList.contains('modal-backdrop')) closeModal();
-        });
-    }
-
-    details = function(row) {
-        return { label: 'Chi tiết', run: () => openReadonlyJson('Chi tiết bản ghi', row) };
-    };
-
     function sellerApplicationActions(section, row) {
         const actions = [
             {
                 label: 'Chi tiết',
                 run: async () => {
                     const detail = await api(`/admin/seller-applications/${row._id}`);
-                    openReadonlyJson('Chi tiết hồ sơ mở shop', detail);
+                    openReadonlyJson('Chi tiết hồ sơ mở shop', detail, { section });
                 }
             }
         ];
@@ -1154,7 +1297,7 @@
 
     function sellerViolationActions(section, row) {
         return [
-            details(row),
+            details(section, row),
             {
                 label: 'Cập nhật trạng thái',
                 run: async () => {
@@ -1177,7 +1320,7 @@
                 label: 'Chi tiết',
                 run: async () => {
                     const detail = await api(`/admin/care-services/applications/${row._id}`);
-                    openReadonlyJson('Chi tiết hồ sơ dịch vụ chăm sóc', detail);
+                    openReadonlyJson('Chi tiết hồ sơ dịch vụ chăm sóc', detail, { section });
                 }
             }
         ];

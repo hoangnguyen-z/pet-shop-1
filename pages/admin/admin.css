@@ -374,15 +374,130 @@ td {
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
 }
 
+.modal-rich h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.modal-form {
+    display: grid;
+    gap: 14px;
+}
+
+.field > span,
+.field-inline > span {
+    display: block;
+    font-weight: 700;
+    color: #172033;
+}
+
+.field-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
+    border: 1px solid #d9dde6;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.field-inline input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+}
+
 .modal textarea {
-    min-height: 320px;
-    font-family: Consolas, monospace;
+    min-height: 140px;
+    font-family: inherit;
 }
 
 .modal-actions {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.detail-view {
+    margin-top: 18px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.detail-grid.nested {
+    grid-template-columns: 1fr;
+}
+
+.detail-item {
+    border: 1px solid #e6e8ee;
+    border-radius: 10px;
+    padding: 14px;
+    background: #f8fafc;
+}
+
+.detail-label {
+    font-size: 12px;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.detail-value {
+    color: #172033;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.detail-card {
+    border: 1px solid #e6e8ee;
+    border-radius: 10px;
+    padding: 14px;
+    background: #fff;
+}
+
+.detail-card-nested {
+    background: #fff;
+}
+
+.detail-card-title {
+    font-weight: 800;
+    color: #0b4f8a;
+    margin-bottom: 12px;
+}
+
+.detail-array {
+    display: grid;
+    gap: 12px;
+}
+
+.chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.detail-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #eef3f9;
+    color: #0b4f8a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.empty.compact {
+    padding: 12px;
+    text-align: left;
 }
 
 .empty {
@@ -415,5 +530,9 @@ td {
 
     .admin-login-hero {
         display: none;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
     }
 }
