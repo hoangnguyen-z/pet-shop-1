@@ -288,12 +288,12 @@
         const isRegister = mode === 'register';
         const roleTabs = isRegister
             ? [
-                ['buyer', 'Buyer'],
-                ['seller', 'Seller']
+                ['buyer', 'Người mua'],
+                ['seller', 'Người bán']
             ]
             : [
-                ['buyer', 'Buyer'],
-                ['seller', 'Seller'],
+                ['buyer', 'Người mua'],
+                ['seller', 'Người bán'],
                 ['admin', 'Admin']
             ];
         const modal = this.createModal('authModal', `
@@ -307,8 +307,8 @@
                         <span>Paws &amp; Palette</span>
                     </div>
                     <div class="auth-visual-copy">
-                        <h3>${isRegister ? 'Start your pet care journey.' : 'Welcome back to your pet-loving space.'}</h3>
-                        <p>${isRegister ? 'Create an account to shop, track orders, or open your own pet store.' : 'A place where your lifestyle and your pet’s happiness come together.'}</p>
+                        <h3>${isRegister ? 'Bắt đầu hành trình chăm sóc thú cưng của bạn.' : 'Chào mừng bạn quay trở lại với ngôi nhà của thú cưng.'}</h3>
+                        <p>${isRegister ? 'Tạo một tài khoản để bắt đầu mua sắm hoặc bán sản phẩm cho thú cưng.' : 'Nơi phong cách sống của bạn và niềm vui của thú cưng hòa làm một.'}</p>
                     </div>
                     <div class="auth-image-stack">
                         <div class="auth-image-card auth-image-main"><img src="/assets/images/pet-dog.svg" alt=""></div>
@@ -321,8 +321,8 @@
                         <span>Paws &amp; Palette</span>
                     </div>
                     <div class="auth-heading">
-                        <h3>${isRegister ? 'Sign up' : 'Sign in'}</h3>
-                        <p>${isRegister ? 'Create an account to start shopping or selling pet products.' : 'Welcome back to your favorite pet marketplace.'}</p>
+                        <h3>${isRegister ? 'Đăng ký' : 'Đăng nhập'}</h3>
+                        <p>${isRegister ? 'Tạo một tài khoản để bắt đầu mua sắm hoặc bán sản phẩm cho thú cưng.' : 'Chào mừng bạn quay trở lại với ngôi nhà của thú cưng.'}</p>
                     </div>
                     <div class="auth-role-tabs" role="tablist" aria-label="Account type">
                         ${roleTabs.map(([value, label], index) => `
@@ -334,9 +334,9 @@
                         <input id="authRole" type="hidden" name="role" value="buyer">
                         ${isRegister ? `
                             <div class="auth-field">
-                                <label for="authName">Full name</label>
+                                <label for="authName">Họ và tên</label>
                                 <div class="auth-input-wrap">
-                                    <input id="authName" type="text" name="name" required maxlength="100" autocomplete="name" placeholder="Alex Johnson">
+                                    <input id="authName" type="text" name="name" required maxlength="100" autocomplete="name" placeholder="Nguyễn Văn A">
                                     <span class="auth-input-icon">ID</span>
                                 </div>
                             </div>
@@ -344,32 +344,32 @@
                         <div class="auth-field">
                             <label for="authEmail">Email</label>
                             <div class="auth-input-wrap">
-                                <input id="authEmail" type="email" name="email" required autocomplete="email" placeholder="name@example.com">
+                                <input id="authEmail" type="email" name="email" required autocomplete="email" placeholder="tên@example.com">
                                 <span class="auth-input-icon">@</span>
                             </div>
                         </div>
                         ${isRegister ? `
                             <div class="auth-field">
-                                <label for="authPhone">Phone number</label>
+                                <label for="authPhone">Số điện thoại</label>
                                 <div class="auth-input-wrap">
-                                    <input id="authPhone" type="tel" name="phone" required pattern="[0-9]{10,11}" inputmode="numeric" autocomplete="tel" placeholder="10-11 digits">
+                                    <input id="authPhone" type="tel" name="phone" required pattern="[0-9]{10,11}" inputmode="numeric" autocomplete="tel" placeholder="10-11 chữ số">
                                     <span class="auth-input-icon">Tel</span>
                                 </div>
                             </div>
                         ` : ''}
                         <div class="auth-field">
-                            <label for="authPassword">Password</label>
+                            <label for="authPassword">Mật khẩu</label>
                             <div class="auth-input-wrap">
-                                <input id="authPassword" type="password" name="password" required minlength="6" autocomplete="${isRegister ? 'new-password' : 'current-password'}" placeholder="${isRegister ? 'Example: Petshop1' : 'Enter your password'}">
+                                <input id="authPassword" type="password" name="password" required minlength="6" autocomplete="${isRegister ? 'mật khẩu mới' : 'mật khẩu hiện tại'}" placeholder="${isRegister ? 'Ví dụ: Petshop1' : 'Nhập mật khẩu của bạn'}">
                                 <button class="auth-password-toggle" type="button" data-auth-toggle-password>Show</button>
                             </div>
-                            ${isRegister ? '<small class="auth-help">Use at least one uppercase letter, one lowercase letter, and one number.</small>' : ''}
+                            ${isRegister ? '<small class="auth-help">Sử dụng ít nhất một chữ hoa, một chữ thường, và một số.</small>' : ''}
                         </div>
                         ${isRegister ? `
                             <div class="auth-field auth-seller-field" id="authSellerShopName" style="display:none;">
-                                <label for="authShopName">Shop name</label>
+                                <label for="authShopName">Tên cửa hàng</label>
                                 <div class="auth-input-wrap">
-                                    <input id="authShopName" type="text" name="shopName" maxlength="200" placeholder="Your shop name">
+                                    <input id="authShopName" type="text" name="shopName" maxlength="200" placeholder="Tên cửa hàng của bạn">
                                     <span class="auth-input-icon">Shop</span>
                                 </div>
                             </div>
@@ -377,23 +377,23 @@
                             <div class="auth-actions-row">
                                 <label class="auth-remember">
                                     <input type="checkbox" name="remember">
-                                    <span>Remember me</span>
+                                    <span>Nhớ tài khoản của tôi</span>
                                 </label>
-                                <a href="#" data-action="forgot-password">Forgot password?</a>
+                                <a href="#" data-action="forgot-password">Quên mật khẩu?</a>
                             </div>
                         `}
                         <button type="submit" class="auth-submit">
-                            ${isRegister ? 'Create account' : 'Sign in'}
+                            ${isRegister ? 'Tạo tài khoản' : 'Đăng nhập'}
                         </button>
                     </form>
-                    <div class="auth-divider"><span>or</span></div>
+                    <div class="auth-divider"><span>hoặc</span></div>
                     <div class="auth-switch-card">
                         <p>
-                            ${isRegister ? 'Already have an account?' : 'New here?'}
-                            <a href="#" data-auth-switch="${isRegister ? 'login' : 'register'}">${isRegister ? 'Sign in' : 'Create one'}</a>
+                            ${isRegister ? 'Đã có tài khoản?' : 'Người dùng mới?'}
+                            <a href="#" data-auth-switch="${isRegister ? 'login' : 'register'}">${isRegister ? 'Đăng nhập' : 'Tạo tài khoản'}</a>
                         </p>
                     </div>
-                    <p class="auth-terms">By continuing, you agree to the marketplace terms of service and privacy policy.</p>
+                    <p class="auth-terms">Bằng cách tiếp tục, bạn đồng ý với điều khoản dịch vụ và chính sách bảo mật của hệ thống.</p>
                 </section>
             </div>
         `);
