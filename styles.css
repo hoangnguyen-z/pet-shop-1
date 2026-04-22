@@ -2617,6 +2617,22 @@ img {
     font-weight: 700;
 }
 
+.filter-pending-note {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.filter-pending-note[hidden] {
+    display: none;
+}
+
 .spa-view .filter-section {
     margin-bottom: 20px;
 }

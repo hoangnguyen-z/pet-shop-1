@@ -9,6 +9,68 @@ const ApiError = require('../utils/ApiError');
 const { SHOP_STATUS } = require('../config/constants');
 
 const PUBLIC_SHOP_POPULATE = 'name logo rating labels verificationLevel';
+const DISPLAY_PRICE_MULTIPLIER = 25000;
+
+function escapeRegex(value = '') {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeSearchText(value = '') {
+    return String(value)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function parsePriceFilter(value) {
+    if (value === undefined || value === null || value === '') return null;
+    const normalized = String(value).replace(/[^\d.]/g, '');
+    if (!normalized) return null;
+    const number = Number(normalized);
+    return Number.isFinite(number) && number >= 0 ? number : null;
+}
+
+function displayPriceExpression() {
+    return {
+        $cond: [
+            { $and: [{ $gt: ['$price', 0] }, { $lt: ['$price', 1000] }] },
+            { $multiply: ['$price', DISPLAY_PRICE_MULTIPLIER] },
+            '$price'
+        ]
+    };
+}
+
+function buildSearchTerms(search = '') {
+    const raw = String(search || '').trim();
+    if (!raw) return [];
+
+    const normalized = normalizeSearchText(raw);
+    const words = new Set(normalized.split(/[\s,.;:/\\|_-]+/).filter(Boolean));
+    const petSynonyms = [
+        { exactKeys: ['cho', 'chó'], wordKeys: ['cun', 'cún', 'dog', 'puppy'], accentedWords: ['chó'], terms: ['dog', 'chó', 'cún', 'puppy'] },
+        { exactKeys: ['meo', 'mèo'], wordKeys: ['meo', 'mèo', 'cat', 'kitten'], terms: ['cat', 'mèo', 'kitten'] },
+        { exactKeys: ['chim'], wordKeys: ['chim', 'bird', 'avian'], terms: ['bird', 'chim', 'avian'] },
+        { exactKeys: ['ca', 'cá'], wordKeys: ['fish', 'aqua', 'aquarium'], accentedWords: ['cá'], terms: ['fish', 'cá', 'aquarium', 'aqua'] },
+        { exactKeys: ['tho', 'thỏ'], wordKeys: ['rabbit', 'bunny'], accentedWords: ['thỏ'], terms: ['rabbit', 'thỏ', 'bunny'] },
+        { exactKeys: ['hamster'], wordKeys: ['hamster'], terms: ['hamster'] },
+        { exactKeys: ['bo sat', 'bò sát', 'reptile', 'reptiles'], wordKeys: ['reptile', 'reptiles'], accentedWords: ['bò sát'], terms: ['reptile', 'bò sát'] }
+    ];
+
+    const exactPetMatch = petSynonyms.find(group => group.exactKeys.includes(normalized) || group.exactKeys.includes(raw.toLowerCase()));
+    if (exactPetMatch) return exactPetMatch.terms;
+
+    const terms = new Set([raw]);
+    petSynonyms.forEach(group => {
+        const hasWordMatch = group.wordKeys.some(key => words.has(normalizeSearchText(key)));
+        const hasAccentedWordMatch = (group.accentedWords || []).some(word => raw.toLowerCase().includes(word));
+        if (hasWordMatch || hasAccentedWordMatch) {
+            group.terms.forEach(term => terms.add(term));
+        }
+    });
+
+    return [...terms].filter(Boolean);
+}
 
 async function getApprovedShopIds(shopId, options = {}) {
     const filter = { status: SHOP_STATUS.APPROVED };
@@ -57,12 +119,19 @@ router.get('/', optionalAuth, pagination(20), async (req, res, next) => {
         const andFilters = [];
 
         if (search) {
+            const searchTerms = buildSearchTerms(search);
             andFilters.push({ $or: [
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
-                { shortDescription: { $regex: search, $options: 'i' } },
-                { brand: { $regex: search, $options: 'i' } },
-                { tags: { $regex: search, $options: 'i' } }
+                ...searchTerms.flatMap(term => {
+                    const regex = { $regex: escapeRegex(term), $options: 'i' };
+                    return [
+                        { name: regex },
+                        { description: regex },
+                        { shortDescription: regex },
+                        { brand: regex },
+                        { tags: regex },
+                        { 'attributes.value': regex }
+                    ];
+                })
             ] });
         }
 
@@ -77,18 +146,21 @@ router.get('/', optionalAuth, pagination(20), async (req, res, next) => {
             ] });
         }
 
-        if (andFilters.length) filter.$and = andFilters;
-
         if (minPrice || maxPrice) {
-            filter.price = {};
-            if (minPrice) filter.price.$gte = parseFloat(minPrice);
-            if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
+            const parsedMinPrice = parsePriceFilter(minPrice);
+            const parsedMaxPrice = parsePriceFilter(maxPrice);
+            const priceChecks = [];
+            const displayedPrice = displayPriceExpression();
+            if (parsedMinPrice !== null) priceChecks.push({ $gte: [displayedPrice, parsedMinPrice] });
+            if (parsedMaxPrice !== null) priceChecks.push({ $lte: [displayedPrice, parsedMaxPrice] });
+            if (priceChecks.length) andFilters.push({ $expr: { $and: priceChecks } });
         }
 
         if (inStock === 'true') filter.stock = { $gt: 0 };
-        if (onSale === 'true') filter.$expr = { $gt: ['$originalPrice', '$price'] };
+        if (onSale === 'true') andFilters.push({ $expr: { $gt: ['$originalPrice', '$price'] } });
         if (minRating) filter.rating = { $gte: parseFloat(minRating) };
         if (featured === 'true') filter.isFeatured = true;
+        if (andFilters.length) filter.$and = andFilters;
 
         const allowedSorts = ['createdAt', 'price', 'soldCount', 'rating', 'originalPrice'];
         const sort = {};

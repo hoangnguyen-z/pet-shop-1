@@ -1392,6 +1392,7 @@ async function renderShopView(params = new URLSearchParams()) {
                     <div>
                         <strong>${totalProducts}</strong> sản phẩm phù hợp
                         ${category || petType || brand || search || minPrice || maxPrice || inStock || onSale || minRating || mallOnly === 'true' ? '<span class="filter-active-note">Đang áp dụng bộ lọc</span>' : ''}
+                        <span class="filter-pending-note" id="spaPendingFilters" hidden>Chưa áp dụng thay đổi</span>
                     </div>
                     <div class="shop-results-actions">
                         <a class="btn btn-secondary btn-small" href="#shop?mallOnly=true">Chỉ xem PetMall</a>
@@ -1415,6 +1416,20 @@ async function renderShopView(params = new URLSearchParams()) {
         const nextMaxPrice = document.getElementById('spaMaxPrice').value;
         const nextMinRating = document.getElementById('spaMinRating').value;
         const [nextSortBy, nextSortOrder] = document.getElementById('spaSort').value.split(':');
+        const minPriceNumber = nextMinPrice === '' ? null : Number(nextMinPrice);
+        const maxPriceNumber = nextMaxPrice === '' ? null : Number(nextMaxPrice);
+
+        if ((minPriceNumber !== null && (!Number.isFinite(minPriceNumber) || minPriceNumber < 0))
+            || (maxPriceNumber !== null && (!Number.isFinite(maxPriceNumber) || maxPriceNumber < 0))) {
+            notify('Vui lòng nhập khoảng giá hợp lệ.', 'error');
+            return;
+        }
+
+        if (minPriceNumber !== null && maxPriceNumber !== null && minPriceNumber > maxPriceNumber) {
+            notify('Giá từ không được lớn hơn giá đến.', 'error');
+            return;
+        }
+
         if (nextSearch) next.set('search', nextSearch);
         if (nextCategory) next.set('category', nextCategory);
         if (nextPetType) next.set('petType', nextPetType);
@@ -1431,10 +1446,9 @@ async function renderShopView(params = new URLSearchParams()) {
         window.location.hash = `shop${next.toString() ? '?' + next.toString() : ''}`;
     };
 
-    let filterTimer = null;
-    const scheduleShopFilters = () => {
-        clearTimeout(filterTimer);
-        filterTimer = setTimeout(applyShopFilters, 450);
+    const pendingNote = document.getElementById('spaPendingFilters');
+    const markShopFiltersPending = () => {
+        if (pendingNote) pendingNote.hidden = false;
     };
 
     document.getElementById('spaApplyFilters').addEventListener('click', applyShopFilters);
@@ -1443,12 +1457,12 @@ async function renderShopView(params = new URLSearchParams()) {
     });
 
     ['spaCategory', 'spaPetType', 'spaBrand', 'spaMinRating', 'spaSort', 'spaInStock', 'spaOnSale', 'spaMallOnly'].forEach(id => {
-        document.getElementById(id)?.addEventListener('change', applyShopFilters);
+        document.getElementById(id)?.addEventListener('change', markShopFiltersPending);
     });
 
     ['spaSearch', 'spaMinPrice', 'spaMaxPrice'].forEach(id => {
         const input = document.getElementById(id);
-        input?.addEventListener('input', scheduleShopFilters);
+        input?.addEventListener('input', markShopFiltersPending);
         input?.addEventListener('keydown', event => {
             if (event.key === 'Enter') {
                 event.preventDefault();
