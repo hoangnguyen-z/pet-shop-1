@@ -223,6 +223,209 @@ const getRefunds = asyncHandler(async (req, res) => {
     });
 });
 
+const getReturns = asyncHandler(async (req, res) => {
+    const { status, page = 1, limit = 20 } = req.query;
+    const query = {};
+    if (status) query.status = status;
+
+    const [returns, total] = await Promise.all([
+        Return.find(query)
+            .populate('order', 'orderNumber orderStatus paymentStatus finalAmount shippingAddress createdAt')
+            .populate('buyer', 'name email phone')
+            .populate('shop', 'name')
+            .sort({ createdAt: -1 })
+            .skip((Number(page) - 1) * Number(limit))
+            .limit(Number(limit)),
+        Return.countDocuments(query)
+    ]);
+
+    sendSuccess(res, {
+        returns,
+        pagination: getPagination(total, page, limit)
+    });
+});
+
+const getReturnById = asyncHandler(async (req, res) => {
+    const request = await Return.findById(req.params.id)
+        .populate('order', 'orderNumber orderStatus paymentStatus finalAmount shippingAddress statusHistory createdAt')
+        .populate('buyer', 'name email phone')
+        .populate('shop', 'name');
+
+    if (!request) {
+        throw ApiError.notFound('Không tìm thấy hồ sơ hoàn hàng');
+    }
+
+    sendSuccess(res, request);
+});
+
+async function updateOrderAfterReturnDecision(request, {
+    orderStatus,
+    paymentStatus,
+    adminId,
+    note
+}) {
+    const order = await Order.findById(request.order);
+    if (!order) return null;
+
+    const selectedProductIds = new Set((request.items || []).map((item) => String(item.product)));
+    order.items = (order.items || []).map((item) => {
+        if (selectedProductIds.has(String(item.product))) {
+            item.shopStatus = orderStatus;
+        }
+        return item;
+    });
+
+    syncOrderState(order, {
+        orderStatus,
+        shippingStatus: deriveShippingStatus(orderStatus),
+        paymentStatus: paymentStatus || order.paymentStatus
+    });
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+        status: orderStatus,
+        note,
+        updatedBy: adminId,
+        updatedAt: new Date()
+    });
+    await order.save();
+    return order;
+}
+
+const approveReturn = asyncHandler(async (req, res) => {
+    const request = await Return.findById(req.params.id);
+    if (!request) throw ApiError.notFound('Không tìm thấy hồ sơ hoàn hàng');
+
+    const note = String(req.body.note || '').trim() || 'Admin chấp nhận yêu cầu hoàn hàng';
+    request.status = 'return_approved';
+    request.adminNote = note;
+    request.approvedBy = req.admin._id;
+    request.approvedAt = new Date();
+    request.addHistory('return_approved', note, 'admin', req.admin._id);
+    await request.save();
+
+    await updateOrderAfterReturnDecision(request, {
+        orderStatus: 'return_pending',
+        adminId: req.admin._id,
+        note
+    });
+    await writeOrderLog({
+        orderId: request.order,
+        event: 'return_updated',
+        actorType: 'admin',
+        actorId: req.admin._id,
+        message: 'Admin approved return request',
+        data: { returnId: request._id, note }
+    });
+
+    await AuditLog.create({
+        admin: req.admin._id,
+        action: 'update',
+        resource: 'return',
+        resourceId: request._id,
+        description: 'Approved return request',
+        changes: { status: request.status, note },
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        status: 'success'
+    });
+
+    sendSuccess(res, request, 'Đã duyệt yêu cầu hoàn hàng');
+});
+
+const rejectReturn = asyncHandler(async (req, res) => {
+    const request = await Return.findById(req.params.id);
+    if (!request) throw ApiError.notFound('Không tìm thấy hồ sơ hoàn hàng');
+
+    const note = String(req.body.note || req.body.reason || '').trim();
+    if (!note) throw ApiError.badRequest('Admin cần ghi lý do từ chối hoàn hàng');
+
+    const restoreStatus = request.orderStatusBeforeReturn || 'delivered';
+    request.status = 'return_rejected';
+    request.adminNote = note;
+    request.resolvedAt = new Date();
+    request.addHistory('return_rejected', note, 'admin', req.admin._id);
+    await request.save();
+
+    await updateOrderAfterReturnDecision(request, {
+        orderStatus: restoreStatus,
+        paymentStatus: request.paymentStatusBeforeReturn || undefined,
+        adminId: req.admin._id,
+        note
+    });
+    await writeOrderLog({
+        orderId: request.order,
+        event: 'return_updated',
+        actorType: 'admin',
+        actorId: req.admin._id,
+        message: 'Admin rejected return request',
+        data: { returnId: request._id, note }
+    });
+
+    await AuditLog.create({
+        admin: req.admin._id,
+        action: 'update',
+        resource: 'return',
+        resourceId: request._id,
+        description: 'Rejected return request',
+        changes: { status: request.status, note },
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        status: 'success'
+    });
+
+    sendSuccess(res, request, 'Đã từ chối và đóng yêu cầu hoàn hàng');
+});
+
+const partialRefundReturn = asyncHandler(async (req, res) => {
+    const request = await Return.findById(req.params.id);
+    if (!request) throw ApiError.notFound('Không tìm thấy hồ sơ hoàn hàng');
+
+    const amount = Number(req.body.amount || req.body.partialRefundAmount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+        throw ApiError.badRequest('Số tiền hoàn một phần phải lớn hơn 0');
+    }
+
+    const note = String(req.body.note || '').trim() || `Admin duyệt hoàn tiền một phần ${amount}`;
+    request.status = 'refunded';
+    request.partialRefundAmount = amount;
+    request.refundAmount = amount;
+    request.adminNote = note;
+    request.approvedBy = req.admin._id;
+    request.approvedAt = request.approvedAt || new Date();
+    request.resolvedAt = new Date();
+    request.addHistory('refunded', note, 'admin', req.admin._id);
+    await request.save();
+
+    await updateOrderAfterReturnDecision(request, {
+        orderStatus: 'returned',
+        paymentStatus: 'refunded',
+        adminId: req.admin._id,
+        note
+    });
+    await writeOrderLog({
+        orderId: request.order,
+        event: 'return_refunded',
+        actorType: 'admin',
+        actorId: req.admin._id,
+        message: 'Admin processed partial refund',
+        data: { returnId: request._id, amount, note }
+    });
+
+    await AuditLog.create({
+        admin: req.admin._id,
+        action: 'update',
+        resource: 'return',
+        resourceId: request._id,
+        description: 'Processed partial return refund',
+        changes: { status: request.status, amount, note },
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+        status: 'success'
+    });
+
+    sendSuccess(res, request, 'Đã xử lý hoàn tiền một phần');
+});
+
 const processRefund = asyncHandler(async (req, res) => {
     const { status, note } = req.body;
     const refund = await Refund.findById(req.params.id);
@@ -284,6 +487,11 @@ router.use(authenticateAdmin);
 router.get('/', checkPermission('orders.view'), getAllOrders);
 router.get('/stats', checkPermission('orders.view'), getOrderStats);
 router.get('/refunds', checkPermission('refunds.view'), getRefunds);
+router.get('/returns', checkPermission('refunds.view'), getReturns);
+router.get('/returns/:id', checkPermission('refunds.view'), getReturnById);
+router.patch('/returns/:id/approve', checkPermission('refunds.process'), approveReturn);
+router.patch('/returns/:id/reject', checkPermission('refunds.process'), rejectReturn);
+router.patch('/returns/:id/partial-refund', checkPermission('refunds.process'), partialRefundReturn);
 router.get('/:id', checkPermission('orders.view'), getOrderById);
 router.put('/:id/status', checkPermission('orders.update'), updateOrderStatus);
 router.put('/:id/payment', checkPermission('orders.update'), updatePaymentStatus);

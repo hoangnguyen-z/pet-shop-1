@@ -6,12 +6,11 @@ const crypto = require('crypto');
 const router = express.Router();
 
 const config = require('../config/env');
-const { User, SellerApplication } = require('../models');
+const { User, SellerApplication, PasswordResetCode } = require('../models');
 const { authenticate } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { sendSuccess, sendCreated } = require('../middleware/responseHandler');
 const ApiError = require('../utils/ApiError');
-const { resolveFrontendBaseUrl } = require('../utils/frontendUrl');
 const {
     ROLES,
     SELLER_APPLICATION_STATUS,
@@ -19,6 +18,7 @@ const {
 } = require('../config/constants');
 const { resolveSellerAccessContext } = require('../services/sellerAccessService');
 const { normalizeAddress, syncUserSellerState } = require('../services/sellerApplicationWorkflow');
+const { sendPasswordResetCodeEmail, maskEmail } = require('../services/mailService');
 
 const generateTokens = (userId) => {
     const accessToken = jwt.sign(
@@ -35,6 +35,17 @@ const generateTokens = (userId) => {
 
     return { accessToken, refreshToken };
 };
+
+function generatePasswordResetCode() {
+    return String(crypto.randomInt(100000, 1000000));
+}
+
+function hashPasswordResetCode(email, code) {
+    return crypto
+        .createHmac('sha256', config.jwt.secret)
+        .update(`${String(email || '').trim().toLowerCase()}:${String(code || '').trim()}`)
+        .digest('hex');
+}
 
 function maskLinkedPaymentIdentifier(identifier = '') {
     const cleaned = String(identifier || '').trim();
@@ -156,12 +167,19 @@ const forgotPasswordValidation = [
 ];
 
 const resetPasswordValidation = [
-    body('token')
-        .notEmpty().withMessage('Token la bat buoc'),
+    body('email')
+        .trim()
+        .notEmpty().withMessage('Email là bắt buộc')
+        .isEmail().withMessage('Email không hợp lệ')
+        .normalizeEmail(),
+    body('code')
+        .trim()
+        .notEmpty().withMessage('Mã xác minh là bắt buộc')
+        .matches(/^[0-9]{6}$/).withMessage('Mã xác minh phải gồm 6 chữ số'),
     body('newPassword')
-        .notEmpty().withMessage('Mat khau moi la bat buoc')
-        .isLength({ min: 6 }).withMessage('Mat khau phai co it nhat 6 ky tu')
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mat khau phai chua it nhat 1 chu hoa, 1 chu thuong va 1 so')
+        .notEmpty().withMessage('Mật khẩu mới là bắt buộc')
+        .isLength({ min: 6 }).withMessage('Mật khẩu phải có ít nhất 6 ký tự')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số')
 ];
 
 const changePasswordValidation = [
@@ -435,24 +453,55 @@ router.post('/refresh-token', async (req, res, next) => {
 router.post('/forgot-password', forgotPasswordValidation, validate, async (req, res, next) => {
     try {
         const { email } = req.body;
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const genericMessage = 'Nếu email tồn tại trong hệ thống, PetNest đã gửi mã xác minh đặt lại mật khẩu.';
+        const expiryMinutes = config.mail.passwordResetExpiryMinutes;
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: normalizedEmail });
 
         if (!user) {
-            return sendSuccess(res, 'Neu email ton tai, chung toi da tao lien ket dat lai mat khau');
+            return sendSuccess(res, genericMessage, {
+                emailMasked: maskEmail(normalizedEmail),
+                expiresInMinutes: expiryMinutes
+            });
         }
 
-        const resetToken = crypto.randomBytes(32).toString('hex');
-        const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+        const code = generatePasswordResetCode();
+        const resetRecord = await PasswordResetCode.create({
+            user: user._id,
+            email: normalizedEmail,
+            codeHash: hashPasswordResetCode(normalizedEmail, code),
+            expiresAt: new Date(Date.now() + expiryMinutes * 60 * 1000),
+            requestedIp: req.ip,
+            userAgent: req.get('user-agent') || ''
+        });
 
-        user.resetPasswordToken = resetTokenHash;
-        user.resetPasswordExpires = Date.now() + 30 * 60 * 1000;
-        await user.save();
+        await PasswordResetCode.updateMany({
+            user: user._id,
+            purpose: 'password_reset',
+            usedAt: null,
+            _id: { $ne: resetRecord._id }
+        }, {
+            $set: { usedAt: new Date() }
+        });
 
-        const resetUrl = `${resolveFrontendBaseUrl(req)}/#reset-password?token=${resetToken}&email=${email}`;
-        console.log(`Password Reset Link: ${resetUrl}`);
+        try {
+            await sendPasswordResetCodeEmail({
+                to: user.email,
+                name: user.name,
+                verificationCode: code,
+                expiryMinutes
+            });
+        } catch (error) {
+            resetRecord.usedAt = new Date();
+            await resetRecord.save();
+            throw error;
+        }
 
-        sendSuccess(res, 'Neu email ton tai, chung toi da tao lien ket dat lai mat khau');
+        sendSuccess(res, genericMessage, {
+            emailMasked: maskEmail(user.email),
+            expiresInMinutes: expiryMinutes
+        });
     } catch (error) {
         next(error);
     }
@@ -460,17 +509,47 @@ router.post('/forgot-password', forgotPasswordValidation, validate, async (req, 
 
 router.post('/reset-password', resetPasswordValidation, validate, async (req, res, next) => {
     try {
-        const { token, newPassword } = req.body;
+        const { email, code, newPassword } = req.body;
+        const normalizedEmail = String(email || '').trim().toLowerCase();
 
-        const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const resetRecord = await PasswordResetCode.findOne({
+            email: normalizedEmail,
+            purpose: 'password_reset',
+            usedAt: null
+        }).sort({ createdAt: -1 });
 
-        const user = await User.findOne({
-            resetPasswordToken: resetTokenHash,
-            resetPasswordExpires: { $gt: Date.now() }
-        });
+        if (!resetRecord) {
+            throw ApiError.badRequest('Mã xác minh không hợp lệ hoặc đã được sử dụng');
+        }
 
-        if (!user) {
-            throw ApiError.badRequest('Token dat lai mat khau khong hop le hoac da het han');
+        if (resetRecord.expiresAt <= new Date()) {
+            resetRecord.usedAt = new Date();
+            await resetRecord.save();
+            throw ApiError.badRequest('Mã xác minh đã hết hạn. Vui lòng yêu cầu mã mới.');
+        }
+
+        if (resetRecord.attempts >= resetRecord.maxAttempts) {
+            resetRecord.usedAt = new Date();
+            await resetRecord.save();
+            throw ApiError.badRequest('Bạn đã nhập sai quá số lần cho phép. Vui lòng yêu cầu mã mới.');
+        }
+
+        const submittedHash = hashPasswordResetCode(normalizedEmail, code);
+        if (submittedHash !== resetRecord.codeHash) {
+            resetRecord.attempts += 1;
+            const remainingAttempts = Math.max(resetRecord.maxAttempts - resetRecord.attempts, 0);
+            if (remainingAttempts === 0) {
+                resetRecord.usedAt = new Date();
+            }
+            await resetRecord.save();
+            throw ApiError.badRequest(`Mã xác minh không đúng. Bạn còn ${remainingAttempts} lần thử.`);
+        }
+
+        const user = await User.findById(resetRecord.user);
+        if (!user || user.email !== normalizedEmail) {
+            resetRecord.usedAt = new Date();
+            await resetRecord.save();
+            throw ApiError.badRequest('Không thể đặt lại mật khẩu cho tài khoản này');
         }
 
         user.password = newPassword;
@@ -479,7 +558,17 @@ router.post('/reset-password', resetPasswordValidation, validate, async (req, re
         user.refreshToken = null;
         await user.save();
 
-        sendSuccess(res, 'Dat lai mat khau thanh cong. Vui long dang nhap lai.');
+        resetRecord.usedAt = new Date();
+        await resetRecord.save();
+        await PasswordResetCode.updateMany({
+            user: user._id,
+            purpose: 'password_reset',
+            usedAt: null
+        }, {
+            $set: { usedAt: new Date() }
+        });
+
+        sendSuccess(res, 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.');
     } catch (error) {
         next(error);
     }

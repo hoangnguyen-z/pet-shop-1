@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 
 const { Order, Product, Notification, Settlement } = require('../models');
+const ReturnRequest = require('../models/admin/Return');
 const { authenticate, requireApprovedSeller } = require('../middleware/auth');
 const { getPaginationMeta } = require('../middleware/pagination');
 const { sendSuccess } = require('../middleware/responseHandler');
@@ -24,6 +25,53 @@ async function loadSettlementsForOrders(sellerId, orders) {
         seller: sellerId,
         orders: { $in: orders.map((order) => order._id) }
     }).select('_id orders status completedAt createdAt amount fee netAmount');
+}
+
+async function getSellerOrderIds(sellerId) {
+    const orders = await Order.find({ 'items.seller': sellerId }).select('_id');
+    return orders.map((order) => order._id);
+}
+
+async function loadSellerReturnRequest(returnId, sellerId) {
+    const orderIds = await getSellerOrderIds(sellerId);
+    const request = await ReturnRequest.findOne({
+        _id: returnId,
+        order: { $in: orderIds }
+    })
+        .populate('order', 'orderNumber orderStatus paymentStatus finalAmount shippingAddress createdAt')
+        .populate('buyer', 'name email phone')
+        .populate('shop', 'name');
+
+    if (!request) {
+        throw ApiError.notFound('Không tìm thấy yêu cầu hoàn hàng của shop');
+    }
+
+    return request;
+}
+
+async function setReturnOrderHold(returnRequest, status, sellerId, note) {
+    const order = await Order.findById(returnRequest.order);
+    if (!order) return null;
+
+    order.items = (order.items || []).map((item) => {
+        if (String(item.seller) === String(sellerId)) {
+            item.shopStatus = status;
+            if (note) item.statusNote = note;
+        }
+        return item;
+    });
+
+    syncOrderState(order, {
+        orderStatus: status,
+        shippingStatus: deriveShippingStatus(status)
+    });
+    order.statusHistory.push({
+        status,
+        note,
+        updatedBy: sellerId
+    });
+    await order.save();
+    return order;
 }
 
 router.get('/', async (req, res, next) => {
@@ -122,6 +170,152 @@ router.get('/stats', async (req, res, next) => {
     }
 });
 
+router.get('/returns', async (req, res, next) => {
+    try {
+        const { page = 1, limit = 20, status } = req.query;
+        const orderIds = await getSellerOrderIds(req.user.id);
+        const query = { order: { $in: orderIds } };
+        if (status) query.status = status;
+
+        const [returns, total] = await Promise.all([
+            ReturnRequest.find(query)
+                .populate('order', 'orderNumber orderStatus paymentStatus finalAmount createdAt')
+                .populate('buyer', 'name email phone')
+                .populate('shop', 'name')
+                .sort({ createdAt: -1 })
+                .skip((Number(page) - 1) * Number(limit))
+                .limit(Number(limit)),
+            ReturnRequest.countDocuments(query)
+        ]);
+
+        sendSuccess(res, 'Lấy danh sách yêu cầu hoàn hàng thành công', returns, getPaginationMeta(total, { page, limit }));
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/returns/:returnId', async (req, res, next) => {
+    try {
+        const request = await loadSellerReturnRequest(req.params.returnId, req.user.id);
+        sendSuccess(res, 'Lấy chi tiết yêu cầu hoàn hàng thành công', request);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.patch('/returns/:returnId/approve', async (req, res, next) => {
+    try {
+        const request = await loadSellerReturnRequest(req.params.returnId, req.user.id);
+        const note = String(req.body.note || '').trim() || 'Người bán chấp nhận yêu cầu hoàn hàng';
+
+        request.status = 'seller_approved';
+        request.sellerNote = note;
+        request.sellerReviewedBy = req.user.id;
+        request.sellerReviewedAt = new Date();
+        request.addHistory('seller_approved', note, 'seller', req.user.id);
+        request.addHistory('return_shipping', 'Vui lòng gửi trả sản phẩm theo hướng dẫn của shop. Tiền vẫn được sàn giữ trong thời gian xử lý.', 'system');
+        await request.save();
+
+        const order = await setReturnOrderHold(request, ORDER_STATUS.RETURN_PENDING, req.user.id, note);
+        await writeOrderLog({
+            orderId: request.order,
+            event: 'return_requested',
+            actorType: 'seller',
+            actorId: req.user.id,
+            message: 'Seller approved return request',
+            data: { returnId: request._id, note }
+        });
+
+        if (order?.buyer) {
+            await Notification.create({
+                user: order.buyer,
+                type: 'order',
+                title: 'Người bán đã chấp nhận hoàn hàng',
+                message: `Shop đã chấp nhận yêu cầu hoàn hàng cho đơn #${order.orderNumber}`,
+                data: { orderId: order._id, returnId: request._id }
+            });
+        }
+
+        sendSuccess(res, 'Đã chấp nhận yêu cầu hoàn hàng', request);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.patch('/returns/:returnId/reject', async (req, res, next) => {
+    try {
+        const request = await loadSellerReturnRequest(req.params.returnId, req.user.id);
+        const note = String(req.body.note || req.body.reason || '').trim();
+        if (!note) {
+            throw ApiError.badRequest('Người bán bắt buộc ghi rõ lý do từ chối');
+        }
+
+        request.status = 'seller_rejected';
+        request.sellerNote = note;
+        request.sellerReviewedBy = req.user.id;
+        request.sellerReviewedAt = new Date();
+        request.addHistory('seller_rejected', note, 'seller', req.user.id);
+        request.addHistory('admin_reviewing', 'Người mua có thể gửi khiếu nại lên admin nếu không đồng ý với kết quả này.', 'system');
+        await request.save();
+
+        const order = await setReturnOrderHold(request, ORDER_STATUS.RETURN_PENDING, req.user.id, note);
+        await writeOrderLog({
+            orderId: request.order,
+            event: 'return_requested',
+            actorType: 'seller',
+            actorId: req.user.id,
+            message: 'Seller rejected return request',
+            data: { returnId: request._id, note }
+        });
+
+        if (order?.buyer) {
+            await Notification.create({
+                user: order.buyer,
+                type: 'order',
+                title: 'Người bán đã từ chối hoàn hàng',
+                message: `Shop đã từ chối yêu cầu hoàn hàng cho đơn #${order.orderNumber}. Bạn có thể khiếu nại lên admin.`,
+                data: { orderId: order._id, returnId: request._id }
+            });
+        }
+
+        sendSuccess(res, 'Đã từ chối yêu cầu hoàn hàng', request);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.patch('/returns/:returnId/request-evidence', async (req, res, next) => {
+    try {
+        const request = await loadSellerReturnRequest(req.params.returnId, req.user.id);
+        const note = String(req.body.note || '').trim();
+        if (!note) {
+            throw ApiError.badRequest('Vui lòng ghi rõ bằng chứng cần bổ sung');
+        }
+
+        request.status = 'need_more_evidence';
+        request.sellerNote = note;
+        request.sellerReviewedBy = req.user.id;
+        request.sellerReviewedAt = new Date();
+        request.addHistory('need_more_evidence', note, 'seller', req.user.id);
+        await request.save();
+
+        const order = await setReturnOrderHold(request, ORDER_STATUS.RETURN_PENDING, req.user.id, note);
+        if (order?.buyer) {
+            await Notification.create({
+                user: order.buyer,
+                type: 'order',
+                title: 'Shop yêu cầu bổ sung bằng chứng',
+                message: `Shop cần thêm bằng chứng cho yêu cầu hoàn hàng đơn #${order.orderNumber}`,
+                data: { orderId: order._id, returnId: request._id }
+            });
+        }
+
+        sendSuccess(res, 'Đã yêu cầu người mua bổ sung bằng chứng', request);
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.get('/:id', async (req, res, next) => {
     try {
         const order = await Order.findOne({
@@ -138,10 +332,15 @@ router.get('/:id', async (req, res, next) => {
             seller: req.user.id,
             orders: order._id
         }).select('_id orders status completedAt createdAt amount fee netAmount');
+        const activeReturns = await ReturnRequest.find({
+            order: order._id,
+            status: { $nin: ['closed', 'return_rejected', 'refunded'] }
+        }).sort({ createdAt: -1 });
 
         sendSuccess(res, 'Lấy thông tin đơn hàng thành công', enrichSellerOrder({
             ...order.toObject(),
-            items: sellerItems
+            items: sellerItems,
+            activeReturns
         }, req.user.id, { settlements }));
     } catch (error) {
         next(error);

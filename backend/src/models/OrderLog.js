@@ -21,6 +21,9 @@ const orderLogSchema = new mongoose.Schema({
             'payment_expired',
             'payment_cancelled',
             'payment_refunded',
+            'return_requested',
+            'return_updated',
+            'return_refunded',
             'cancelled',
             'note'
         ],

@@ -26,6 +26,9 @@ const CareServiceOffering = require('./CareServiceOffering');
 const CareServiceBooking = require('./CareServiceBooking');
 const CareServiceReview = require('./CareServiceReview');
 const PaymentTransaction = require('./PaymentTransaction');
+const Conversation = require('./Conversation');
+const ChatMessage = require('./ChatMessage');
+const PasswordResetCode = require('./PasswordResetCode');
 
 module.exports = {
     User,
@@ -55,5 +58,8 @@ module.exports = {
     CareServiceOffering,
     CareServiceBooking,
     CareServiceReview,
-    PaymentTransaction
+    PaymentTransaction,
+    Conversation,
+    ChatMessage,
+    PasswordResetCode
 };

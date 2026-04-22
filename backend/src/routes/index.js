@@ -16,6 +16,7 @@ const adminRoutes = require('./admin');
 const publicRoutes = require('./public');
 const uploadRoutes = require('./uploads');
 const paymentRoutes = require('./payments');
+const chatRoutes = require('./chat');
 
 router.use('/auth', authRoutes);
 router.use('/products', productRoutes);
@@ -33,6 +34,7 @@ router.use('/admin', adminRoutes);
 router.use('/public', publicRoutes);
 router.use('/uploads', uploadRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/chat', chatRoutes);
 
 router.get('/health', (req, res) => {
     res.json({

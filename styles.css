@@ -1761,6 +1761,16 @@ img {
     font-size: 14px;
 }
 
+.auth-success {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    background: #f0fdf4;
+    color: #166534;
+    font-size: 14px;
+}
+
 .auth-help {
     display: block;
     margin-top: 7px;
@@ -2103,6 +2113,23 @@ img {
 
 .auth-submit:active {
     transform: translateY(0);
+}
+
+.auth-secondary-submit {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #dcddd7;
+    border-radius: 999px;
+    background: #fff;
+    color: #964300;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.auth-secondary-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .auth-divider {
@@ -4270,5 +4297,211 @@ img {
 @media (max-width: 960px) {
     .care-booking-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+.chat-shell {
+    display: grid;
+    grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+    gap: 24px;
+    align-items: stretch;
+}
+
+.chat-sidebar,
+.chat-panel {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+
+.chat-sidebar-head,
+.chat-panel-head {
+    padding: 22px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.chat-sidebar-head h2,
+.chat-panel-head h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+}
+
+.chat-sidebar-head p,
+.chat-panel-head p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.chat-thread-list {
+    display: grid;
+    max-height: 620px;
+    overflow: auto;
+}
+
+.chat-thread-item {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    padding: 16px 18px;
+    border: 0;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fff;
+    color: #111827;
+    text-align: left;
+    cursor: pointer;
+}
+
+.chat-thread-item:hover,
+.chat-thread-item.active {
+    background: #eff6ff;
+}
+
+.chat-thread-item img,
+.chat-panel-head img {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    object-fit: cover;
+    background: #f1f5f9;
+}
+
+.chat-thread-item strong,
+.chat-thread-item small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-thread-item small {
+    margin-top: 4px;
+    color: #64748b;
+}
+
+.chat-thread-item em {
+    min-width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #ef1d2f;
+    color: #fff;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 800;
+}
+
+.chat-panel {
+    display: grid;
+    grid-template-rows: auto minmax(360px, 1fr) auto;
+    min-height: 640px;
+}
+
+.chat-panel-head {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+}
+
+.chat-messages {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: auto;
+    background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+}
+
+.chat-bubble-row {
+    display: flex;
+}
+
+.chat-bubble-row.mine {
+    justify-content: flex-end;
+}
+
+.chat-bubble {
+    max-width: min(640px, 78%);
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.chat-bubble-row.mine .chat-bubble {
+    background: #0052cc;
+    color: #fff;
+    border-color: #0052cc;
+}
+
+.chat-bubble p {
+    margin: 0;
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+.chat-bubble time {
+    display: block;
+    margin-top: 6px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.chat-bubble-row.mine time {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.chat-compose {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 18px;
+    border-top: 1px solid #eef2f7;
+    background: #fff;
+}
+
+.chat-compose textarea {
+    width: 100%;
+    resize: vertical;
+    border: 1px solid #dbe3ef;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font: inherit;
+}
+
+.chat-empty-state,
+.chat-empty-thread,
+.chat-panel-empty {
+    padding: 26px;
+    color: #64748b;
+    text-align: center;
+}
+
+.chat-panel-empty {
+    align-self: center;
+    justify-self: center;
+}
+
+@media (max-width: 900px) {
+    .chat-shell,
+    .chat-panel-head,
+    .chat-compose {
+        grid-template-columns: 1fr;
+    }
+
+    .chat-panel {
+        min-height: 520px;
+    }
+
+    .chat-panel-head .btn {
+        justify-self: start;
     }
 }

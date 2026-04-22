@@ -123,9 +123,9 @@
         section('refunds', 'Đơn hàng', 'Hoàn tiền', '/admin/content/refunds', 'refunds',
             cols('order.orderNumber:Mã đơn', 'buyer.email:Khách mua', 'shop.name:Cửa hàng', 'amount:Số tiền:money', 'status:Trạng thái:badge', 'reason:Lý do'),
             { statuses: ['pending', 'approved', 'rejected', 'processing', 'completed', 'failed'], actions: statusActions('/admin/content/refunds') }),
-        section('returns', 'Đơn hàng', 'Đổi trả', '/admin/content/returns', 'returns',
-            cols('order.orderNumber:Mã đơn', 'buyer.email:Khách mua', 'shop.name:Cửa hàng', 'status:Trạng thái:badge', 'reason:Lý do'),
-            { statuses: ['pending', 'approved', 'rejected', 'return_shipping', 'delivered', 'inspected', 'refunded', 'rejected_inspection'], actions: statusActions('/admin/content/returns') }),
+        section('returns', 'Đơn hàng', 'Đổi trả', '/admin/orders/returns', 'returns',
+            cols('order.orderNumber:Mã đơn', 'buyer.email:Khách mua', 'shop.name:Cửa hàng', 'refundAmount:Số tiền:money', 'status:Trạng thái:badge', 'reason:Lý do'),
+            { statuses: ['seller_reviewing', 'need_more_evidence', 'seller_approved', 'seller_rejected', 'admin_reviewing', 'return_approved', 'return_rejected', 'return_shipping', 'returned', 'refunded', 'closed'], actions: returnActions }),
         section('complaints', 'Đơn hàng', 'Khiếu nại', '/admin/content/complaints', 'complaints',
             cols('subject:Chủ đề', 'buyer.email:Khách mua', 'shop.name:Cửa hàng', 'type:Loại', 'status:Trạng thái:badge', 'priority:Mức độ ưu tiên'),
             { statuses: ['pending', 'reviewing', 'seller_replied', 'escalated', 'resolved', 'closed'], actions: statusActions('/admin/content/complaints') }),
@@ -1024,6 +1024,43 @@
         ];
     }
 
+    function returnActions(section, row) {
+        return [
+            details(section, row),
+            {
+                label: 'Duyệt hoàn hàng',
+                run: async () => {
+                    const note = prompt('Ghi chú duyệt hoàn hàng', 'Admin chấp nhận yêu cầu hoàn hàng');
+                    if (note === null) return;
+                    await api(`/admin/orders/returns/${row._id}/approve`, { method: 'PATCH', body: { note } });
+                    notify('Đã duyệt yêu cầu hoàn hàng');
+                    await loadSection(section.id);
+                }
+            },
+            {
+                label: 'Từ chối',
+                run: async () => {
+                    const note = prompt('Lý do từ chối hoàn hàng', '');
+                    if (!note) return;
+                    await api(`/admin/orders/returns/${row._id}/reject`, { method: 'PATCH', body: { note } });
+                    notify('Đã từ chối yêu cầu hoàn hàng');
+                    await loadSection(section.id);
+                }
+            },
+            {
+                label: 'Hoàn tiền một phần',
+                run: async () => {
+                    const amount = Number(prompt('Số tiền hoàn một phần', row.refundAmount || 0));
+                    if (!Number.isFinite(amount) || amount <= 0) return;
+                    const note = prompt('Ghi chú hoàn tiền một phần', '') || '';
+                    await api(`/admin/orders/returns/${row._id}/partial-refund`, { method: 'PATCH', body: { amount, note } });
+                    notify('Đã xử lý hoàn tiền một phần');
+                    await loadSection(section.id);
+                }
+            }
+        ];
+    }
+
     function settlementActions(endpoint) {
         function openSettlementDetail(row) {
             const detail = {
@@ -1170,7 +1207,19 @@
         suspend_shop: 'Tạm khóa shop',
         lock_seller: 'Khóa người bán',
         permanently_ban: 'Cấm vĩnh viễn',
-        report_authorities: 'Báo cơ quan chức năng'
+        report_authorities: 'Báo cơ quan chức năng',
+        return_requested: 'Đã gửi yêu cầu hoàn hàng',
+        seller_reviewing: 'Người bán đang xem xét',
+        need_more_evidence: 'Cần bổ sung bằng chứng',
+        seller_approved: 'Người bán đã chấp nhận',
+        seller_rejected: 'Người bán đã từ chối',
+        admin_reviewing: 'Admin đang xử lý',
+        return_approved: 'Hoàn hàng được duyệt',
+        return_rejected: 'Hoàn hàng bị từ chối',
+        return_shipping: 'Đang gửi trả hàng',
+        returned: 'Đã trả hàng',
+        refunded: 'Đã hoàn tiền',
+        closed: 'Đã đóng'
     };
 
     const baseTranslateAdminLabel = translateAdminLabel;

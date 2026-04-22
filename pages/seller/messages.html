@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paws &amp; Palette - Tin nhắn khách hàng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/pages/seller/seller-portal.css?v=20260422-chat-1">
+</head>
+<body class="seller-dashboard-body seller-messages-body">
+    <div class="seller-sidebar-backdrop" id="sellerSidebarBackdrop"></div>
+
+    <div class="seller-dashboard-shell">
+        <aside class="seller-side-nav" id="sellerSidebar">
+            <div class="seller-side-brand">
+                <div class="seller-brand-mark">
+                    <span class="material-symbols-outlined">pets</span>
+                </div>
+                <div>
+                    <h1>Paws &amp; Palette</h1>
+                    <p>Trung tâm người bán</p>
+                </div>
+            </div>
+
+            <nav class="seller-side-links">
+                <a class="seller-nav-link" href="/pages/seller/dashboard.html">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Tổng quan</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/products.html">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span>Sản phẩm</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/orders.html">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span>Đơn hàng</span>
+                </a>
+                <a class="seller-nav-link active" href="/pages/seller/messages.html">
+                    <span class="material-symbols-outlined">chat</span>
+                    <span>Tin nhắn</span>
+                </a>
+                <a class="seller-nav-link" href="/pages/seller/settings.html">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Cài đặt</span>
+                </a>
+            </nav>
+
+            <div class="seller-side-footer">
+                <a class="seller-primary-button seller-full-button" href="/pages/seller/create-product.html">
+                    <span class="material-symbols-outlined">add</span>
+                    <span>Thêm sản phẩm</span>
+                </a>
+            </div>
+        </aside>
+
+        <div class="seller-dashboard-main">
+            <header class="seller-dashboard-topbar">
+                <div class="seller-topbar-left">
+                    <button class="seller-mobile-toggle" id="sellerSidebarToggle" type="button" aria-label="Mở menu">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <label class="seller-topbar-search">
+                        <span class="material-symbols-outlined">search</span>
+                        <input id="sellerMessagesSearch" type="text" placeholder="Tìm khách hàng, sản phẩm hoặc nội dung tin nhắn...">
+                    </label>
+                </div>
+
+                <div class="seller-topbar-right">
+                    <button class="seller-icon-button" id="sellerMessagesRefresh" type="button" aria-label="Làm mới">
+                        <span class="material-symbols-outlined">refresh</span>
+                    </button>
+                    <div class="seller-profile-chip">
+                        <div class="seller-profile-copy">
+                            <strong id="sellerMessagesName">Người bán</strong>
+                            <span>Hỗ trợ khách hàng</span>
+                        </div>
+                        <img id="sellerMessagesAvatar" src="/assets/photos/cat.jpg" alt="Ảnh đại diện người bán">
+                    </div>
+                </div>
+            </header>
+
+            <main class="seller-messages-content">
+                <section class="seller-messages-heading">
+                    <div>
+                        <h2>Tin nhắn khách hàng</h2>
+                        <p>Trả lời câu hỏi của người mua về sản phẩm, tồn kho, cách dùng và chính sách shop.</p>
+                    </div>
+                    <a class="seller-secondary-button" href="/pages/seller/orders.html">
+                        <span class="material-symbols-outlined">receipt_long</span>
+                        <span>Xem đơn hàng</span>
+                    </a>
+                </section>
+
+                <section class="seller-chat-shell">
+                    <aside class="seller-chat-list" id="sellerConversationList">
+                        <div class="seller-empty-state">Đang tải hội thoại...</div>
+                    </aside>
+                    <section class="seller-chat-panel" id="sellerChatPanel">
+                        <div class="seller-empty-state">
+                            <strong>Chọn một hội thoại</strong>
+                            <p>Các tin nhắn mới từ người mua sẽ hiển thị tại đây.</p>
+                        </div>
+                    </section>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="/js/config.js?v=20260422-chat-1"></script>
+    <script src="/js/api/client.js?v=20260422-chat-1"></script>
+    <script src="/js/utils.js?v=20260418-vnd-1"></script>
+    <script src="/js/components/auth.js?v=20260422-chat-1"></script>
+    <script src="/pages/seller/messages.js?v=20260422-chat-1"></script>
+</body>
+</html>

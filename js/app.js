@@ -157,7 +157,18 @@ function formatReadableStatus(value = '') {
         inactive: 'Ngừng hoạt động',
         hidden: 'Đang ẩn',
         visible: 'Đang hiển thị',
-        reported: 'Bị báo cáo'
+        reported: 'Bị báo cáo',
+        return_requested: 'Đã gửi yêu cầu hoàn hàng',
+        seller_reviewing: 'Người bán đang xem xét',
+        need_more_evidence: 'Cần bổ sung bằng chứng',
+        seller_approved: 'Người bán đã chấp nhận',
+        seller_rejected: 'Người bán đã từ chối',
+        admin_reviewing: 'Admin đang xử lý',
+        return_approved: 'Hoàn hàng được duyệt',
+        return_rejected: 'Hoàn hàng bị từ chối',
+        return_shipping: 'Đang gửi trả hàng',
+        refunded: 'Đã hoàn tiền',
+        closed: 'Đã đóng hồ sơ'
     };
     return labelMap[normalized] || String(value || '')
         .replace(/_/g, ' ')
@@ -190,6 +201,7 @@ function formatPaymentMethod(method = '') {
 
 let paymentPollingTimer = null;
 let paymentCountdownTimer = null;
+let chatPollingTimer = null;
 
 function clearPaymentTimers() {
     if (paymentPollingTimer) {
@@ -655,6 +667,13 @@ function buildCatalogActionButtons(productId) {
     `;
 }
 
+function clearChatPollingTimer() {
+    if (chatPollingTimer) {
+        clearInterval(chatPollingTimer);
+        chatPollingTimer = null;
+    }
+}
+
 const STATIC_PAGE_FALLBACKS = {
     'about-us': {
         title: 'About Us',
@@ -868,6 +887,31 @@ async function buyNow(productId) {
         return false;
     }
 }
+
+async function startShopChat({ shopId, productId, message = '' } = {}) {
+    if (!authManager.isAuthenticated) {
+        authManager.showLoginModal();
+        return false;
+    }
+
+    if (authManager.user?.role !== 'buyer') {
+        authManager.showNotification('Chỉ tài khoản người mua mới có thể nhắn tin với shop theo luồng mua hàng.', 'error');
+        return false;
+    }
+
+    try {
+        const response = await api.startChatConversation({ shopId, productId, message });
+        const conversation = response.data || {};
+        if (!conversation._id) throw new Error('Không thể mở hội thoại với shop.');
+        window.location.hash = `messages?conversation=${encodeURIComponent(conversation._id)}`;
+        return true;
+    } catch (error) {
+        authManager.showNotification(error.message || 'Không thể mở khung chat với shop.', 'error');
+        return false;
+    }
+}
+
+window.startShopChat = startShopChat;
 
 async function updateCartCount() {
     if (!authManager.isAuthenticated) {
@@ -1177,6 +1221,7 @@ function parseHashRoute() {
 async function renderHashView() {
     try {
         clearPaymentTimers();
+        clearChatPollingTimer();
         const { route, params } = parseHashRoute();
         if (route === 'home') {
             showHomeView();
@@ -1207,10 +1252,12 @@ async function renderHashView() {
         if (route === 'payment-result') return await renderPaymentResultView(params.get('result'), params.get('paymentId'), params.get('orderId'));
         if (route === 'account') return await renderAccountView();
         if (route === 'orders') return await renderOrdersView();
+        if (route === 'returns') return await renderReturnsView();
         if (route === 'service-bookings') return await renderCareServiceBookingsView();
         if (route === 'order') return await renderOrderDetailView(params.get('id'));
         if (route === 'wishlist') return await renderWishlistView();
         if (route === 'notifications') return await renderNotificationsView();
+        if (route === 'messages') return await renderMessagesView(params);
         if (route === 'reset-password') return await renderResetPasswordView(params);
         showHomeView();
     } catch (error) {
@@ -1486,7 +1533,10 @@ async function renderShopDetailView(shopId) {
                         <p>${appGenerateStars(shop.rating || 0)} <strong>${shop.rating ?? 'Chưa có'}</strong> (${shop.reviewCount || 0} đánh giá)</p>
                         <p><strong>Liên hệ:</strong> ${shop.phone || ''} ${shop.email ? `- ${shop.email}` : ''}</p>
                         ${address ? `<p><strong>Địa chỉ:</strong> ${address}</p>` : ''}
-                        ${mapUrl ? `<p><a class="btn btn-secondary btn-small" href="${mapUrl}" target="_blank" rel="noreferrer">Xem vị trí trên Google Maps</a></p>` : ''}
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+                            ${mapUrl ? `<a class="btn btn-secondary btn-small" href="${mapUrl}" target="_blank" rel="noreferrer">Xem vị trí trên Google Maps</a>` : ''}
+                            ${!isSellerBuyingBlocked() ? `<button class="btn btn-primary btn-small" type="button" data-chat-shop="${shop._id || shopId}">Nhắn tin với shop</button>` : ''}
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1609,6 +1659,11 @@ async function renderShopDetailView(shopId) {
             ` : ''}
         `);
         bindProductCards(document.getElementById('spaView'));
+        document.querySelectorAll('[data-chat-shop]').forEach((button) => {
+            button.addEventListener('click', () => {
+                startShopChat({ shopId: button.dataset.chatShop });
+            });
+        });
 
         if (hasCareServices) {
             document.querySelectorAll('[data-shop-tab-target]').forEach((button) => {
@@ -1745,6 +1800,7 @@ async function renderProductView(productId) {
                             <p>${appGenerateStars(shop.rating || 0)} ${shop.reviewCount || 0} đánh giá</p>
                         </div>
                         ${shopId ? `<a class="btn btn-secondary btn-small" href="#shop-detail?id=${shopId}">Xem shop</a>` : ''}
+                        ${shopId && !sellerViewOnly ? `<button class="btn btn-primary btn-small" type="button" id="spaChatShop">Chat với shop</button>` : ''}
                     </div>
                     <div class="product-detail-actions">
                         ${sellerViewOnly
@@ -1773,6 +1829,7 @@ async function renderProductView(productId) {
         if (!sellerViewOnly) {
             document.getElementById('spaAddToCart').addEventListener('click', () => addToCart(product._id));
             document.getElementById('spaBuyNow').addEventListener('click', () => buyNow(product._id));
+            document.getElementById('spaChatShop')?.addEventListener('click', () => startShopChat({ shopId, productId: product._id }));
             document.getElementById('spaAddWishlist').addEventListener('click', async () => {
                 if (!authManager.isAuthenticated) {
                     authManager.showLoginModal();
@@ -1914,21 +1971,56 @@ async function renderPageView(slug = 'privacy-policy') {
 }
 
 async function renderResetPasswordView(params) {
-    const token = params.get('token') || '';
-    const email = params.get('email') || '';
+    const resetEmail = params.get('email') || '';
     setSpaContent('Đặt lại mật khẩu', `
-        <form id="spaResetPasswordForm" class="account-content" style="display:grid; gap:14px; max-width:520px;">
-            <p>${email ? `Đặt lại mật khẩu cho <strong>${email}</strong>.` : 'Nhập mật khẩu mới cho tài khoản của bạn.'}</p>
-            <input type="password" name="newPassword" placeholder="Mật khẩu mới, ví dụ: Petshop2" required minlength="6">
-            <button class="btn btn-primary" type="submit" ${token ? '' : 'disabled'}>Đặt lại mật khẩu</button>
-            ${token ? '' : '<p>Thiếu mã đặt lại mật khẩu. Vui lòng yêu cầu liên kết mới từ mục Đăng nhập -> Quên mật khẩu.</p>'}
+        <form id="spaResetPasswordForm" class="account-content" style="display:grid; gap:14px; max-width:560px;">
+            <p>Nhập email đã đăng ký, mã xác minh 6 số và mật khẩu mới của bạn.</p>
+            <input type="email" name="email" value="${escapeHtml(resetEmail)}" placeholder="Email đã đăng ký" required>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <input type="text" name="code" placeholder="Mã xác minh 6 số" required inputmode="numeric" maxlength="6" pattern="[0-9]{6}" style="flex:1 1 220px;">
+                <button class="btn btn-secondary" id="spaSendResetCode" type="button">Gửi mã</button>
+            </div>
+            <input type="password" name="newPassword" placeholder="Mật khẩu mới, ví dụ: PetNest1" required minlength="6">
+            <input type="password" name="confirmPassword" placeholder="Nhập lại mật khẩu mới" required minlength="6">
+            <p class="muted">Mật khẩu cần có ít nhất một chữ hoa, một chữ thường và một số. Mã xác minh chỉ dùng một lần và có thời hạn.</p>
+            <button class="btn btn-primary" type="submit">Đặt lại mật khẩu</button>
         </form>
     `);
-    document.getElementById('spaResetPasswordForm').addEventListener('submit', async event => {
+
+    const resetForm = document.getElementById('spaResetPasswordForm');
+    document.getElementById('spaSendResetCode')?.addEventListener('click', async () => {
+        const formData = new FormData(resetForm);
+        const requestEmail = String(formData.get('email') || '').trim();
+        if (!requestEmail) {
+            authManager.showNotification('Vui lòng nhập email đã đăng ký.', 'error');
+            return;
+        }
+
+        try {
+            const response = await api.forgotPassword(requestEmail);
+            const payload = response.data || {};
+            authManager.showNotification(`Mã xác minh đã được gửi đến ${payload.emailMasked || requestEmail}.`, 'success');
+        } catch (error) {
+            authManager.showNotification(error.message || 'Không thể gửi mã xác minh.', 'error');
+        }
+    });
+
+    resetForm.addEventListener('submit', async event => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
+        const newPassword = formData.get('newPassword');
+        const confirmPassword = formData.get('confirmPassword');
+        if (newPassword !== confirmPassword) {
+            authManager.showNotification('Mật khẩu nhập lại chưa khớp.', 'error');
+            return;
+        }
+
         try {
-            await api.resetPassword(token, formData.get('newPassword'));
+            await api.resetPassword({
+                email: formData.get('email'),
+                code: formData.get('code'),
+                newPassword
+            });
             authManager.showNotification('Đã đặt lại mật khẩu. Vui lòng đăng nhập lại.', 'success');
             window.location.hash = '';
             authManager.showLoginModal();
@@ -1936,6 +2028,7 @@ async function renderResetPasswordView(params) {
             authManager.showNotification(error.message || 'Đặt lại mật khẩu thất bại.', 'error');
         }
     });
+    return;
 }
 
 function requireBuyerView() {
@@ -3206,16 +3299,17 @@ async function renderOrderDetailView(orderId) {
                             <div>
                                 <strong>Chọn sản phẩm cần trả</strong>
                                 <div style="display:grid; gap:8px; margin-top:8px;">
-                                    ${(order.items || []).map((item) => `
+                                    ${(order.items || []).map((item, index) => `
                                         <label style="display:flex; gap:10px; align-items:flex-start;">
-                                            <input type="checkbox" name="returnProduct" value="${escapeHtml(item.product?._id || item.product || '')}">
-                                            <span>${escapeHtml(item.name || 'Sản phẩm')} · SL ${escapeHtml(String(item.quantity || 1))}</span>
+                                            <input type="checkbox" name="returnProduct" value="${escapeHtml(item.product?._id || item.product || '')}" data-return-index="${index}">
+                                            <span>${escapeHtml(item.name || 'Sản phẩm')} · Đã mua ${escapeHtml(String(item.quantity || 1))}</span>
+                                            <input type="number" name="returnQuantity_${index}" min="1" max="${escapeHtml(String(item.quantity || 1))}" value="1" aria-label="Số lượng hoàn" style="width:96px;">
                                         </label>
                                     `).join('')}
                                 </div>
                             </div>
                             <select name="reason" required>
-                                <option value="">Chọn lý do trả hàng</option>
+                                <option value="">Chọn lý do hoàn hàng</option>
                                 ${returnReasons.map((entry) => `<option value="${entry.value}">${entry.label}</option>`).join('')}
                             </select>
                             <select name="resolution">
@@ -3224,8 +3318,8 @@ async function renderOrderDetailView(orderId) {
                                 <option value="return_refund">Trả hàng hoàn tiền</option>
                             </select>
                             <textarea name="description" rows="4" placeholder="Mô tả chi tiết tình trạng hàng hóa, vấn đề bạn gặp phải và mong muốn xử lý"></textarea>
-                            <input name="evidence" type="text" placeholder="Link ảnh/video minh chứng (nếu có)">
-                            <button class="btn btn-primary" type="submit">Gửi yêu cầu trả hàng</button>
+                            <input name="evidence" type="text" placeholder="Link ảnh/video minh chứng, có thể dán nhiều link cách nhau bằng dấu phẩy">
+                            <button class="btn btn-primary" type="submit">Gửi yêu cầu hoàn hàng</button>
                         </div>
                     </form>
                 ` : ''}
@@ -3262,33 +3356,35 @@ async function renderOrderDetailView(orderId) {
     document.getElementById('orderReturnForm')?.addEventListener('submit', async (event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        const selectedItems = formData.getAll('returnProduct').map((productId) => ({ productId }));
+        const selectedItems = Array.from(event.currentTarget.querySelectorAll('input[name="returnProduct"]:checked')).map((input) => {
+            const index = input.dataset.returnIndex;
+            const quantityInput = event.currentTarget.querySelector(`[name="returnQuantity_${index}"]`);
+            return {
+                productId: input.value,
+                quantity: Math.max(Number(quantityInput?.value || 1), 1)
+            };
+        });
         if (!selectedItems.length) {
             authManager.showNotification('Hãy chọn ít nhất một sản phẩm cần trả hàng.', 'error');
             return;
         }
 
-        const reasonMap = {
-            damaged: 'Sản phẩm lỗi / hỏng',
-            wrong_item: 'Sai sản phẩm',
-            missing_item: 'Thiếu sản phẩm',
-            not_as_described: 'Hàng không đúng mô tả',
-            suspected_fake: 'Nghi ngờ hàng giả / kém chất lượng',
-            other: 'Lý do khác'
-        };
-
         try {
             await api.requestOrderReturn(order._id, {
                 items: selectedItems,
-                reason: reasonMap[formData.get('reason')] || formData.get('reason') || 'Lý do khác',
+                reason: formData.get('reason') || 'other',
                 description: formData.get('description') || '',
                 resolution: formData.get('resolution') || 'refund',
-                images: formData.get('evidence') ? [formData.get('evidence')] : []
+                evidence: String(formData.get('evidence') || '')
+                    .split(',')
+                    .map((entry) => entry.trim())
+                    .filter(Boolean)
+                    .map((url) => ({ type: /\.(mp4|mov|webm)(\?|$)/i.test(url) ? 'video' : 'image', url }))
             });
-            authManager.showNotification('Đã gửi yêu cầu trả hàng. Sàn sẽ tiếp tục giữ tiền cho đến khi xử lý xong.', 'success');
+            authManager.showNotification('Đã gửi yêu cầu hoàn hàng. Sàn sẽ tiếp tục giữ tiền cho đến khi xử lý xong.', 'success');
             renderOrderDetailView(order._id);
         } catch (error) {
-            authManager.showNotification(error.message || 'Không thể gửi yêu cầu trả hàng.', 'error');
+            authManager.showNotification(error.message || 'Không thể gửi yêu cầu hoàn hàng.', 'error');
         }
     });
 }
@@ -3322,6 +3418,245 @@ async function renderWishlistView() {
         });
     });
     bindProductCards(document.getElementById('spaView'));
+}
+
+async function renderReturnsView() {
+    if (!requireBuyerView()) return;
+
+    const response = await api.getBuyerReturns({ limit: 50 });
+    const returns = response.data || [];
+    const statusLabels = {
+        return_requested: 'Đã gửi yêu cầu',
+        seller_reviewing: 'Người bán đang xem xét',
+        need_more_evidence: 'Cần bổ sung bằng chứng',
+        seller_approved: 'Người bán đã chấp nhận',
+        seller_rejected: 'Người bán đã từ chối',
+        admin_reviewing: 'Admin đang xử lý',
+        return_approved: 'Hoàn hàng được duyệt',
+        return_rejected: 'Hoàn hàng bị từ chối',
+        return_shipping: 'Đang gửi trả hàng',
+        returned: 'Đã trả hàng',
+        refunded: 'Đã hoàn tiền',
+        closed: 'Đã đóng'
+    };
+
+    setSpaContent('Theo dõi hoàn hàng', `
+        <div class="account-content" style="display:grid; gap:16px;">
+            ${returns.map((request) => `
+                <article class="order-card">
+                    <div class="order-card-head">
+                        <div>
+                            <h3>#${escapeHtml(request.order?.orderNumber || request.order?._id || request.order || '')}</h3>
+                            <p>${escapeHtml(request.shop?.name || 'Shop')}</p>
+                        </div>
+                        <strong>${formatCurrency(request.refundAmount || 0)}</strong>
+                    </div>
+                    <div class="order-card-badges">
+                        ${buildStatusBadge(statusLabels[request.status] || formatReadableStatus(request.status), request.status === 'refunded' ? 'success' : request.status === 'need_more_evidence' ? 'warm' : 'neutral')}
+                    </div>
+                    <p><strong>Lý do:</strong> ${escapeHtml(request.reason || '')}</p>
+                    <p><strong>Phương án:</strong> ${escapeHtml(formatReadableStatus(request.resolution || 'refund'))}</p>
+                    ${(request.history || []).length ? `
+                        <div class="order-log-list">
+                            ${request.history.slice(-4).map((entry) => `
+                                <div class="order-log-item">
+                                    <strong>${escapeHtml(statusLabels[entry.status] || formatReadableStatus(entry.status))}</strong>
+                                    <p>${escapeHtml(entry.note || '')}</p>
+                                    <span>${new Date(entry.createdAt).toLocaleString('vi-VN')}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    ${request.status === 'need_more_evidence' ? `
+                        <form class="return-evidence-form" data-return-id="${request._id}" style="display:grid; gap:8px;">
+                            <input name="evidence" placeholder="Dán link ảnh/video bổ sung, cách nhau bằng dấu phẩy">
+                            <textarea name="note" rows="3" placeholder="Ghi chú bổ sung"></textarea>
+                            <button class="btn btn-primary" type="submit">Bổ sung bằng chứng</button>
+                        </form>
+                    ` : ''}
+                </article>
+            `).join('') || '<p>Bạn chưa có yêu cầu hoàn hàng nào.</p>'}
+        </div>
+    `);
+
+    document.querySelectorAll('.return-evidence-form').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const data = new FormData(event.currentTarget);
+            await api.addReturnEvidence(event.currentTarget.dataset.returnId, {
+                note: data.get('note') || '',
+                evidence: String(data.get('evidence') || '')
+                    .split(',')
+                    .map((entry) => entry.trim())
+                    .filter(Boolean)
+                    .map((url) => ({ type: /\.(mp4|mov|webm)(\?|$)/i.test(url) ? 'video' : 'image', url }))
+            });
+            authManager.showNotification('Đã bổ sung bằng chứng.', 'success');
+            renderReturnsView();
+        });
+    });
+}
+
+function formatChatTime(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit'
+    }).format(date);
+}
+
+function chatConversationTitle(conversation = {}) {
+    return conversation.shop?.name || conversation.seller?.name || 'Shop';
+}
+
+function renderConversationList(conversations = [], selectedId = '') {
+    if (!conversations.length) {
+        return `
+            <div class="chat-empty-state">
+                <strong>Chưa có hội thoại nào</strong>
+                <p>Bạn có thể mở trang sản phẩm hoặc shop để nhắn tin tư vấn trước khi mua.</p>
+                <a class="btn btn-primary btn-small" href="#shop">Tìm sản phẩm</a>
+            </div>
+        `;
+    }
+
+    return conversations.map((conversation) => {
+        const isActive = String(conversation._id) === String(selectedId);
+        const unread = Number(conversation.buyerUnreadCount || 0);
+        const image = resolveImage(conversation.shop?.logo || conversation.product?.thumbnail, 'generic');
+        return `
+            <button class="chat-thread-item ${isActive ? 'active' : ''}" type="button" data-chat-select="${conversation._id}">
+                <img src="${image}" alt="${escapeHtml(chatConversationTitle(conversation))}">
+                <span>
+                    <strong>${escapeHtml(chatConversationTitle(conversation))}</strong>
+                    <small>${escapeHtml(conversation.product?.name || conversation.lastMessage || 'Bắt đầu trao đổi với shop')}</small>
+                </span>
+                ${unread ? `<em>${unread}</em>` : ''}
+            </button>
+        `;
+    }).join('');
+}
+
+function renderChatMessages(messages = []) {
+    if (!messages.length) {
+        return '<div class="chat-empty-thread">Hãy gửi lời nhắn đầu tiên để shop tư vấn cho bạn.</div>';
+    }
+
+    const userId = String(authManager.user?._id || authManager.user?.id || '');
+    return messages.map((message) => {
+        const isMine = String(message.sender?._id || message.sender) === userId;
+        return `
+            <div class="chat-bubble-row ${isMine ? 'mine' : 'theirs'}">
+                <div class="chat-bubble">
+                    <p>${escapeHtml(message.body || '')}</p>
+                    <time>${formatChatTime(message.createdAt)}</time>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function renderMessagesView(params = new URLSearchParams()) {
+    if (!requireBuyerView()) return;
+
+    const selectedFromUrl = params.get('conversation') || '';
+    const response = await api.getChatConversations({ limit: 50 });
+    const conversations = response.data || [];
+    const selectedId = selectedFromUrl || conversations[0]?._id || '';
+    const selected = conversations.find((item) => String(item._id) === String(selectedId)) || conversations[0] || null;
+
+    setSpaContent('Tin nhắn với shop', `
+        <div class="chat-shell">
+            <aside class="chat-sidebar">
+                <div class="chat-sidebar-head">
+                    <h2>Hội thoại</h2>
+                    <p>Trao đổi với người bán để được tư vấn sản phẩm, tồn kho và cách sử dụng.</p>
+                </div>
+                <div class="chat-thread-list" id="chatConversationList">
+                    ${renderConversationList(conversations, selected?._id || '')}
+                </div>
+            </aside>
+            <section class="chat-panel">
+                ${selected ? `
+                    <div class="chat-panel-head">
+                        <img src="${resolveImage(selected.shop?.logo || selected.product?.thumbnail, 'generic')}" alt="${escapeHtml(chatConversationTitle(selected))}">
+                        <div>
+                            <h2>${escapeHtml(chatConversationTitle(selected))}</h2>
+                            ${selected.product ? `<p>Đang trao đổi về: <a href="#product?id=${selected.product._id}">${escapeHtml(selected.product.name)}</a></p>` : '<p>Hội thoại tư vấn trực tiếp với shop</p>'}
+                        </div>
+                        <a class="btn btn-secondary btn-small" href="#shop-detail?id=${selected.shop?._id || selected.shop}">Vào shop</a>
+                    </div>
+                    <div class="chat-messages" id="chatMessages"><div class="chat-empty-thread">Đang tải tin nhắn...</div></div>
+                    <form class="chat-compose" id="chatComposeForm">
+                        <textarea id="chatMessageInput" rows="2" maxlength="2000" placeholder="Nhập tin nhắn cho shop..." required></textarea>
+                        <button class="btn btn-primary" type="submit">Gửi</button>
+                    </form>
+                ` : `
+                    <div class="chat-panel-empty">
+                        <h2>Chưa có cuộc trò chuyện</h2>
+                        <p>Bấm “Chat với shop” ở trang sản phẩm hoặc cửa hàng để bắt đầu.</p>
+                        <a class="btn btn-primary" href="#shop">Đi tới gian hàng</a>
+                    </div>
+                `}
+            </section>
+        </div>
+    `);
+
+    document.querySelectorAll('[data-chat-select]').forEach((button) => {
+        button.addEventListener('click', () => {
+            window.location.hash = `messages?conversation=${encodeURIComponent(button.dataset.chatSelect)}`;
+        });
+    });
+
+    if (!selected) return;
+
+    const messagesContainer = document.getElementById('chatMessages');
+    const loadMessages = async ({ silent = false } = {}) => {
+        try {
+            if (!silent && messagesContainer) {
+                messagesContainer.innerHTML = '<div class="chat-empty-thread">Đang tải tin nhắn...</div>';
+            }
+            const messagesResponse = await api.getChatMessages(selected._id);
+            const payload = messagesResponse.data || {};
+            const messages = payload.messages || [];
+            if (messagesContainer) {
+                messagesContainer.innerHTML = renderChatMessages(messages);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+            await api.markChatConversationRead(selected._id).catch(() => {});
+        } catch (error) {
+            if (messagesContainer) {
+                messagesContainer.innerHTML = `<div class="chat-empty-thread">${escapeHtml(error.message || 'Không thể tải tin nhắn.')}</div>`;
+            }
+        }
+    };
+
+    await loadMessages();
+    chatPollingTimer = setInterval(() => loadMessages({ silent: true }), 7000);
+
+    document.getElementById('chatComposeForm')?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const input = document.getElementById('chatMessageInput');
+        const body = input.value.trim();
+        if (!body) return;
+        const submitButton = event.currentTarget.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Đang gửi...';
+        try {
+            await api.sendChatMessage(selected._id, body);
+            input.value = '';
+            await loadMessages({ silent: true });
+        } catch (error) {
+            authManager.showNotification(error.message || 'Không thể gửi tin nhắn.', 'error');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Gửi';
+        }
+    });
 }
 
 async function renderNotificationsView() {

@@ -9,6 +9,7 @@
         addressNav: '&#272;&#7883;a ch&#7881; giao h&#224;ng',
         passwordNav: '&#272;&#7893;i m&#7853;t kh&#7849;u',
         ordersNav: '&#272;&#417;n h&#224;ng c&#7911;a t&#244;i',
+        messagesNav: 'Tin nh&#7855;n v&#7899;i shop',
         profileHeading: 'H&#7891; s&#417; c&#7911;a t&#244;i',
         profileDesc: 'Qu&#7843;n l&#253; th&#244;ng tin c&#225; nh&#226;n &#273;&#7875; vi&#7879;c mua h&#224;ng v&#224; nh&#7853;n &#273;&#417;n thu&#7853;n ti&#7879;n h&#417;n.',
         username: 'T&#234;n &#273;&#259;ng nh&#7853;p',
@@ -170,6 +171,7 @@
                             <button class="buyer-account-nav-link" type="button" data-account-nav="address">${html('addressNav')}</button>
                             <button class="buyer-account-nav-link" type="button" data-account-nav="password">${html('passwordNav')}</button>
                             <a class="buyer-account-nav-link" href="#orders">${html('ordersNav')}</a>
+                            <a class="buyer-account-nav-link" href="#messages">${html('messagesNav')}</a>
                         </nav>
                     </div>
                 </aside>

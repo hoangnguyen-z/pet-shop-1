@@ -202,6 +202,10 @@
                 e.preventDefault();
                 this.showRegisterModal();
             }
+            if (e.target.closest('[data-action="forgot-password"]')) {
+                e.preventDefault();
+                this.showForgotPasswordModal();
+            }
             if (e.target.closest('[data-action="logout"]')) {
                 e.preventDefault();
                 this.logout();
@@ -253,6 +257,7 @@
                     </button>
                     <div class="user-dropdown" id="userDropdown">
                         <a href="#account"><i class="fas fa-user"></i> Tài khoản của tôi</a>
+                        ${this.user?.role === 'buyer' ? '<a href="#messages"><i class="fas fa-comments"></i> Tin nhắn với shop</a>' : ''}
                         <a href="#notifications"><i class="fas fa-bell"></i> Thông báo</a>
                         ${this.user?.role === 'seller' ? '<a href="/pages/seller/dashboard.html"><i class="fas fa-store"></i> Seller Center</a>' : ''}
                         ${this.user?.role === 'admin' ? '<a href="/pages/admin/dashboard.html"><i class="fas fa-cog"></i> Admin Center</a>' : ''}
@@ -278,6 +283,206 @@
 
     showRegisterModal() {
         this.showAuthModal('register');
+    }
+
+    showForgotPasswordModal() {
+        document.getElementById('loginModal')?.remove();
+        document.getElementById('registerModal')?.remove();
+        document.getElementById('authModal')?.remove();
+        document.getElementById('forgotPasswordModal')?.remove();
+
+        const modal = this.createModal('forgotPasswordModal', `
+            <div class="auth-shell auth-reset-shell">
+                <button class="modal-close auth-close" type="button" aria-label="Đóng">&times;</button>
+                <section class="auth-visual" aria-hidden="true">
+                    <div class="auth-blob auth-blob-one"></div>
+                    <div class="auth-blob auth-blob-two"></div>
+                    <div class="auth-brand">
+                        <img src="/assets/images/pet-logo.svg" alt="" class="auth-brand-logo">
+                        <span>PetNest</span>
+                    </div>
+                    <div class="auth-visual-copy">
+                        <h3>Bảo vệ tài khoản của bạn.</h3>
+                        <p>PetNest sẽ gửi mã xác minh 6 số đến email đã đăng ký. Mã chỉ dùng một lần và hết hạn sau vài phút.</p>
+                    </div>
+                    <div class="auth-image-stack">
+                        <div class="auth-image-card auth-image-main"><img src="/assets/images/pet-cat.svg" alt=""></div>
+                        <div class="auth-image-card auth-image-overlap"><img src="/assets/images/pet-dog.svg" alt=""></div>
+                    </div>
+                </section>
+                <section class="auth-panel">
+                    <div class="auth-heading">
+                        <h3>Quên mật khẩu</h3>
+                        <p id="forgotPasswordIntro">Nhập email đã đăng ký để nhận mã xác minh đặt lại mật khẩu.</p>
+                    </div>
+                    <div class="auth-error" id="forgotPasswordError" role="alert"></div>
+                    <div class="auth-success" id="forgotPasswordSuccess" role="status" style="display:none;"></div>
+
+                    <form id="forgotRequestForm" class="auth-form" novalidate>
+                        <div class="auth-field">
+                            <label for="forgotEmail">Email đã đăng ký</label>
+                            <div class="auth-input-wrap">
+                                <input id="forgotEmail" type="email" name="email" required autocomplete="email" placeholder="ten@example.com">
+                                <span class="auth-input-icon">@</span>
+                            </div>
+                        </div>
+                        <button id="forgotRequestSubmit" type="submit" class="auth-submit">Gửi mã xác minh</button>
+                    </form>
+
+                    <form id="forgotResetForm" class="auth-form" style="display:none;" novalidate>
+                        <input id="forgotResetEmail" type="hidden" name="email">
+                        <div class="auth-field">
+                            <label for="forgotCode">Mã xác minh 6 số</label>
+                            <div class="auth-input-wrap">
+                                <input id="forgotCode" type="text" name="code" required inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="123456">
+                                <span class="auth-input-icon">OTP</span>
+                            </div>
+                        </div>
+                        <div class="auth-field">
+                            <label for="forgotNewPassword">Mật khẩu mới</label>
+                            <div class="auth-input-wrap">
+                                <input id="forgotNewPassword" type="password" name="newPassword" required minlength="6" autocomplete="new-password" placeholder="Ví dụ: PetNest1">
+                                <button class="auth-password-toggle" type="button" data-reset-toggle-password>Hiện</button>
+                            </div>
+                            <small class="auth-help">Mật khẩu cần có ít nhất một chữ hoa, một chữ thường và một số.</small>
+                        </div>
+                        <div class="auth-field">
+                            <label for="forgotConfirmPassword">Nhập lại mật khẩu mới</label>
+                            <div class="auth-input-wrap">
+                                <input id="forgotConfirmPassword" type="password" name="confirmPassword" required minlength="6" autocomplete="new-password" placeholder="Nhập lại mật khẩu mới">
+                            </div>
+                        </div>
+                        <button id="forgotResetSubmit" type="submit" class="auth-submit">Đặt lại mật khẩu</button>
+                        <button id="forgotResendButton" type="button" class="auth-secondary-submit">Gửi lại mã</button>
+                    </form>
+
+                    <div class="auth-switch-card">
+                        <p>Đã nhớ mật khẩu? <a href="#" data-reset-back-login>Đăng nhập</a></p>
+                    </div>
+                    <p class="auth-terms">Không chia sẻ mã xác minh cho bất kỳ ai. PetNest không bao giờ yêu cầu mã qua điện thoại hoặc mạng xã hội.</p>
+                </section>
+            </div>
+        `);
+
+        modal.classList.add('auth-modal');
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('show'), 10);
+
+        const errorBox = modal.querySelector('#forgotPasswordError');
+        const successBox = modal.querySelector('#forgotPasswordSuccess');
+        const requestForm = modal.querySelector('#forgotRequestForm');
+        const resetForm = modal.querySelector('#forgotResetForm');
+        const requestSubmit = modal.querySelector('#forgotRequestSubmit');
+        const resetSubmit = modal.querySelector('#forgotResetSubmit');
+        const resendButton = modal.querySelector('#forgotResendButton');
+        const emailInput = modal.querySelector('#forgotEmail');
+        const resetEmailInput = modal.querySelector('#forgotResetEmail');
+
+        const setError = (message = '') => {
+            errorBox.innerHTML = message ? `<div>${message}</div>` : '';
+            errorBox.style.display = message ? 'block' : 'none';
+        };
+
+        const setSuccess = (message = '') => {
+            successBox.innerHTML = message ? `<div>${message}</div>` : '';
+            successBox.style.display = message ? 'block' : 'none';
+        };
+
+        const requestCode = async (email) => {
+            setError('');
+            setSuccess('');
+            requestSubmit.disabled = true;
+            resendButton.disabled = true;
+            requestSubmit.textContent = 'Đang gửi...';
+            try {
+                const response = await this.api.forgotPassword(email);
+                const payload = response.data || {};
+                resetEmailInput.value = email;
+                requestForm.style.display = 'none';
+                resetForm.style.display = 'grid';
+                setSuccess(`Mã xác minh đã được gửi đến ${payload.emailMasked || email}. Mã có hiệu lực trong ${payload.expiresInMinutes || 10} phút.`);
+            } catch (error) {
+                setError(error.message || 'Không thể gửi mã xác minh. Vui lòng thử lại.');
+            } finally {
+                requestSubmit.disabled = false;
+                resendButton.disabled = false;
+                requestSubmit.textContent = 'Gửi mã xác minh';
+            }
+        };
+
+        requestForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!requestForm.checkValidity()) {
+                requestForm.reportValidity();
+                return;
+            }
+            await requestCode(emailInput.value.trim());
+        });
+
+        resendButton.addEventListener('click', async () => {
+            const email = resetEmailInput.value || emailInput.value.trim();
+            if (!email) {
+                requestForm.style.display = 'grid';
+                resetForm.style.display = 'none';
+                return;
+            }
+            await requestCode(email);
+        });
+
+        resetForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setError('');
+            if (!resetForm.checkValidity()) {
+                resetForm.reportValidity();
+                return;
+            }
+
+            const formData = new FormData(resetForm);
+            const newPassword = formData.get('newPassword');
+            const confirmPassword = formData.get('confirmPassword');
+            if (newPassword !== confirmPassword) {
+                setError('Mật khẩu nhập lại chưa khớp.');
+                return;
+            }
+
+            resetSubmit.disabled = true;
+            resetSubmit.textContent = 'Đang đặt lại...';
+            try {
+                await this.api.resetPassword({
+                    email: formData.get('email'),
+                    code: formData.get('code'),
+                    newPassword
+                });
+                setSuccess('Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.');
+                this.showNotification('Đặt lại mật khẩu thành công!', 'success');
+                setTimeout(() => {
+                    modal.remove();
+                    this.showLoginModal();
+                }, 900);
+            } catch (error) {
+                setError(error.message || 'Không thể đặt lại mật khẩu.');
+            } finally {
+                resetSubmit.disabled = false;
+                resetSubmit.textContent = 'Đặt lại mật khẩu';
+            }
+        });
+
+        modal.querySelector('[data-reset-toggle-password]')?.addEventListener('click', (event) => {
+            const passwordInput = modal.querySelector('#forgotNewPassword');
+            const confirmInput = modal.querySelector('#forgotConfirmPassword');
+            const isHidden = passwordInput.type === 'password';
+            passwordInput.type = isHidden ? 'text' : 'password';
+            confirmInput.type = isHidden ? 'text' : 'password';
+            event.currentTarget.textContent = isHidden ? 'Ẩn' : 'Hiện';
+        });
+
+        modal.querySelector('[data-reset-back-login]')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            modal.remove();
+            this.showLoginModal();
+        });
+
+        this.setupModalClose(modal);
     }
 
     showAuthModal(mode = 'login') {
@@ -747,38 +952,6 @@
                 this.showForgotPasswordModal();
             });
         });
-    }
-
-    showForgotPasswordModal() {
-        const modal = this.createModal('forgotPasswordModal', `
-            <div class="modal-header">
-                <h3>Quên mật khẩu</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="forgotPasswordForm">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" name="email" required placeholder="Nhập email của bạn">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Gửi liên kết đặt lại</button>
-                </form>
-            </div>
-        `);
-
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('show'), 10);
-        modal.querySelector('#forgotPasswordForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try {
-                await this.api.forgotPassword(new FormData(e.currentTarget).get('email'));
-                modal.remove();
-                this.showNotification('Nếu email tồn tại, hệ thống đã tạo liên kết đặt lại mật khẩu.', 'success');
-            } catch (error) {
-                this.showNotification(error.message || 'Không thể yêu cầu đặt lại mật khẩu', 'error');
-            }
-        });
-        this.setupModalClose(modal);
     }
 
     showNotification(message, type = 'info') {

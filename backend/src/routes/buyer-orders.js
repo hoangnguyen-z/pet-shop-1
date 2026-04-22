@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Order, Product, Review, Coupon, OrderLog } = require('../models');
+const { Order, Product, Review, Coupon, OrderLog, Settlement, Notification } = require('../models');
 const ReturnRequest = require('../models/admin/Return');
 const { authenticate } = require('../middleware/auth');
 const { getPaginationMeta } = require('../middleware/pagination');
@@ -11,6 +11,52 @@ const { ORDER_STATUS, PAYMENT_STATUS } = require('../config/constants');
 const { quoteOrder, createOrder, syncOrderState, deriveShippingStatus, writeOrderLog } = require('../services/orderService');
 
 const PAYMENT_CALLBACK_SECRET = process.env.PAYMENT_CALLBACK_SECRET || 'dev-payment-secret';
+
+const RETURN_REASON_LABELS = {
+    damaged: 'Sản phẩm lỗi/hỏng',
+    wrong_item: 'Sai sản phẩm',
+    missing_item: 'Thiếu sản phẩm',
+    not_as_described: 'Không đúng mô tả',
+    suspected_fake: 'Nghi ngờ hàng giả/kém chất lượng',
+    other: 'Lý do khác'
+};
+
+function normalizeReturnEvidence({ images = [], videos = [], evidence = [] } = {}, userId) {
+    const entries = [];
+    const pushUrl = (url, type = 'link') => {
+        const safeUrl = String(url || '').trim();
+        if (!safeUrl) return;
+        entries.push({ type, url: safeUrl, uploadedBy: userId, uploadedAt: new Date() });
+    };
+
+    (Array.isArray(images) ? images : [images]).forEach((url) => pushUrl(url, 'image'));
+    (Array.isArray(videos) ? videos : [videos]).forEach((url) => pushUrl(url, 'video'));
+    (Array.isArray(evidence) ? evidence : [evidence]).forEach((item) => {
+        if (typeof item === 'string') return pushUrl(item, 'link');
+        if (item && typeof item === 'object') {
+            entries.push({
+                type: ['image', 'video', 'link', 'note'].includes(item.type) ? item.type : 'link',
+                url: String(item.url || '').trim(),
+                note: String(item.note || '').trim(),
+                uploadedBy: userId,
+                uploadedAt: new Date()
+            });
+        }
+    });
+
+    return entries.filter((entry) => entry.url || entry.note);
+}
+
+async function assertOrderNotSettled(orderId) {
+    const settlement = await Settlement.findOne({
+        orders: orderId,
+        status: { $in: ['completed'] }
+    }).select('_id');
+
+    if (settlement) {
+        throw ApiError.badRequest('Đơn hàng đã được đối soát, vui lòng liên hệ hỗ trợ để được admin xem xét.');
+    }
+}
 
 router.post('/:id/payment-callback', asyncHandler(async (req, res) => {
     const secret = req.get('x-payment-secret');
@@ -122,6 +168,82 @@ router.get('/my-orders', asyncHandler(async (req, res) => {
     sendSuccess(res, orders, 'Loaded orders', getPaginationMeta(total, { page, limit }));
 }));
 
+router.get('/returns', asyncHandler(async (req, res) => {
+    const { page = 1, limit = 20, status } = req.query;
+    const query = { buyer: req.user.id };
+    if (status) query.status = status;
+
+    const [returns, total] = await Promise.all([
+        ReturnRequest.find(query)
+            .populate('order', 'orderNumber orderStatus paymentStatus finalAmount createdAt')
+            .populate('shop', 'name logo verificationLevel labels')
+            .sort({ createdAt: -1 })
+            .skip((Number(page) - 1) * Number(limit))
+            .limit(Number(limit)),
+        ReturnRequest.countDocuments(query)
+    ]);
+
+    sendSuccess(res, returns, 'Loaded return requests', getPaginationMeta(total, { page, limit }));
+}));
+
+router.get('/returns/:returnId', asyncHandler(async (req, res) => {
+    const request = await ReturnRequest.findOne({
+        _id: req.params.returnId,
+        buyer: req.user.id
+    })
+        .populate('order', 'orderNumber orderStatus paymentStatus finalAmount shippingAddress createdAt')
+        .populate('shop', 'name logo');
+
+    if (!request) {
+        throw ApiError.notFound('Không tìm thấy yêu cầu hoàn hàng');
+    }
+
+    sendSuccess(res, request, 'Loaded return request');
+}));
+
+router.patch('/returns/:returnId/add-evidence', asyncHandler(async (req, res) => {
+    const request = await ReturnRequest.findOne({
+        _id: req.params.returnId,
+        buyer: req.user.id
+    });
+
+    if (!request) {
+        throw ApiError.notFound('Không tìm thấy yêu cầu hoàn hàng');
+    }
+
+    if (!['need_more_evidence', 'seller_reviewing', 'admin_reviewing'].includes(request.status)) {
+        throw ApiError.badRequest('Yêu cầu hoàn hàng hiện không cần bổ sung bằng chứng');
+    }
+
+    const evidence = normalizeReturnEvidence(req.body, req.user.id);
+    if (!evidence.length && !String(req.body.note || '').trim()) {
+        throw ApiError.badRequest('Vui lòng nhập ghi chú hoặc đính kèm bằng chứng');
+    }
+
+    request.evidence.push(...evidence);
+    if (req.body.note) {
+        request.evidence.push({
+            type: 'note',
+            note: String(req.body.note).trim(),
+            uploadedBy: req.user.id,
+            uploadedAt: new Date()
+        });
+    }
+    request.status = 'seller_reviewing';
+    request.addHistory('seller_reviewing', 'Người mua đã bổ sung bằng chứng', 'buyer', req.user.id);
+    await request.save();
+
+    await writeOrderLog({
+        orderId: request.order,
+        event: 'return_requested',
+        actorType: 'buyer',
+        actorId: req.user.id,
+        message: 'Buyer added evidence for return request'
+    });
+
+    sendSuccess(res, request, 'Đã bổ sung bằng chứng cho yêu cầu hoàn hàng');
+}));
+
 router.get('/:id', asyncHandler(async (req, res) => {
     const order = await Order.findOne({
         _id: req.params.id,
@@ -205,11 +327,15 @@ router.post('/:orderId/reviews/:productId', asyncHandler(async (req, res) => {
     sendCreated(res, review, 'Review created');
 }));
 
-router.post('/:id/return-request', asyncHandler(async (req, res) => {
-    const { reason, description = '', images = [], items = [], resolution = 'refund' } = req.body;
+async function createReturnRequest(req, res) {
+    const { reason, description = '', items = [], resolution = 'refund' } = req.body;
 
     if (!String(reason || '').trim()) {
-        throw ApiError.badRequest('Return reason is required');
+        throw ApiError.badRequest('Vui lòng chọn lý do hoàn hàng');
+    }
+
+    if (!['refund', 'exchange', 'return_refund'].includes(resolution)) {
+        throw ApiError.badRequest('Phương án xử lý hoàn hàng không hợp lệ');
     }
 
     const order = await Order.findOne({
@@ -225,47 +351,71 @@ router.post('/:id/return-request', asyncHandler(async (req, res) => {
     const eligibleStatuses = [ORDER_STATUS.SHIPPING, ORDER_STATUS.DELIVERED, ORDER_STATUS.COMPLETED];
     const currentStatus = order.orderStatus || order.status;
     if (!eligibleStatuses.includes(currentStatus)) {
-        throw ApiError.badRequest('Order is not eligible for a return request yet');
+        throw ApiError.badRequest('Đơn hàng chưa đủ điều kiện gửi yêu cầu hoàn hàng');
     }
+
+    await assertOrderNotSettled(order._id);
 
     const existingRequest = await ReturnRequest.findOne({ order: order._id }).sort({ createdAt: -1 });
-    if (existingRequest && !['rejected', 'rejected_inspection'].includes(existingRequest.status)) {
-        throw ApiError.badRequest('A return request for this order is already being processed');
+    if (existingRequest && !['seller_rejected', 'return_rejected', 'closed', 'rejected', 'rejected_inspection'].includes(existingRequest.status)) {
+        throw ApiError.badRequest('Đơn hàng này đang có yêu cầu hoàn hàng được xử lý');
     }
 
-    const selectedProductIds = new Set(
-        (Array.isArray(items) ? items : [])
-            .map((item) => String(item.productId || item.product || '').trim())
-            .filter(Boolean)
-    );
+    const requestedItems = Array.isArray(items) ? items : [];
+    const selectedProductIds = new Set(requestedItems.map((item) => String(item.productId || item.product || '').trim()).filter(Boolean));
+    const quantityByProduct = requestedItems.reduce((map, item) => {
+        const productId = String(item.productId || item.product || '').trim();
+        if (!productId) return map;
+        map.set(productId, Number(item.quantity || 1));
+        return map;
+    }, new Map());
 
-    const selectedOrderItems = (order.items || []).filter((item) => selectedProductIds.has(String(item.product?._id || item.product)));
+    const selectedOrderItems = (order.items || []).filter((item) => {
+        return selectedProductIds.has(String(item.product?._id || item.product));
+    });
     if (!selectedOrderItems.length) {
-        throw ApiError.badRequest('Please select at least one product to return');
+        throw ApiError.badRequest('Vui lòng chọn ít nhất một sản phẩm cần hoàn');
+    }
+
+    const selectedShopIds = new Set(selectedOrderItems.map((item) => String(item.shop || '')).filter(Boolean));
+    if (selectedShopIds.size > 1) {
+        throw ApiError.badRequest('Vui lòng tạo yêu cầu hoàn hàng riêng cho từng shop');
     }
 
     const returnItems = selectedOrderItems.map((item) => ({
         product: item.product?._id || item.product,
         name: item.name,
-        quantity: item.quantity,
+        quantity: Math.min(Math.max(quantityByProduct.get(String(item.product?._id || item.product)) || 1, 1), Number(item.quantity || 1)),
+        orderedQuantity: item.quantity,
         price: item.price,
-        reason
+        reason: RETURN_REASON_LABELS[reason] || reason,
+        refundAmount: Number(item.price || 0) * Math.min(Math.max(quantityByProduct.get(String(item.product?._id || item.product)) || 1, 1), Number(item.quantity || 1))
     }));
 
-    const refundAmount = returnItems.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 0)), 0);
+    const refundAmount = returnItems.reduce((sum, item) => sum + Number(item.refundAmount || 0), 0);
     const shopId = selectedOrderItems[0]?.shop;
+    const evidence = normalizeReturnEvidence(req.body, req.user.id);
 
     const request = await ReturnRequest.create({
         order: order._id,
         buyer: req.user.id,
         shop: shopId,
         items: returnItems,
-        reason,
-        description: [description, `Requested resolution: ${resolution}`].filter(Boolean).join('\n'),
-        images: Array.isArray(images) ? images : [],
+        reason: RETURN_REASON_LABELS[reason] || reason,
+        description,
+        resolution,
+        images: evidence.filter((item) => item.type === 'image').map((item) => item.url),
+        videos: evidence.filter((item) => item.type === 'video').map((item) => item.url),
+        evidence,
         refundAmount,
-        status: 'pending'
+        status: 'return_requested',
+        orderStatusBeforeReturn: currentStatus,
+        paymentStatusBeforeReturn: order.paymentStatus
     });
+    request.addHistory('return_requested', `Người mua gửi yêu cầu hoàn hàng: ${RETURN_REASON_LABELS[reason] || reason}`, 'buyer', req.user.id);
+    request.addHistory('seller_reviewing', 'Chờ người bán xem xét yêu cầu hoàn hàng', 'system');
+    request.status = 'seller_reviewing';
+    await request.save();
 
     syncOrderState(order, {
         orderStatus: ORDER_STATUS.RETURN_PENDING,
@@ -279,7 +429,7 @@ router.post('/:id/return-request', asyncHandler(async (req, res) => {
     });
     order.statusHistory.push({
         status: ORDER_STATUS.RETURN_PENDING,
-        note: `Buyer requested return: ${reason}`,
+        note: `Người mua yêu cầu hoàn hàng: ${RETURN_REASON_LABELS[reason] || reason}`,
         updatedBy: req.user.id
     });
     await order.save();
@@ -291,14 +441,25 @@ router.post('/:id/return-request', asyncHandler(async (req, res) => {
         actorId: req.user.id,
         message: `Buyer requested return for order ${order.orderNumber}`,
         data: {
-            reason,
+            reason: RETURN_REASON_LABELS[reason] || reason,
             resolution,
             itemCount: returnItems.length
         }
     });
 
-    sendCreated(res, request, 'Return request created successfully');
-}));
+    await Notification.create({
+        user: selectedOrderItems[0]?.seller,
+        type: 'order',
+        title: 'Có yêu cầu hoàn hàng mới',
+        message: `Người mua đã gửi yêu cầu hoàn hàng cho đơn #${order.orderNumber}`,
+        data: { orderId: order._id, returnId: request._id }
+    });
+
+    sendCreated(res, request, 'Đã gửi yêu cầu hoàn hàng. Trạng thái chuyển sang Đang yêu cầu hoàn hàng.');
+}
+
+router.post('/:id/returns', asyncHandler(createReturnRequest));
+router.post('/:id/return-request', asyncHandler(createReturnRequest));
 
 router.put('/:id/cancel', asyncHandler(async (req, res) => {
     const { reason } = req.body;

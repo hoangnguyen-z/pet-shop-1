@@ -173,8 +173,11 @@ class ApiClient {
         return this.post('/auth/forgot-password', { email });
     }
 
-    resetPassword(token, newPassword) {
-        return this.post('/auth/reset-password', { token, newPassword });
+    resetPassword(tokenOrData, newPassword) {
+        if (typeof tokenOrData === 'object' && tokenOrData !== null) {
+            return this.post('/auth/reset-password', tokenOrData);
+        }
+        return this.post('/auth/reset-password', { token: tokenOrData, newPassword });
     }
 
     logout() {
@@ -362,7 +365,22 @@ class ApiClient {
     }
 
     requestOrderReturn(id, data) {
-        return this.post(`/orders/${id}/return-request`, data);
+        return this.post(`/orders/${id}/returns`, data);
+    }
+
+    getBuyerReturns(params = {}) {
+        return this.get('/orders/returns', params);
+    }
+
+    getBuyerReturn(id) {
+        return this.get(`/orders/returns/${id}`);
+    }
+
+    addReturnEvidence(id, data) {
+        return this.request(`/orders/returns/${id}/add-evidence`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        });
     }
 
     getMyShop() {
@@ -521,6 +539,35 @@ class ApiClient {
         return this.put(`/seller/orders/${id}/status`, { status, reason, ...tracking });
     }
 
+    getSellerReturns(params = {}) {
+        return this.get('/seller/orders/returns', params);
+    }
+
+    getSellerReturn(id) {
+        return this.get(`/seller/orders/returns/${id}`);
+    }
+
+    approveSellerReturn(id, note = '') {
+        return this.request(`/seller/orders/returns/${id}/approve`, {
+            method: 'PATCH',
+            body: JSON.stringify({ note })
+        });
+    }
+
+    rejectSellerReturn(id, note = '') {
+        return this.request(`/seller/orders/returns/${id}/reject`, {
+            method: 'PATCH',
+            body: JSON.stringify({ note })
+        });
+    }
+
+    requestSellerReturnEvidence(id, note = '') {
+        return this.request(`/seller/orders/returns/${id}/request-evidence`, {
+            method: 'PATCH',
+            body: JSON.stringify({ note })
+        });
+    }
+
     getSellerCoupons() {
         return this.get('/seller/coupons');
     }
@@ -583,6 +630,26 @@ class ApiClient {
 
     markAllNotificationsRead() {
         return this.put('/user/notifications/read-all');
+    }
+
+    getChatConversations(params = {}) {
+        return this.get('/chat/conversations', params);
+    }
+
+    startChatConversation(data) {
+        return this.post('/chat/conversations', data);
+    }
+
+    getChatMessages(conversationId) {
+        return this.get(`/chat/conversations/${conversationId}/messages`);
+    }
+
+    sendChatMessage(conversationId, body) {
+        return this.post(`/chat/conversations/${conversationId}/messages`, { body });
+    }
+
+    markChatConversationRead(conversationId) {
+        return this.request(`/chat/conversations/${conversationId}/read`, { method: 'PATCH' });
     }
 
     getAdminDashboard() {
@@ -692,7 +759,12 @@ api.buyerApi = {
     cancelOrder: api.cancelOrder.bind(api),
     validateCoupon: api.validateCoupon.bind(api),
     createReview: api.createReview.bind(api),
-    requestOrderReturn: api.requestOrderReturn.bind(api)
+    requestOrderReturn: api.requestOrderReturn.bind(api),
+    getChatConversations: api.getChatConversations.bind(api),
+    startChatConversation: api.startChatConversation.bind(api),
+    getChatMessages: api.getChatMessages.bind(api),
+    sendChatMessage: api.sendChatMessage.bind(api),
+    markChatConversationRead: api.markChatConversationRead.bind(api)
 };
 api.sellerApi = {
     getDashboard: api.getSellerDashboard.bind(api),
@@ -720,7 +792,11 @@ api.sellerApi = {
     getReviews: api.getSellerReviews.bind(api),
     replyReview: api.replySellerReview.bind(api),
     getSettlements: api.getSellerSettlements.bind(api),
-    requestSettlement: api.requestSellerSettlement.bind(api)
+    requestSettlement: api.requestSellerSettlement.bind(api),
+    getChatConversations: api.getChatConversations.bind(api),
+    getChatMessages: api.getChatMessages.bind(api),
+    sendChatMessage: api.sendChatMessage.bind(api),
+    markChatConversationRead: api.markChatConversationRead.bind(api)
 };
 api.adminApi = api;
 window.api = api;

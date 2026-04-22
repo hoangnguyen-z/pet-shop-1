@@ -48,6 +48,21 @@ const FUND_FLOW_LABELS = {
     cancelled: 'Đã hủy'
 };
 
+const RETURN_STATUS_LABELS = {
+    return_requested: 'Đã gửi yêu cầu',
+    seller_reviewing: 'Đang chờ shop xử lý',
+    need_more_evidence: 'Cần bổ sung bằng chứng',
+    seller_approved: 'Shop đã chấp nhận',
+    seller_rejected: 'Shop đã từ chối',
+    admin_reviewing: 'Admin đang xem xét',
+    return_approved: 'Hoàn hàng được duyệt',
+    return_rejected: 'Hoàn hàng bị từ chối',
+    return_shipping: 'Đang gửi trả hàng',
+    returned: 'Đã trả hàng',
+    refunded: 'Đã hoàn tiền',
+    closed: 'Đã đóng'
+};
+
 const PAYMENT_METHOD_LABELS = {
     cod: 'COD',
     bank_transfer: 'Chuyển khoản',
@@ -532,6 +547,9 @@ function handleOrderDrawerClick(event) {
     const nextButton = event.target.closest('[data-drawer-next]');
     const cancelButton = event.target.closest('[data-drawer-cancel]');
     const refreshButton = event.target.closest('[data-drawer-refresh]');
+    const approveReturnButton = event.target.closest('[data-return-approve]');
+    const rejectReturnButton = event.target.closest('[data-return-reject]');
+    const evidenceReturnButton = event.target.closest('[data-return-evidence]');
 
     if (nextButton) {
         submitOrderStatusChange(sellerOrdersState.selectedOrderId, nextButton.dataset.drawerNext, { fromDrawer: true });
@@ -545,6 +563,43 @@ function handleOrderDrawerClick(event) {
 
     if (refreshButton) {
         openSellerOrderDetail(sellerOrdersState.selectedOrderId);
+        return;
+    }
+
+    if (approveReturnButton || rejectReturnButton || evidenceReturnButton) {
+        const returnId = approveReturnButton?.dataset.returnApprove
+            || rejectReturnButton?.dataset.returnReject
+            || evidenceReturnButton?.dataset.returnEvidence;
+        const note = document.querySelector(`[data-return-note="${returnId}"]`)?.value.trim() || '';
+        handleReturnAction(returnId, approveReturnButton ? 'approve' : rejectReturnButton ? 'reject' : 'evidence', note);
+    }
+}
+
+async function handleReturnAction(returnId, action, note) {
+    try {
+        if (action === 'approve') {
+            await api.approveSellerReturn(returnId, note || 'Shop chấp nhận yêu cầu hoàn hàng');
+            authManager.showNotification('Đã chấp nhận yêu cầu hoàn hàng.', 'success');
+        } else if (action === 'reject') {
+            if (!note) {
+                authManager.showNotification('Vui lòng nhập lý do từ chối hoàn hàng.', 'error');
+                return;
+            }
+            await api.rejectSellerReturn(returnId, note);
+            authManager.showNotification('Đã từ chối yêu cầu hoàn hàng.', 'success');
+        } else {
+            if (!note) {
+                authManager.showNotification('Vui lòng ghi rõ bằng chứng cần bổ sung.', 'error');
+                return;
+            }
+            await api.requestSellerReturnEvidence(returnId, note);
+            authManager.showNotification('Đã yêu cầu người mua bổ sung bằng chứng.', 'success');
+        }
+
+        await loadSellerOrdersPage({ refreshSummary: true });
+        if (sellerOrdersState.selectedOrderId) await openSellerOrderDetail(sellerOrdersState.selectedOrderId, { silent: true });
+    } catch (error) {
+        authManager.showNotification(error.message || 'Không thể xử lý yêu cầu hoàn hàng.', 'error');
     }
 }
 
@@ -709,6 +764,28 @@ function renderOrderDrawer(order) {
             </div>
         </section>
 
+        ${(order.activeReturns || []).length ? `
+            <section class="seller-orders-drawer-card">
+                <h4>Yêu cầu hoàn hàng</h4>
+                ${(order.activeReturns || []).map((request) => `
+                    <article class="seller-orders-return-card">
+                        <div class="seller-orders-status-stack">
+                            <span class="seller-orders-status-badge ${statusBadgeClass(request.status)}">${escapeHtml(RETURN_STATUS_LABELS[request.status] || formatLabel(request.status))}</span>
+                            <small>${escapeHtml(request.reason || '')}</small>
+                        </div>
+                        <p>${escapeHtml(request.description || 'Không có mô tả chi tiết')}</p>
+                        <p><strong>Số tiền dự kiến:</strong> ${escapeHtml(formatOrderMoney(request.refundAmount || 0))}</p>
+                        <label><span>Ghi chú xử lý</span><textarea data-return-note="${request._id}" rows="3" placeholder="Nhập ghi chú cho người mua hoặc admin"></textarea></label>
+                        <div class="seller-orders-drawer-actions">
+                            <button class="seller-primary-button" type="button" data-return-approve="${request._id}">Đồng ý hoàn hàng</button>
+                            <button class="seller-secondary-button" type="button" data-return-evidence="${request._id}">Yêu cầu bổ sung bằng chứng</button>
+                            <button class="seller-secondary-button seller-orders-drawer-danger" type="button" data-return-reject="${request._id}">Từ chối</button>
+                        </div>
+                    </article>
+                `).join('')}
+            </section>
+        ` : ''}
+
         <section class="seller-orders-drawer-card">
             <h4>Cập nhật xử lý</h4>
             <div class="seller-orders-drawer-form-grid">
@@ -837,9 +914,9 @@ function getLatestOrderEvent(order) {
 }
 
 function statusBadgeClass(status) {
-    if (['completed', 'paid', 'confirmed', 'settled'].includes(status)) return 'seller-orders-status-success';
-    if (['shipping', 'preparing', 'delivered', 'platform_holding', 'pending_settlement', 'waiting_payment'].includes(status)) return 'seller-orders-status-warm';
-    if (['cancelled', 'failed', 'refunded', 'disputed'].includes(status)) return 'seller-orders-status-danger';
+    if (['completed', 'paid', 'confirmed', 'settled', 'seller_approved', 'return_approved'].includes(status)) return 'seller-orders-status-success';
+    if (['shipping', 'preparing', 'delivered', 'platform_holding', 'pending_settlement', 'waiting_payment', 'seller_reviewing', 'need_more_evidence', 'return_shipping', 'admin_reviewing'].includes(status)) return 'seller-orders-status-warm';
+    if (['cancelled', 'failed', 'refunded', 'disputed', 'seller_rejected', 'return_rejected'].includes(status)) return 'seller-orders-status-danger';
     return 'seller-orders-status-neutral';
 }
 

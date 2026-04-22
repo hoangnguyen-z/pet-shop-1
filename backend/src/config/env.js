@@ -24,6 +24,7 @@ module.exports = {
         user: process.env.MAIL_USER || '',
         pass: process.env.MAIL_PASS || '',
         from: process.env.MAIL_FROM || process.env.MAIL_USER || '',
-        verificationExpiryMinutes: Math.max(Number(process.env.PAYMENT_EXPIRY_MINUTES || 15), 5)
+        verificationExpiryMinutes: Math.max(Number(process.env.PAYMENT_EXPIRY_MINUTES || 15), 5),
+        passwordResetExpiryMinutes: Math.max(Number(process.env.PASSWORD_RESET_EXPIRY_MINUTES || 10), 5)
     }
 };
